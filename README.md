@@ -10,6 +10,20 @@ A high-performance toolkit to generate semantically correct AST from Vue SFCs fo
 - **High Performance**: Complete the AST transformation in a single traversal.
 - **Error Handling**: Collect the errors from both `vue-compiler-rs` and `oxc-parser`. Implement similar `paincked` logic like `oxc-parser`
 
+## Testing
+
+The project includes comprehensive tests:
+
+```bash
+# Run tests
+just test
+
+# Generate coverage report
+just coverage
+```
+
+Current test coverage: **95.61%** (lines), **96.12%** (functions), **95.61%** (regions)
+
 ## Credits
 
 This project includes a fork of [vue-oxc-parser](https://github.com/zhiyuanzmj/vue-oxc-parser) originally created by zhiyuanzmj.
