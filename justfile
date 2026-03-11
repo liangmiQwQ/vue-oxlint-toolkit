@@ -7,7 +7,7 @@ _default:
 
 init:
   cargo install cargo-binstall
-  cargo binstall cargo-insta cargo-shear cargo-workspaces cargo-edit dprint -y
+  cargo binstall cargo-insta cargo-shear cargo-workspaces cargo-edit cargo-llvm-cov dprint -y
   just install-hook
   
 fmt: 
@@ -50,3 +50,6 @@ bench:
 
 bump:
   cargo workspaces version -y -m "chore: release v%v" --no-individual-tags
+
+coverage:
+  cargo llvm-cov --all-features --workspace
