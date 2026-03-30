@@ -8,6 +8,12 @@ Program {
         start: 0,
         end: 208,
     },
+    node_id: Cell {
+        value: NodeId(0),
+    },
+    scope_id: Cell {
+        value: None,
+    },
     source_text: "<template>\n  <div v-for=\"\" />\n  <div v-for=\"item /* some */in source\" />\n  <div v-for=\"ehsgrjbegklhuk\" />\n  <div v-for=\"(item, index) source\" />\n  <div v-for=\"(item, index) /* in */ in source\" />\n</template>\n",
     comments: Vec(
         [],
@@ -24,11 +30,20 @@ Program {
                         start: 0,
                         end: 0,
                     },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
                     expression: ArrowFunctionExpression(
                         ArrowFunctionExpression {
                             span: Span {
                                 start: 0,
                                 end: 0,
+                            },
+                            node_id: Cell {
+                                value: NodeId(0),
+                            },
+                            scope_id: Cell {
+                                value: None,
                             },
                             type_parameters: None,
                             params: FormalParameters {
@@ -36,20 +51,23 @@ Program {
                                     start: 0,
                                     end: 0,
                                 },
-                                items: Vec(
-                                    [],
-                                ),
-                                rest: None,
                                 node_id: Cell {
                                     value: NodeId(0),
                                 },
                                 kind: ArrowFormalParameters,
+                                items: Vec(
+                                    [],
+                                ),
+                                rest: None,
                             },
                             return_type: None,
                             body: FunctionBody {
                                 span: Span {
                                     start: 0,
                                     end: 0,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
                                 },
                                 directives: Vec(
                                     [],
@@ -62,11 +80,17 @@ Program {
                                                     start: 0,
                                                     end: 0,
                                                 },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
                                                 expression: JSXFragment(
                                                     JSXFragment {
                                                         span: Span {
                                                             start: 0,
                                                             end: 0,
+                                                        },
+                                                        node_id: Cell {
+                                                            value: NodeId(0),
                                                         },
                                                         opening_fragment: JSXOpeningFragment {
                                                             span: Span {
@@ -85,10 +109,16 @@ Program {
                                                                             start: 0,
                                                                             end: 207,
                                                                         },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
                                                                         opening_element: JSXOpeningElement {
                                                                             span: Span {
                                                                                 start: 0,
                                                                                 end: 10,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
                                                                             },
                                                                             name: Identifier(
                                                                                 JSXIdentifier {
@@ -96,19 +126,16 @@ Program {
                                                                                         start: 1,
                                                                                         end: 9,
                                                                                     },
-                                                                                    name: "template",
                                                                                     node_id: Cell {
                                                                                         value: NodeId(0),
                                                                                     },
+                                                                                    name: "template",
                                                                                 },
                                                                             ),
                                                                             type_arguments: None,
                                                                             attributes: Vec(
                                                                                 [],
                                                                             ),
-                                                                            node_id: Cell {
-                                                                                value: NodeId(0),
-                                                                            },
                                                                         },
                                                                         children: Vec(
                                                                             [
@@ -118,13 +145,13 @@ Program {
                                                                                             start: 10,
                                                                                             end: 13,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n  ",
                                                                                         raw: Some(
                                                                                             "\n  ",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Element(
@@ -133,10 +160,16 @@ Program {
                                                                                             start: 13,
                                                                                             end: 29,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 13,
                                                                                                 end: 29,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
                                                                                             },
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
@@ -144,10 +177,10 @@ Program {
                                                                                                         start: 14,
                                                                                                         end: 17,
                                                                                                     },
-                                                                                                    name: "div",
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
                                                                                                     },
+                                                                                                    name: "div",
                                                                                                 },
                                                                                             ),
                                                                                             type_arguments: None,
@@ -159,34 +192,37 @@ Program {
                                                                                                                 start: 18,
                                                                                                                 end: 26,
                                                                                                             },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
                                                                                                             name: NamespacedName(
                                                                                                                 JSXNamespacedName {
                                                                                                                     span: Span {
                                                                                                                         start: 18,
                                                                                                                         end: 23,
                                                                                                                     },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
                                                                                                                     namespace: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 18,
                                                                                                                             end: 23,
                                                                                                                         },
-                                                                                                                        name: "v-for",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
+                                                                                                                        name: "v-for",
                                                                                                                     },
                                                                                                                     name: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 0,
                                                                                                                             end: 0,
                                                                                                                         },
-                                                                                                                        name: "",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                    },
-                                                                                                                    node_id: Cell {
-                                                                                                                        value: NodeId(0),
+                                                                                                                        name: "",
                                                                                                                     },
                                                                                                                 },
                                                                                                             ),
@@ -196,6 +232,9 @@ Program {
                                                                                                                         span: Span {
                                                                                                                             start: 24,
                                                                                                                             end: 26,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
                                                                                                                         },
                                                                                                                         expression: EmptyExpression(
                                                                                                                             JSXEmptyExpression {
@@ -208,22 +247,13 @@ Program {
                                                                                                                                 },
                                                                                                                             },
                                                                                                                         ),
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
                                                                                                                     },
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            node_id: Cell {
-                                                                                                                value: NodeId(0),
-                                                                                                            },
                                                                                                         },
                                                                                                     ),
                                                                                                 ],
                                                                                             ),
-                                                                                            node_id: Cell {
-                                                                                                value: NodeId(0),
-                                                                                            },
                                                                                         },
                                                                                         children: Vec(
                                                                                             [],
@@ -234,26 +264,23 @@ Program {
                                                                                                     start: 0,
                                                                                                     end: 0,
                                                                                                 },
+                                                                                                node_id: Cell {
+                                                                                                    value: NodeId(0),
+                                                                                                },
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
                                                                                                             start: 0,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        name: "",
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
+                                                                                                        name: "",
                                                                                                     },
                                                                                                 ),
-                                                                                                node_id: Cell {
-                                                                                                    value: NodeId(0),
-                                                                                                },
                                                                                             },
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Text(
@@ -262,13 +289,13 @@ Program {
                                                                                             start: 29,
                                                                                             end: 32,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n  ",
                                                                                         raw: Some(
                                                                                             "\n  ",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Element(
@@ -277,10 +304,16 @@ Program {
                                                                                             start: 32,
                                                                                             end: 72,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 32,
                                                                                                 end: 72,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
                                                                                             },
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
@@ -288,10 +321,10 @@ Program {
                                                                                                         start: 33,
                                                                                                         end: 36,
                                                                                                     },
-                                                                                                    name: "div",
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
                                                                                                     },
+                                                                                                    name: "div",
                                                                                                 },
                                                                                             ),
                                                                                             type_arguments: None,
@@ -303,34 +336,37 @@ Program {
                                                                                                                 start: 37,
                                                                                                                 end: 69,
                                                                                                             },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
                                                                                                             name: NamespacedName(
                                                                                                                 JSXNamespacedName {
                                                                                                                     span: Span {
                                                                                                                         start: 37,
                                                                                                                         end: 42,
                                                                                                                     },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
                                                                                                                     namespace: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 37,
                                                                                                                             end: 42,
                                                                                                                         },
-                                                                                                                        name: "v-for",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
+                                                                                                                        name: "v-for",
                                                                                                                     },
                                                                                                                     name: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 0,
                                                                                                                             end: 0,
                                                                                                                         },
-                                                                                                                        name: "",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                    },
-                                                                                                                    node_id: Cell {
-                                                                                                                        value: NodeId(0),
+                                                                                                                        name: "",
                                                                                                                     },
                                                                                                                 },
                                                                                                             ),
@@ -340,6 +376,9 @@ Program {
                                                                                                                         span: Span {
                                                                                                                             start: 43,
                                                                                                                             end: 69,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
                                                                                                                         },
                                                                                                                         expression: EmptyExpression(
                                                                                                                             JSXEmptyExpression {
@@ -352,22 +391,13 @@ Program {
                                                                                                                                 },
                                                                                                                             },
                                                                                                                         ),
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
                                                                                                                     },
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            node_id: Cell {
-                                                                                                                value: NodeId(0),
-                                                                                                            },
                                                                                                         },
                                                                                                     ),
                                                                                                 ],
                                                                                             ),
-                                                                                            node_id: Cell {
-                                                                                                value: NodeId(0),
-                                                                                            },
                                                                                         },
                                                                                         children: Vec(
                                                                                             [],
@@ -378,26 +408,23 @@ Program {
                                                                                                     start: 0,
                                                                                                     end: 0,
                                                                                                 },
+                                                                                                node_id: Cell {
+                                                                                                    value: NodeId(0),
+                                                                                                },
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
                                                                                                             start: 0,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        name: "",
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
+                                                                                                        name: "",
                                                                                                     },
                                                                                                 ),
-                                                                                                node_id: Cell {
-                                                                                                    value: NodeId(0),
-                                                                                                },
                                                                                             },
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Text(
@@ -406,13 +433,13 @@ Program {
                                                                                             start: 72,
                                                                                             end: 75,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n  ",
                                                                                         raw: Some(
                                                                                             "\n  ",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Element(
@@ -421,10 +448,16 @@ Program {
                                                                                             start: 75,
                                                                                             end: 105,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 75,
                                                                                                 end: 105,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
                                                                                             },
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
@@ -432,10 +465,10 @@ Program {
                                                                                                         start: 76,
                                                                                                         end: 79,
                                                                                                     },
-                                                                                                    name: "div",
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
                                                                                                     },
+                                                                                                    name: "div",
                                                                                                 },
                                                                                             ),
                                                                                             type_arguments: None,
@@ -447,34 +480,37 @@ Program {
                                                                                                                 start: 80,
                                                                                                                 end: 102,
                                                                                                             },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
                                                                                                             name: NamespacedName(
                                                                                                                 JSXNamespacedName {
                                                                                                                     span: Span {
                                                                                                                         start: 80,
                                                                                                                         end: 85,
                                                                                                                     },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
                                                                                                                     namespace: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 80,
                                                                                                                             end: 85,
                                                                                                                         },
-                                                                                                                        name: "v-for",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
+                                                                                                                        name: "v-for",
                                                                                                                     },
                                                                                                                     name: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 0,
                                                                                                                             end: 0,
                                                                                                                         },
-                                                                                                                        name: "",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                    },
-                                                                                                                    node_id: Cell {
-                                                                                                                        value: NodeId(0),
+                                                                                                                        name: "",
                                                                                                                     },
                                                                                                                 },
                                                                                                             ),
@@ -484,6 +520,9 @@ Program {
                                                                                                                         span: Span {
                                                                                                                             start: 86,
                                                                                                                             end: 102,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
                                                                                                                         },
                                                                                                                         expression: EmptyExpression(
                                                                                                                             JSXEmptyExpression {
@@ -496,22 +535,13 @@ Program {
                                                                                                                                 },
                                                                                                                             },
                                                                                                                         ),
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
                                                                                                                     },
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            node_id: Cell {
-                                                                                                                value: NodeId(0),
-                                                                                                            },
                                                                                                         },
                                                                                                     ),
                                                                                                 ],
                                                                                             ),
-                                                                                            node_id: Cell {
-                                                                                                value: NodeId(0),
-                                                                                            },
                                                                                         },
                                                                                         children: Vec(
                                                                                             [],
@@ -522,26 +552,23 @@ Program {
                                                                                                     start: 0,
                                                                                                     end: 0,
                                                                                                 },
+                                                                                                node_id: Cell {
+                                                                                                    value: NodeId(0),
+                                                                                                },
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
                                                                                                             start: 0,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        name: "",
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
+                                                                                                        name: "",
                                                                                                     },
                                                                                                 ),
-                                                                                                node_id: Cell {
-                                                                                                    value: NodeId(0),
-                                                                                                },
                                                                                             },
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Text(
@@ -550,13 +577,13 @@ Program {
                                                                                             start: 105,
                                                                                             end: 108,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n  ",
                                                                                         raw: Some(
                                                                                             "\n  ",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Element(
@@ -565,10 +592,16 @@ Program {
                                                                                             start: 108,
                                                                                             end: 144,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 108,
                                                                                                 end: 144,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
                                                                                             },
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
@@ -576,10 +609,10 @@ Program {
                                                                                                         start: 109,
                                                                                                         end: 112,
                                                                                                     },
-                                                                                                    name: "div",
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
                                                                                                     },
+                                                                                                    name: "div",
                                                                                                 },
                                                                                             ),
                                                                                             type_arguments: None,
@@ -591,34 +624,37 @@ Program {
                                                                                                                 start: 113,
                                                                                                                 end: 141,
                                                                                                             },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
                                                                                                             name: NamespacedName(
                                                                                                                 JSXNamespacedName {
                                                                                                                     span: Span {
                                                                                                                         start: 113,
                                                                                                                         end: 118,
                                                                                                                     },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
                                                                                                                     namespace: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 113,
                                                                                                                             end: 118,
                                                                                                                         },
-                                                                                                                        name: "v-for",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
+                                                                                                                        name: "v-for",
                                                                                                                     },
                                                                                                                     name: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 0,
                                                                                                                             end: 0,
                                                                                                                         },
-                                                                                                                        name: "",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                    },
-                                                                                                                    node_id: Cell {
-                                                                                                                        value: NodeId(0),
+                                                                                                                        name: "",
                                                                                                                     },
                                                                                                                 },
                                                                                                             ),
@@ -628,6 +664,9 @@ Program {
                                                                                                                         span: Span {
                                                                                                                             start: 119,
                                                                                                                             end: 141,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
                                                                                                                         },
                                                                                                                         expression: EmptyExpression(
                                                                                                                             JSXEmptyExpression {
@@ -640,22 +679,13 @@ Program {
                                                                                                                                 },
                                                                                                                             },
                                                                                                                         ),
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
                                                                                                                     },
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            node_id: Cell {
-                                                                                                                value: NodeId(0),
-                                                                                                            },
                                                                                                         },
                                                                                                     ),
                                                                                                 ],
                                                                                             ),
-                                                                                            node_id: Cell {
-                                                                                                value: NodeId(0),
-                                                                                            },
                                                                                         },
                                                                                         children: Vec(
                                                                                             [],
@@ -666,26 +696,23 @@ Program {
                                                                                                     start: 0,
                                                                                                     end: 0,
                                                                                                 },
+                                                                                                node_id: Cell {
+                                                                                                    value: NodeId(0),
+                                                                                                },
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
                                                                                                             start: 0,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        name: "",
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
+                                                                                                        name: "",
                                                                                                     },
                                                                                                 ),
-                                                                                                node_id: Cell {
-                                                                                                    value: NodeId(0),
-                                                                                                },
                                                                                             },
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Text(
@@ -694,13 +721,13 @@ Program {
                                                                                             start: 144,
                                                                                             end: 147,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n  ",
                                                                                         raw: Some(
                                                                                             "\n  ",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Element(
@@ -709,10 +736,16 @@ Program {
                                                                                             start: 147,
                                                                                             end: 195,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 147,
                                                                                                 end: 195,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
                                                                                             },
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
@@ -720,10 +753,10 @@ Program {
                                                                                                         start: 148,
                                                                                                         end: 151,
                                                                                                     },
-                                                                                                    name: "div",
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
                                                                                                     },
+                                                                                                    name: "div",
                                                                                                 },
                                                                                             ),
                                                                                             type_arguments: None,
@@ -735,34 +768,37 @@ Program {
                                                                                                                 start: 152,
                                                                                                                 end: 192,
                                                                                                             },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
                                                                                                             name: NamespacedName(
                                                                                                                 JSXNamespacedName {
                                                                                                                     span: Span {
                                                                                                                         start: 152,
                                                                                                                         end: 157,
                                                                                                                     },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
                                                                                                                     namespace: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 152,
                                                                                                                             end: 157,
                                                                                                                         },
-                                                                                                                        name: "v-for",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
+                                                                                                                        name: "v-for",
                                                                                                                     },
                                                                                                                     name: JSXIdentifier {
                                                                                                                         span: Span {
                                                                                                                             start: 0,
                                                                                                                             end: 0,
                                                                                                                         },
-                                                                                                                        name: "",
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                    },
-                                                                                                                    node_id: Cell {
-                                                                                                                        value: NodeId(0),
+                                                                                                                        name: "",
                                                                                                                     },
                                                                                                                 },
                                                                                                             ),
@@ -772,6 +808,9 @@ Program {
                                                                                                                         span: Span {
                                                                                                                             start: 158,
                                                                                                                             end: 192,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
                                                                                                                         },
                                                                                                                         expression: EmptyExpression(
                                                                                                                             JSXEmptyExpression {
@@ -784,22 +823,13 @@ Program {
                                                                                                                                 },
                                                                                                                             },
                                                                                                                         ),
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
                                                                                                                     },
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            node_id: Cell {
-                                                                                                                value: NodeId(0),
-                                                                                                            },
                                                                                                         },
                                                                                                     ),
                                                                                                 ],
                                                                                             ),
-                                                                                            node_id: Cell {
-                                                                                                value: NodeId(0),
-                                                                                            },
                                                                                         },
                                                                                         children: Vec(
                                                                                             [],
@@ -810,26 +840,23 @@ Program {
                                                                                                     start: 0,
                                                                                                     end: 0,
                                                                                                 },
+                                                                                                node_id: Cell {
+                                                                                                    value: NodeId(0),
+                                                                                                },
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
                                                                                                             start: 0,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        name: "",
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
+                                                                                                        name: "",
                                                                                                     },
                                                                                                 ),
-                                                                                                node_id: Cell {
-                                                                                                    value: NodeId(0),
-                                                                                                },
                                                                                             },
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                                 Text(
@@ -838,13 +865,13 @@ Program {
                                                                                             start: 195,
                                                                                             end: 196,
                                                                                         },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
                                                                                         value: "\n",
                                                                                         raw: Some(
                                                                                             "\n",
                                                                                         ),
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
                                                                                     },
                                                                                 ),
                                                                             ],
@@ -855,26 +882,23 @@ Program {
                                                                                     start: 196,
                                                                                     end: 207,
                                                                                 },
+                                                                                node_id: Cell {
+                                                                                    value: NodeId(0),
+                                                                                },
                                                                                 name: Identifier(
                                                                                     JSXIdentifier {
                                                                                         span: Span {
                                                                                             start: 198,
                                                                                             end: 206,
                                                                                         },
-                                                                                        name: "template",
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
                                                                                         },
+                                                                                        name: "template",
                                                                                     },
                                                                                 ),
-                                                                                node_id: Cell {
-                                                                                    value: NodeId(0),
-                                                                                },
                                                                             },
                                                                         ),
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
                                                                     },
                                                                 ),
                                                                 Text(
@@ -883,13 +907,13 @@ Program {
                                                                             start: 207,
                                                                             end: 208,
                                                                         },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
                                                                         value: "\n",
                                                                         raw: Some(
                                                                             "\n",
                                                                         ),
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
                                                                     },
                                                                 ),
                                                             ],
@@ -903,27 +927,12 @@ Program {
                                                                 value: NodeId(0),
                                                             },
                                                         },
-                                                        node_id: Cell {
-                                                            value: NodeId(0),
-                                                        },
                                                     },
                                                 ),
-                                                node_id: Cell {
-                                                    value: NodeId(0),
-                                                },
                                             },
                                         ),
                                     ],
                                 ),
-                                node_id: Cell {
-                                    value: NodeId(0),
-                                },
-                            },
-                            node_id: Cell {
-                                value: NodeId(0),
-                            },
-                            scope_id: Cell {
-                                value: None,
                             },
                             expression: false,
                             async: true,
@@ -931,19 +940,10 @@ Program {
                             pife: false,
                         },
                     ),
-                    node_id: Cell {
-                        value: NodeId(0),
-                    },
                 },
             ),
         ],
     ),
-    node_id: Cell {
-        value: NodeId(0),
-    },
-    scope_id: Cell {
-        value: None,
-    },
     source_type: SourceType {
         language: JavaScript,
         module_kind: Unambiguous,

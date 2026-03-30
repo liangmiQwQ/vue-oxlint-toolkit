@@ -8,6 +8,12 @@ Program {
         start: 0,
         end: 0,
     },
+    node_id: Cell {
+        value: NodeId(0),
+    },
+    scope_id: Cell {
+        value: None,
+    },
     source_text: "",
     comments: Vec(
         [],
@@ -19,12 +25,6 @@ Program {
     body: Vec(
         [],
     ),
-    node_id: Cell {
-        value: NodeId(0),
-    },
-    scope_id: Cell {
-        value: None,
-    },
     source_type: SourceType {
         language: JavaScript,
         module_kind: Script,
