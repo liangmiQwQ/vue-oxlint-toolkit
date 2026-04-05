@@ -29,7 +29,7 @@ too_many_lines = { level = "allow" }
 
 [workspace.dependencies]
 criterion = "0.8.2"
-insta = "1.47.1"
+insta = "1.47.2"
 
 vue_oxc_toolkit = { path = "crates/vue_oxc_toolkit" }
 
