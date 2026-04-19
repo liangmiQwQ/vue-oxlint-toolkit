@@ -22,7 +22,7 @@ just test
 just coverage
 ```
 
-Current test coverage: **95.61%** (lines), **96.12%** (functions), **95.61%** (regions)
+Current test coverage: **96.12%** (lines), **96.12%** (functions), **95.71%** (regions)
 
 ## Credits
 
