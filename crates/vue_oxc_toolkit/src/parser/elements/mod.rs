@@ -27,6 +27,24 @@ mod v_for;
 mod v_if;
 mod v_slot;
 
+/// Convert a kebab-case string to camelCase, matching Vue's prop-name normalization.
+/// e.g. `msg-id` → `msgId`, `foo` → `foo`
+fn kebab_to_camel(s: &str) -> String {
+  let mut result = String::with_capacity(s.len());
+  let mut capitalize_next = false;
+  for ch in s.chars() {
+    if ch == '-' {
+      capitalize_next = true;
+    } else if capitalize_next {
+      result.extend(ch.to_uppercase());
+      capitalize_next = false;
+    } else {
+      result.push(ch);
+    }
+  }
+  result
+}
+
 impl<'a: 'b, 'b> ParserImpl<'a> {
   fn parse_children(
     &mut self,
@@ -323,10 +341,13 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
           && let Some(argument) = dir.argument
           && let DirectiveArg::Static(arg_name) = argument
         {
-          // :prop without value → synthesize :prop="prop" (identifier reference)
+          // :prop without value → synthesize :prop="prop" (identifier reference).
+          // Vue normalizes dashed prop names to camelCase (:msg-id → msgId).
+          let ident_name = kebab_to_camel(arg_name);
+          let ident_str = ast.str(&ident_name);
           Some(ast.jsx_attribute_value_expression_container(
             SPAN,
-            JSXExpression::from(ast.expression_identifier(SPAN, arg_name)),
+            JSXExpression::from(ast.expression_identifier(SPAN, ident_str)),
           ))
         } else {
           None
