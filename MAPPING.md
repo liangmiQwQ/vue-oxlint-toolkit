@@ -110,6 +110,24 @@ Attributes are mapped to `JSXAttributeItem`.
   - **Shorthands**: Normalized to full names (`:` -> `v-bind`, `@` -> `v-on`, `#` -> `v-slot`).
   - **Value**: Wrapped in `JSXExpressionContainer`. If the directive only has a name (e.g., `v-else`), use `None`.
 
+### v-bind Shorthand Without Value
+
+When `:prop` is used without a value, the toolkit synthesizes an identifier reference matching the prop name. Dashed prop names are normalized to camelCase.
+
+| Template  | Synthesized JSX attribute |
+| --------- | ------------------------- |
+| `:id`     | `:id="id"`                |
+| `:msg-id` | `:msg-id="msgId"`         |
+
+### v-bind Without Argument (Spread)
+
+`v-bind="expr"` (or its shorthand `:="expr"`) has no argument — it spreads an object onto the element. This maps directly to a `JSXSpreadAttribute` (`{...expr}`).
+
+| Template               | JSX                |
+| ---------------------- | ------------------ |
+| `<div v-bind="obj" />` | `<div {...obj} />` |
+| `<div :="obj" />`      | `<div {...obj} />` |
+
 ### Dynamic Arguments
 
 Dynamic arguments (e.g., `:[arg]="val"`) are wrapped in brackets within the `JSXNamespacedName` or handled via `ObjectExpression` when transformed.
