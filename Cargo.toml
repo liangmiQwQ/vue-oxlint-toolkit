@@ -33,14 +33,14 @@ insta = "1.47.2"
 
 vue_oxc_toolkit = { path = "crates/vue_oxc_toolkit" }
 
-oxc_allocator = ">=0.125.0"
-oxc_ast = ">=0.125.0"
-oxc_ast_visit = ">=0.125.0"
-oxc_codegen = ">=0.125.0"
-oxc_diagnostics = ">=0.125.0"
-oxc_parser = ">=0.125.0"
-oxc_span = ">=0.125.0"
-oxc_syntax = ">=0.125.0"
+oxc_allocator = ">=0.126.0"
+oxc_ast = ">=0.126.0"
+oxc_ast_visit = ">=0.126.0"
+oxc_codegen = ">=0.126.0"
+oxc_diagnostics = ">=0.126.0"
+oxc_parser = ">=0.126.0"
+oxc_span = ">=0.126.0"
+oxc_syntax = ">=0.126.0"
 
 memchr = "2.8.0"
 regex = "1.12.3"
