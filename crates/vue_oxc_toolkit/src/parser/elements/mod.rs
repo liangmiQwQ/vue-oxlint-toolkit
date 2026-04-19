@@ -27,6 +27,25 @@ mod v_for;
 mod v_if;
 mod v_slot;
 
+/// Convert kebab-case to camel-like case.
+/// `pascal: true` → `PascalCase` (e.g. `keep-alive` → `KeepAlive`)
+/// `pascal: false` → `camelCase`  (e.g. `msg-id` → `msgId`)
+fn kebab_to_case(s: &str, pascal: bool) -> String {
+  let mut result = String::with_capacity(s.len());
+  let mut capitalize_next = pascal;
+  for ch in s.chars() {
+    if ch == '-' {
+      capitalize_next = true;
+    } else if capitalize_next {
+      result.extend(ch.to_uppercase());
+      capitalize_next = false;
+    } else {
+      result.push(ch);
+    }
+  }
+  result
+}
+
 impl<'a: 'b, 'b> ParserImpl<'a> {
   fn parse_children(
     &mut self,
@@ -159,16 +178,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         jsx_element.opening_element.name.take_in(self.allocator)
       } else if tag_name.contains('-') {
         // For <keep-alive />
-        let name = tag_name
-          .split('-')
-          .map(|s| {
-            // SAFETY to use ascii and not check bytes length
-            let mut bytes = s.as_bytes().to_vec();
-            bytes[0] = bytes[0].to_ascii_uppercase();
-            String::from_utf8(bytes).unwrap()
-          })
-          .collect::<String>();
-
+        let name = kebab_to_case(tag_name, true);
         ast.jsx_element_name_identifier_reference(name_span, ast.str(&name))
       } else {
         let name = ast.str(node.tag_name);
@@ -319,6 +329,18 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         {
           // v-slot:[name]
           Some(ast.jsx_attribute_value_expression_container(SPAN, argument.into()))
+        } else if dir.name == "bind"
+          && let Some(argument) = dir.argument
+          && let DirectiveArg::Static(arg_name) = argument
+        {
+          // :prop without value → synthesize :prop="prop" (identifier reference).
+          // Vue normalizes dashed prop names to camelCase (:msg-id → msgId).
+          let ident_name = kebab_to_case(arg_name, false);
+          let ident_str = ast.str(&ident_name);
+          Some(ast.jsx_attribute_value_expression_container(
+            SPAN,
+            JSXExpression::from(ast.expression_identifier(SPAN, ident_str)),
+          ))
         } else {
           None
         };
