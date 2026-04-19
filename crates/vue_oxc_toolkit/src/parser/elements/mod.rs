@@ -27,22 +27,28 @@ mod v_for;
 mod v_if;
 mod v_slot;
 
-/// Convert a kebab-case string to camelCase, matching Vue's prop-name normalization.
+/// Convert kebab-case to `PascalCase`. e.g. `keep-alive` → `KeepAlive`
+fn kebab_to_pascal(s: &str) -> String {
+  s.split('-')
+    .map(|seg| {
+      let mut bytes = seg.as_bytes().to_vec();
+      bytes[0] = bytes[0].to_ascii_uppercase();
+      String::from_utf8(bytes).unwrap()
+    })
+    .collect()
+}
+
+/// Convert kebab-case to camelCase, matching Vue's prop-name normalization.
 /// e.g. `msg-id` → `msgId`, `foo` → `foo`
 fn kebab_to_camel(s: &str) -> String {
-  let mut result = String::with_capacity(s.len());
-  let mut capitalize_next = false;
-  for ch in s.chars() {
-    if ch == '-' {
-      capitalize_next = true;
-    } else if capitalize_next {
-      result.extend(ch.to_uppercase());
-      capitalize_next = false;
-    } else {
-      result.push(ch);
-    }
+  if !s.contains('-') {
+    return s.to_string();
   }
-  result
+  let pascal = kebab_to_pascal(s);
+  let mut chars = pascal.chars();
+  chars
+    .next()
+    .map_or_else(String::new, |first| first.to_lowercase().collect::<String>() + chars.as_str())
 }
 
 impl<'a: 'b, 'b> ParserImpl<'a> {
@@ -177,16 +183,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         jsx_element.opening_element.name.take_in(self.allocator)
       } else if tag_name.contains('-') {
         // For <keep-alive />
-        let name = tag_name
-          .split('-')
-          .map(|s| {
-            // SAFETY to use ascii and not check bytes length
-            let mut bytes = s.as_bytes().to_vec();
-            bytes[0] = bytes[0].to_ascii_uppercase();
-            String::from_utf8(bytes).unwrap()
-          })
-          .collect::<String>();
-
+        let name = kebab_to_pascal(tag_name);
         ast.jsx_element_name_identifier_reference(name_span, ast.str(&name))
       } else {
         let name = ast.str(node.tag_name);
