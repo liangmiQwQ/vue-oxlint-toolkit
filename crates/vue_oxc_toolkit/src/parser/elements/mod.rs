@@ -320,13 +320,13 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
           // v-slot:[name]
           Some(ast.jsx_attribute_value_expression_container(SPAN, argument.into()))
         } else if dir.name == "bind"
-          && let Some(DirectiveArg::Static(arg_name)) = &dir.argument
-          && dir.expression.is_none()
+          && let Some(argument) = dir.argument
+          && let DirectiveArg::Static(arg_name) = argument
         {
           // :prop without value → synthesize :prop="prop" (identifier reference)
           Some(ast.jsx_attribute_value_expression_container(
             SPAN,
-            JSXExpression::from(ast.expression_identifier(SPAN, *arg_name)),
+            JSXExpression::from(ast.expression_identifier(SPAN, arg_name)),
           ))
         } else {
           None
