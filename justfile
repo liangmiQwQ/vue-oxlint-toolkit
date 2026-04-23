@@ -40,7 +40,7 @@ ready:
 
 lint: 
   cargo shear
-  cargo clippy --workspace --all-targets --all-features
+  cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 build:
   cargo build
