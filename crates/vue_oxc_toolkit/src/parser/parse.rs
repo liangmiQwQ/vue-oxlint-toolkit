@@ -209,7 +209,7 @@ impl<'a> ParserImpl<'a> {
   }
 
   fn sort_errors_and_commends(&mut self) {
-    self.comments.sort_by(|a, b| a.span.start.cmp(&b.span.start));
+    self.comments.sort_by_key(|a| a.span.start);
     self.errors.sort_by(|a, b| {
       let Some(a_labels) = &a.labels else { return Ordering::Less };
       let Some(b_labels) = &b.labels else { return Ordering::Greater };
