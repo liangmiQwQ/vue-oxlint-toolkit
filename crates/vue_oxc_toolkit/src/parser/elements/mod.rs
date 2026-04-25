@@ -148,8 +148,11 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
 
     let open_element_span = {
       let start = node.loc.start.offset;
-      let tag_name_end =
-        node.props.last().map_or_else(|| start + 1 + tag_name_str.len() as u32, |prop| prop.loc().end.offset);
+      let tag_name_end = node
+        .props
+        .last()
+        .map_or_else(|| start + 1 + tag_name_str.len() as u32, |prop| prop.loc().end.offset);
+
       let end = memchr::memchr(b'>', &self.source_text.as_bytes()[tag_name_end as usize..])
         .map(|i| tag_name_end + i as u32 + 1)
         .unwrap(); // SAFETY: The tag must be closed. Or parser will treat it as panicked.
@@ -221,9 +224,13 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       ));
     }
 
-    let children = children.unwrap_or_else(
-      || v_slot_wrapper.wrap(self.parse_children(open_element_span.end, end_element_span.start, &node.children)),
-    );
+    let children = children.unwrap_or_else(|| {
+      v_slot_wrapper.wrap(self.parse_children(
+        open_element_span.end,
+        end_element_span.start,
+        &node.children,
+      ))
+    });
 
     let opening_element_name = element_name.clone_in(self.allocator);
 
@@ -538,9 +545,10 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
 
   fn compute_head_span(&self, dir: &DirectiveNode<'_>) -> Span {
     let dir_text = dir.loc.span().source_text(self.source_text);
-    let head_end = dir_text
-      .find('=')
-      .map_or_else(|| self.roffset(dir.loc.end.offset as usize) as u32, |i| dir.loc.start.offset + i as u32);
+    let head_end = dir_text.find('=').map_or_else(
+      || self.roffset(dir.loc.end.offset as usize) as u32,
+      |i| dir.loc.start.offset + i as u32,
+    );
     Span::new(dir.loc.start.offset, head_end)
   }
 }
