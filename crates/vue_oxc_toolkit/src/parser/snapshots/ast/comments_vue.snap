@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxc_toolkit/src/test.rs
+assertion_line: 93
 expression: result
 ---
 =============== Program ===============
@@ -341,6 +342,21 @@ Program {
                                                                                         },
                                                                                         children: Vec(
                                                                                             [
+                                                                                                Text(
+                                                                                                    JSXText {
+                                                                                                        span: Span {
+                                                                                                            start: 54,
+                                                                                                            end: 59,
+                                                                                                        },
+                                                                                                        node_id: Cell {
+                                                                                                            value: NodeId(0),
+                                                                                                        },
+                                                                                                        value: "\n    ",
+                                                                                                        raw: Some(
+                                                                                                            "\n    ",
+                                                                                                        ),
+                                                                                                    },
+                                                                                                ),
                                                                                                 ExpressionContainer(
                                                                                                     JSXExpressionContainer {
                                                                                                         span: Span {
@@ -360,6 +376,21 @@ Program {
                                                                                                                     value: NodeId(0),
                                                                                                                 },
                                                                                                             },
+                                                                                                        ),
+                                                                                                    },
+                                                                                                ),
+                                                                                                Text(
+                                                                                                    JSXText {
+                                                                                                        span: Span {
+                                                                                                            start: 80,
+                                                                                                            end: 83,
+                                                                                                        },
+                                                                                                        node_id: Cell {
+                                                                                                            value: NodeId(0),
+                                                                                                        },
+                                                                                                        value: "\n  ",
+                                                                                                        raw: Some(
+                                                                                                            "\n  ",
                                                                                                         ),
                                                                                                     },
                                                                                                 ),
@@ -749,7 +780,9 @@ Program {
 =============== Codegen ===============
 async () => {
 	<><template>
-  <div v-bind:key={1}>{}</div>
+  <div v-bind:key={1}>
+    {}
+  </div>
 </template>
 
 <script lang="ts"></script>
@@ -816,9 +849,17 @@ Slice: "1";
 Span: (24, 25); 
 Type: NumericLiteral; 
 
+Slice: "\n    "; 
+Span: (54, 59); 
+Type: JSXText; 
+
 Slice: "<!-- Good Morning -->"; 
 Span: (59, 80); 
 Type: JSXExpressionContainer; 
+
+Slice: "\n  "; 
+Span: (80, 83); 
+Type: JSXText; 
 
 Slice: "</div>"; 
 Span: (83, 89); 

@@ -7,13 +7,12 @@ use oxc_ast::{AstBuilder, NONE};
 
 use oxc_span::{SPAN, Span};
 use oxc_syntax::module_record::ModuleRecord;
-use vize_armature::{
-  ParseMode, ParserOptions, SourceLocation, TemplateChildNode, WhitespaceStrategy,
-};
+use vize_armature::{ParseMode, ParserOptions, TemplateChildNode, WhitespaceStrategy};
 
 use crate::is_void_tag;
 use crate::parser::error;
 use crate::parser::{ResParse, ResParseExt};
+use crate::utils::{ElementExt, VizeSpan};
 
 use super::ParserImpl;
 use super::ParserImplReturn;
@@ -106,7 +105,10 @@ impl<'a> ParserImpl<'a> {
 
     let options = ParserOptions {
       mode: ParseMode::Sfc,
-      whitespace: WhitespaceStrategy::Condense,
+      // Preserve so vize emits a TextNode for every whitespace run between
+      // siblings; the JSX surface needs the original formatting to round-trip
+      // back into source.
+      whitespace: WhitespaceStrategy::Preserve,
       is_void_tag: |name| is_void_tag!(name),
       ..Default::default()
     };
@@ -146,14 +148,7 @@ impl<'a> ParserImpl<'a> {
           children.push(self.ast.jsx_child_text(text_span, atom, Some(atom)));
         }
 
-        // Compute true end of element (vize loc only covers opening tag)
-        let tag_name = node.tag.as_str();
-        let true_end = if node.is_self_closing || is_void_tag!(tag_name) {
-          node.loc.end.offset
-        } else {
-          self.element_close_span(node.loc.end.offset, tag_name).end
-        };
-        text_start = true_end;
+        text_start = node.true_end_offset(self.source_text, is_void_tag!(node.tag.as_str()));
 
         let tag_text = node.loc.span().source_text(self.source_text);
         if tag_text.starts_with("<script") {
@@ -209,17 +204,6 @@ impl<'a> ParserImpl<'a> {
 
       a_first.offset().cmp(&b_first.offset())
     });
-  }
-}
-
-// Easy transform from vize_armature::SourceLocation to oxc_span::Span
-pub trait SourceLocatonSpan {
-  fn span(&self) -> Span;
-}
-
-impl SourceLocatonSpan for SourceLocation {
-  fn span(&self) -> Span {
-    Span::new(self.start.offset, self.end.offset)
   }
 }
 

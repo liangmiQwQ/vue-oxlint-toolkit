@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxc_toolkit/src/test.rs
+assertion_line: 93
 expression: result
 ---
 =============== Program ===============
@@ -355,7 +356,23 @@ Program {
                                                                                             ),
                                                                                         },
                                                                                         children: Vec(
-                                                                                            [],
+                                                                                            [
+                                                                                                Text(
+                                                                                                    JSXText {
+                                                                                                        span: Span {
+                                                                                                            start: 18,
+                                                                                                            end: 26,
+                                                                                                        },
+                                                                                                        node_id: Cell {
+                                                                                                            value: NodeId(0),
+                                                                                                        },
+                                                                                                        value: "\n    \n  ",
+                                                                                                        raw: Some(
+                                                                                                            "\n    \n  ",
+                                                                                                        ),
+                                                                                                    },
+                                                                                                ),
+                                                                                            ],
                                                                                         ),
                                                                                         closing_element: Some(
                                                                                             JSXClosingElement {
@@ -587,7 +604,9 @@ import { ref } from "vue";
 async () => {
 	const count = ref(0);
 	<><template>
-  <div></div>
+  <div>
+    
+  </div>
 </template>
 
 <script setup></script>
@@ -671,6 +690,10 @@ Type: JSXOpeningElement;
 Slice: "div"; 
 Span: (14, 17); 
 Type: JSXIdentifier; 
+
+Slice: "\n    \n  "; 
+Span: (18, 26); 
+Type: JSXText; 
 
 Slice: "</div>"; 
 Span: (26, 32); 

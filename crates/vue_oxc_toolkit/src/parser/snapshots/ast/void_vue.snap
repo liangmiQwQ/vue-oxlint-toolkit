@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxc_toolkit/src/test.rs
+assertion_line: 93
 expression: result
 ---
 =============== Program ===============
@@ -329,15 +330,15 @@ Program {
                                                                                 Text(
                                                                                     JSXText {
                                                                                         span: Span {
-                                                                                            start: 37,
+                                                                                            start: 43,
                                                                                             end: 44,
                                                                                         },
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
                                                                                         },
-                                                                                        value: "</img>\n",
+                                                                                        value: "\n",
                                                                                         raw: Some(
-                                                                                            "</img>\n",
+                                                                                            "\n",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -455,7 +456,7 @@ async () => {
 	<><template>
   <br />
   <input></>
-  <img /></img>
+  <img />
 </template>
 </>;
 };
@@ -526,8 +527,8 @@ Slice: "img";
 Span: (33, 36); 
 Type: JSXIdentifier; 
 
-Slice: "</img>\n"; 
-Span: (37, 44); 
+Slice: "\n"; 
+Span: (43, 44); 
 Type: JSXText; 
 
 Slice: "</template>"; 

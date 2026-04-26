@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxc_toolkit/src/test.rs
+assertion_line: 93
 expression: result
 ---
 =============== Program ===============
@@ -1240,8 +1241,8 @@ Program {
                                                                                                                 ExpressionContainer(
                                                                                                                     JSXExpressionContainer {
                                                                                                                         span: Span {
-                                                                                                                            start: 154,
-                                                                                                                            end: 157,
+                                                                                                                            start: 0,
+                                                                                                                            end: 0,
                                                                                                                         },
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
@@ -1249,8 +1250,8 @@ Program {
                                                                                                                         expression: Identifier(
                                                                                                                             IdentifierReference {
                                                                                                                                 span: Span {
-                                                                                                                                    start: 155,
-                                                                                                                                    end: 157,
+                                                                                                                                    start: 0,
+                                                                                                                                    end: 0,
                                                                                                                                 },
                                                                                                                                 node_id: Cell {
                                                                                                                                     value: NodeId(0),
@@ -1388,52 +1389,25 @@ Program {
                                                                                                                 ExpressionContainer(
                                                                                                                     JSXExpressionContainer {
                                                                                                                         span: Span {
-                                                                                                                            start: 168,
-                                                                                                                            end: 175,
+                                                                                                                            start: 0,
+                                                                                                                            end: 0,
                                                                                                                         },
                                                                                                                         node_id: Cell {
                                                                                                                             value: NodeId(0),
                                                                                                                         },
-                                                                                                                        expression: BinaryExpression(
-                                                                                                                            BinaryExpression {
+                                                                                                                        expression: Identifier(
+                                                                                                                            IdentifierReference {
                                                                                                                                 span: Span {
-                                                                                                                                    start: 169,
-                                                                                                                                    end: 175,
+                                                                                                                                    start: 0,
+                                                                                                                                    end: 0,
                                                                                                                                 },
                                                                                                                                 node_id: Cell {
                                                                                                                                     value: NodeId(0),
                                                                                                                                 },
-                                                                                                                                operator: Subtraction,
-                                                                                                                                left: Identifier(
-                                                                                                                                    IdentifierReference {
-                                                                                                                                        span: Span {
-                                                                                                                                            start: 169,
-                                                                                                                                            end: 172,
-                                                                                                                                        },
-                                                                                                                                        node_id: Cell {
-                                                                                                                                            value: NodeId(0),
-                                                                                                                                        },
-                                                                                                                                        reference_id: Cell {
-                                                                                                                                            value: None,
-                                                                                                                                        },
-                                                                                                                                        name: "msg",
-                                                                                                                                    },
-                                                                                                                                ),
-                                                                                                                                right: Identifier(
-                                                                                                                                    IdentifierReference {
-                                                                                                                                        span: Span {
-                                                                                                                                            start: 173,
-                                                                                                                                            end: 175,
-                                                                                                                                        },
-                                                                                                                                        node_id: Cell {
-                                                                                                                                            value: NodeId(0),
-                                                                                                                                        },
-                                                                                                                                        reference_id: Cell {
-                                                                                                                                            value: None,
-                                                                                                                                        },
-                                                                                                                                        name: "id",
-                                                                                                                                    },
-                                                                                                                                ),
+                                                                                                                                reference_id: Cell {
+                                                                                                                                    value: None,
+                                                                                                                                },
+                                                                                                                                name: "msgId",
                                                                                                                             },
                                                                                                                         ),
                                                                                                                     },
@@ -1519,8 +1493,8 @@ Program {
                                                                                             type_arguments: None,
                                                                                             attributes: Vec(
                                                                                                 [
-                                                                                                    Attribute(
-                                                                                                        JSXAttribute {
+                                                                                                    SpreadAttribute(
+                                                                                                        JSXSpreadAttribute {
                                                                                                             span: Span {
                                                                                                                 start: 186,
                                                                                                                 end: 224,
@@ -1528,150 +1502,106 @@ Program {
                                                                                                             node_id: Cell {
                                                                                                                 value: NodeId(0),
                                                                                                             },
-                                                                                                            name: NamespacedName(
-                                                                                                                JSXNamespacedName {
+                                                                                                            argument: ObjectExpression(
+                                                                                                                ObjectExpression {
                                                                                                                     span: Span {
-                                                                                                                        start: 186,
-                                                                                                                        end: 192,
+                                                                                                                        start: 194,
+                                                                                                                        end: 223,
                                                                                                                     },
                                                                                                                     node_id: Cell {
                                                                                                                         value: NodeId(0),
                                                                                                                     },
-                                                                                                                    namespace: JSXIdentifier {
-                                                                                                                        span: Span {
-                                                                                                                            start: 186,
-                                                                                                                            end: 192,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        name: "v-bind",
-                                                                                                                    },
-                                                                                                                    name: JSXIdentifier {
-                                                                                                                        span: Span {
-                                                                                                                            start: 0,
-                                                                                                                            end: 0,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        name: "",
-                                                                                                                    },
+                                                                                                                    properties: Vec(
+                                                                                                                        [
+                                                                                                                            ObjectProperty(
+                                                                                                                                ObjectProperty {
+                                                                                                                                    span: Span {
+                                                                                                                                        start: 196,
+                                                                                                                                        end: 205,
+                                                                                                                                    },
+                                                                                                                                    node_id: Cell {
+                                                                                                                                        value: NodeId(0),
+                                                                                                                                    },
+                                                                                                                                    kind: Init,
+                                                                                                                                    method: false,
+                                                                                                                                    shorthand: false,
+                                                                                                                                    computed: false,
+                                                                                                                                    key: StaticIdentifier(
+                                                                                                                                        IdentifierName {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 196,
+                                                                                                                                                end: 198,
+                                                                                                                                            },
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            name: "id",
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                    value: StringLiteral(
+                                                                                                                                        StringLiteral {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 200,
+                                                                                                                                                end: 205,
+                                                                                                                                            },
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            lone_surrogates: false,
+                                                                                                                                            value: "app",
+                                                                                                                                            raw: Some(
+                                                                                                                                                "'app'",
+                                                                                                                                            ),
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                            ObjectProperty(
+                                                                                                                                ObjectProperty {
+                                                                                                                                    span: Span {
+                                                                                                                                        start: 207,
+                                                                                                                                        end: 221,
+                                                                                                                                    },
+                                                                                                                                    node_id: Cell {
+                                                                                                                                        value: NodeId(0),
+                                                                                                                                    },
+                                                                                                                                    kind: Init,
+                                                                                                                                    method: false,
+                                                                                                                                    shorthand: false,
+                                                                                                                                    computed: false,
+                                                                                                                                    key: StaticIdentifier(
+                                                                                                                                        IdentifierName {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 207,
+                                                                                                                                                end: 212,
+                                                                                                                                            },
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            name: "class",
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                    value: StringLiteral(
+                                                                                                                                        StringLiteral {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 214,
+                                                                                                                                                end: 221,
+                                                                                                                                            },
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            lone_surrogates: false,
+                                                                                                                                            value: "w-100",
+                                                                                                                                            raw: Some(
+                                                                                                                                                "'w-100'",
+                                                                                                                                            ),
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                    ),
                                                                                                                 },
-                                                                                                            ),
-                                                                                                            value: Some(
-                                                                                                                ExpressionContainer(
-                                                                                                                    JSXExpressionContainer {
-                                                                                                                        span: Span {
-                                                                                                                            start: 193,
-                                                                                                                            end: 224,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        expression: ObjectExpression(
-                                                                                                                            ObjectExpression {
-                                                                                                                                span: Span {
-                                                                                                                                    start: 194,
-                                                                                                                                    end: 223,
-                                                                                                                                },
-                                                                                                                                node_id: Cell {
-                                                                                                                                    value: NodeId(0),
-                                                                                                                                },
-                                                                                                                                properties: Vec(
-                                                                                                                                    [
-                                                                                                                                        ObjectProperty(
-                                                                                                                                            ObjectProperty {
-                                                                                                                                                span: Span {
-                                                                                                                                                    start: 196,
-                                                                                                                                                    end: 205,
-                                                                                                                                                },
-                                                                                                                                                node_id: Cell {
-                                                                                                                                                    value: NodeId(0),
-                                                                                                                                                },
-                                                                                                                                                kind: Init,
-                                                                                                                                                method: false,
-                                                                                                                                                shorthand: false,
-                                                                                                                                                computed: false,
-                                                                                                                                                key: StaticIdentifier(
-                                                                                                                                                    IdentifierName {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 196,
-                                                                                                                                                            end: 198,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        name: "id",
-                                                                                                                                                    },
-                                                                                                                                                ),
-                                                                                                                                                value: StringLiteral(
-                                                                                                                                                    StringLiteral {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 200,
-                                                                                                                                                            end: 205,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        lone_surrogates: false,
-                                                                                                                                                        value: "app",
-                                                                                                                                                        raw: Some(
-                                                                                                                                                            "'app'",
-                                                                                                                                                        ),
-                                                                                                                                                    },
-                                                                                                                                                ),
-                                                                                                                                            },
-                                                                                                                                        ),
-                                                                                                                                        ObjectProperty(
-                                                                                                                                            ObjectProperty {
-                                                                                                                                                span: Span {
-                                                                                                                                                    start: 207,
-                                                                                                                                                    end: 221,
-                                                                                                                                                },
-                                                                                                                                                node_id: Cell {
-                                                                                                                                                    value: NodeId(0),
-                                                                                                                                                },
-                                                                                                                                                kind: Init,
-                                                                                                                                                method: false,
-                                                                                                                                                shorthand: false,
-                                                                                                                                                computed: false,
-                                                                                                                                                key: StaticIdentifier(
-                                                                                                                                                    IdentifierName {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 207,
-                                                                                                                                                            end: 212,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        name: "class",
-                                                                                                                                                    },
-                                                                                                                                                ),
-                                                                                                                                                value: StringLiteral(
-                                                                                                                                                    StringLiteral {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 214,
-                                                                                                                                                            end: 221,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        lone_surrogates: false,
-                                                                                                                                                        value: "w-100",
-                                                                                                                                                        raw: Some(
-                                                                                                                                                            "'w-100'",
-                                                                                                                                                        ),
-                                                                                                                                                    },
-                                                                                                                                                ),
-                                                                                                                                            },
-                                                                                                                                        ),
-                                                                                                                                    ],
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    },
-                                                                                                                ),
                                                                                                             ),
                                                                                                         },
                                                                                                     ),
@@ -1753,8 +1683,8 @@ Program {
                                                                                             type_arguments: None,
                                                                                             attributes: Vec(
                                                                                                 [
-                                                                                                    Attribute(
-                                                                                                        JSXAttribute {
+                                                                                                    SpreadAttribute(
+                                                                                                        JSXSpreadAttribute {
                                                                                                             span: Span {
                                                                                                                 start: 235,
                                                                                                                 end: 252,
@@ -1762,107 +1692,63 @@ Program {
                                                                                                             node_id: Cell {
                                                                                                                 value: NodeId(0),
                                                                                                             },
-                                                                                                            name: NamespacedName(
-                                                                                                                JSXNamespacedName {
+                                                                                                            argument: ObjectExpression(
+                                                                                                                ObjectExpression {
                                                                                                                     span: Span {
-                                                                                                                        start: 235,
-                                                                                                                        end: 236,
+                                                                                                                        start: 238,
+                                                                                                                        end: 251,
                                                                                                                     },
                                                                                                                     node_id: Cell {
                                                                                                                         value: NodeId(0),
                                                                                                                     },
-                                                                                                                    namespace: JSXIdentifier {
-                                                                                                                        span: Span {
-                                                                                                                            start: 235,
-                                                                                                                            end: 236,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        name: "v-bind",
-                                                                                                                    },
-                                                                                                                    name: JSXIdentifier {
-                                                                                                                        span: Span {
-                                                                                                                            start: 236,
-                                                                                                                            end: 236,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        name: "",
-                                                                                                                    },
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            value: Some(
-                                                                                                                ExpressionContainer(
-                                                                                                                    JSXExpressionContainer {
-                                                                                                                        span: Span {
-                                                                                                                            start: 237,
-                                                                                                                            end: 252,
-                                                                                                                        },
-                                                                                                                        node_id: Cell {
-                                                                                                                            value: NodeId(0),
-                                                                                                                        },
-                                                                                                                        expression: ObjectExpression(
-                                                                                                                            ObjectExpression {
-                                                                                                                                span: Span {
-                                                                                                                                    start: 238,
-                                                                                                                                    end: 251,
-                                                                                                                                },
-                                                                                                                                node_id: Cell {
-                                                                                                                                    value: NodeId(0),
-                                                                                                                                },
-                                                                                                                                properties: Vec(
-                                                                                                                                    [
-                                                                                                                                        ObjectProperty(
-                                                                                                                                            ObjectProperty {
-                                                                                                                                                span: Span {
-                                                                                                                                                    start: 240,
-                                                                                                                                                    end: 249,
-                                                                                                                                                },
-                                                                                                                                                node_id: Cell {
-                                                                                                                                                    value: NodeId(0),
-                                                                                                                                                },
-                                                                                                                                                kind: Init,
-                                                                                                                                                method: false,
-                                                                                                                                                shorthand: false,
-                                                                                                                                                computed: false,
-                                                                                                                                                key: StaticIdentifier(
-                                                                                                                                                    IdentifierName {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 240,
-                                                                                                                                                            end: 242,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        name: "id",
-                                                                                                                                                    },
-                                                                                                                                                ),
-                                                                                                                                                value: StringLiteral(
-                                                                                                                                                    StringLiteral {
-                                                                                                                                                        span: Span {
-                                                                                                                                                            start: 244,
-                                                                                                                                                            end: 249,
-                                                                                                                                                        },
-                                                                                                                                                        node_id: Cell {
-                                                                                                                                                            value: NodeId(0),
-                                                                                                                                                        },
-                                                                                                                                                        lone_surrogates: false,
-                                                                                                                                                        value: "app",
-                                                                                                                                                        raw: Some(
-                                                                                                                                                            "'app'",
-                                                                                                                                                        ),
-                                                                                                                                                    },
-                                                                                                                                                ),
+                                                                                                                    properties: Vec(
+                                                                                                                        [
+                                                                                                                            ObjectProperty(
+                                                                                                                                ObjectProperty {
+                                                                                                                                    span: Span {
+                                                                                                                                        start: 240,
+                                                                                                                                        end: 249,
+                                                                                                                                    },
+                                                                                                                                    node_id: Cell {
+                                                                                                                                        value: NodeId(0),
+                                                                                                                                    },
+                                                                                                                                    kind: Init,
+                                                                                                                                    method: false,
+                                                                                                                                    shorthand: false,
+                                                                                                                                    computed: false,
+                                                                                                                                    key: StaticIdentifier(
+                                                                                                                                        IdentifierName {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 240,
+                                                                                                                                                end: 242,
                                                                                                                                             },
-                                                                                                                                        ),
-                                                                                                                                    ],
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    },
-                                                                                                                ),
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            name: "id",
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                    value: StringLiteral(
+                                                                                                                                        StringLiteral {
+                                                                                                                                            span: Span {
+                                                                                                                                                start: 244,
+                                                                                                                                                end: 249,
+                                                                                                                                            },
+                                                                                                                                            node_id: Cell {
+                                                                                                                                                value: NodeId(0),
+                                                                                                                                            },
+                                                                                                                                            lone_surrogates: false,
+                                                                                                                                            value: "app",
+                                                                                                                                            raw: Some(
+                                                                                                                                                "'app'",
+                                                                                                                                            ),
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                    ),
+                                                                                                                },
                                                                                                             ),
                                                                                                         },
                                                                                                     ),
@@ -2002,12 +1888,12 @@ async () => {
   <input v-model:={text}></>
   <Some v-bind:some.none={1}></>
   <div v-bind:id={id}></>
-  <div v-bind:msg-id={msg - id}></>
-  <div v-bind:={{
+  <div v-bind:msg-id={msgId}></>
+  <div {...{
 		id: "app",
 		class: "w-100"
 	}}></>
-  <div v-bind:={{ id: "app" }}></>
+  <div {...{ id: "app" }}></>
 </template>
 </>;
 };
@@ -2286,14 +2172,6 @@ Slice: "id";
 Span: (155, 157); 
 Type: JSXIdentifier; 
 
-Slice: ":id"; 
-Span: (154, 157); 
-Type: JSXExpressionContainer; 
-
-Slice: "id"; 
-Span: (155, 157); 
-Type: IdentifierReference; 
-
 Slice: "\n  "; 
 Span: (160, 163); 
 Type: JSXText; 
@@ -2326,22 +2204,6 @@ Slice: "msg-id";
 Span: (169, 175); 
 Type: JSXIdentifier; 
 
-Slice: ":msg-id"; 
-Span: (168, 175); 
-Type: JSXExpressionContainer; 
-
-Slice: "msg-id"; 
-Span: (169, 175); 
-Type: BinaryExpression; 
-
-Slice: "msg"; 
-Span: (169, 172); 
-Type: IdentifierReference; 
-
-Slice: "id"; 
-Span: (173, 175); 
-Type: IdentifierReference; 
-
 Slice: "\n  "; 
 Span: (178, 181); 
 Type: JSXText; 
@@ -2360,19 +2222,7 @@ Type: JSXIdentifier;
 
 Slice: "v-bind=\"{ id: 'app', class: 'w-100' }\""; 
 Span: (186, 224); 
-Type: JSXAttribute; 
-
-Slice: "v-bind"; 
-Span: (186, 192); 
-Type: JSXNamespacedName; 
-
-Slice: "v-bind"; 
-Span: (186, 192); 
-Type: JSXIdentifier; 
-
-Slice: "\"{ id: 'app', class: 'w-100' }\""; 
-Span: (193, 224); 
-Type: JSXExpressionContainer; 
+Type: JSXSpreadAttribute; 
 
 Slice: "{ id: 'app', class: 'w-100' }"; 
 Span: (194, 223); 
@@ -2420,19 +2270,7 @@ Type: JSXIdentifier;
 
 Slice: ":=\"{ id: 'app' }\""; 
 Span: (235, 252); 
-Type: JSXAttribute; 
-
-Slice: ":"; 
-Span: (235, 236); 
-Type: JSXNamespacedName; 
-
-Slice: ":"; 
-Span: (235, 236); 
-Type: JSXIdentifier; 
-
-Slice: "\"{ id: 'app' }\""; 
-Span: (237, 252); 
-Type: JSXExpressionContainer; 
+Type: JSXSpreadAttribute; 
 
 Slice: "{ id: 'app' }"; 
 Span: (238, 251); 

@@ -6,9 +6,8 @@ use oxc_ast::ast::Statement;
 use oxc_span::SourceType;
 use vize_armature::{ElementNode, PropNode};
 
-use crate::parser::{
-  ParserImpl, ResParse, ResParseExt, error, modules::Merge, parse::SourceLocatonSpan,
-};
+use crate::parser::{ParserImpl, ResParse, ResParseExt, error, modules::Merge};
+use crate::utils::{VizeSpan, element_close_span};
 
 impl<'a> ParserImpl<'a> {
   pub fn parse_script(
@@ -21,11 +20,7 @@ impl<'a> ParserImpl<'a> {
       .iter()
       .find_map(|p| match p {
         PropNode::Attribute(attr) if attr.name.as_str() == "lang" => {
-          attr.value.as_ref().map(|v| {
-            // vize TextNode.loc doesn't include quotes, it's the content span directly
-            let span = v.loc.span();
-            &self.source_text[span.start as usize..span.end as usize]
-          })
+          attr.value.as_ref().map(|v| v.loc.span().source_text(self.source_text))
         }
         _ => None,
       })
@@ -69,12 +64,9 @@ impl<'a> ParserImpl<'a> {
         PropNode::Directive(dir) => dir.name.as_str() == "setup",
       });
 
-      // Handle error if there are multiple script tags
       // Use full element span (opening + body + closing) for a better diagnostic location
       let node_span = {
-        use crate::parser::parse::SourceLocatonSpan as _;
-        let open_end = node.loc.end.offset;
-        let close = self.element_close_span(open_end, "script");
+        let close = element_close_span(self.source_text, node.loc.end.offset, "script");
         if close.is_empty() {
           node.loc.span()
         } else {

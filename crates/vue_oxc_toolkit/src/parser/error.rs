@@ -1,12 +1,9 @@
 use oxc_span::Span;
 
 use oxc_diagnostics::OxcDiagnostic;
-use vize_armature::{CompilerError, ErrorCode, SourceLocation};
+use vize_armature::{CompilerError, ErrorCode};
 
-/// Convert a vize `SourceLocation` to an `oxc_span::Span`
-const fn loc_to_span(loc: &SourceLocation) -> Span {
-  Span::new(loc.start.offset, loc.end.offset)
-}
+use crate::utils::VizeSpan;
 
 /// Process vize parser errors into OXC diagnostics.
 /// Returns the diagnostics and whether the parser should be considered panicked (fatal).
@@ -18,11 +15,7 @@ pub fn process_vize_errors(errors: &[CompilerError], diagnostics: &mut Vec<OxcDi
         panicked = true;
       }
       let diag = OxcDiagnostic::error(error.to_string());
-      diagnostics.push(if let Some(loc) = &error.loc {
-        diag.with_label(loc_to_span(loc))
-      } else {
-        diag
-      });
+      diagnostics.push(if let Some(loc) = &error.loc { diag.with_label(loc.span()) } else { diag });
     }
   }
   panicked

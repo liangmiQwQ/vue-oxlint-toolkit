@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_span::SPAN;
 use vize_armature::DirectiveNode;
 
-use crate::parser::{ParserImpl, parse::SourceLocatonSpan};
+use crate::{parser::ParserImpl, utils::VizeSpan};
 
 pub struct VSlotWrapper<'a, 'b> {
   ast: &'a AstBuilder<'b>,
@@ -62,10 +62,8 @@ impl<'a> ParserImpl<'a> {
 
       // --- Process Params ---
       if let Some(exp) = dir.exp.as_ref() {
-        let exp_loc = exp.loc();
         let allocator = Allocator::new();
-        // vize expression loc doesn't include quotes
-        let exp_span = exp_loc.span();
+        let exp_span = exp.span();
         // SAFETY: warp with `((` and `)=>0)`
         let Expression::ArrowFunctionExpression(mut arrow_function_expression) =
           (unsafe { self.parse_expression(exp_span, b"((", b")=>0)", &allocator)? })

@@ -164,7 +164,7 @@ where
 
 #[macro_export]
 macro_rules! is_void_tag {
-  ($name:ident) => {
+  ($name:expr) => {
     matches!(
       $name,
       "area"

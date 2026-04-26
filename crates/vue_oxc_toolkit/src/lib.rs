@@ -9,6 +9,7 @@ use crate::parser::{ParserImpl, ParserImplReturn};
 
 mod irregular_whitespaces;
 mod parser;
+mod utils;
 
 #[cfg(test)]
 mod test;

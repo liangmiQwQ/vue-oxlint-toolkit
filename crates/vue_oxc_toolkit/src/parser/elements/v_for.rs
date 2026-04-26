@@ -8,10 +8,12 @@ use oxc_ast::{
 };
 
 use oxc_span::{SPAN, Span};
-use regex::Regex;
 use vize_armature::DirectiveNode;
 
-use crate::parser::{ParserImpl, error, parse::SourceLocatonSpan};
+use crate::{
+  parser::{ParserImpl, error},
+  utils::{DirectiveExt, VizeSpan, parse_v_for_alias},
+};
 
 pub struct VForWrapper<'a, 'b> {
   ast: &'a AstBuilder<'b>,
@@ -26,67 +28,59 @@ impl<'a> ParserImpl<'a> {
   }
 
   pub fn analyze_v_for(&mut self, dir: &DirectiveNode<'_>, wrapper: &mut VForWrapper<'_, 'a>) {
-    let dir_span = self.directive_span(dir);
+    let dir_span = dir.full_span(self.source_text);
     (|| {
-      if dir.exp.is_none() {
-        self.invalid_v_for_expression(dir_span)?;
-      }
-      let exp = dir.exp.as_ref().unwrap(); // SAFETY: Checked above
-      let exp_loc = exp.loc();
+      let Some(exp) = dir.exp.as_ref() else {
+        return self.invalid_v_for_expression(dir_span);
+      };
+      let exp_span = exp.span();
+      let exp_content = exp_span.source_text(self.source_text);
 
-      // vize expression loc doesn't include quotes, use directly
-      let exp_content = exp_loc.span().source_text(self.source_text);
+      let Some(alias) = parse_v_for_alias(exp_content) else {
+        return self.invalid_v_for_expression(dir_span);
+      };
 
-      // https://github.com/vuejs/core/blob/e1ccd9fde8f57fe7bd40fdf1345692ab3e6a1fa0/packages/compiler-core/src/utils.ts#L571
-      let for_alias_regex = Regex::new(r"^([\s\S]*?)\s+(?:in|of)\s+(\S[\s\S]*)").unwrap();
-      if let Some(caps) = for_alias_regex.captures(exp_content)
-        && let Some(cap1) = caps.get(1)
-        && let Some(cap2) = caps.get(2)
-      {
-        // vize expression loc doesn't include quotes
-        let start = exp_loc.span().start;
-        wrapper.set_data_origin(self.ast.parenthesized_expression(
-          SPAN,
-          self.parse_pure_expression(Span::new(
-            start + cap2.start() as u32,
-            start + cap2.end() as u32,
-          ))?,
-        ));
+      wrapper.set_data_origin(self.ast.parenthesized_expression(
+        SPAN,
+        self.parse_pure_expression(Span::new(
+          exp_span.start + alias.source_start as u32,
+          exp_span.start + alias.source_end as u32,
+        ))?,
+      ));
 
-        let span = Span::new(start + cap1.start() as u32, start + cap1.end() as u32);
-        let params = cap1.as_str();
-        let allocator = Allocator::new();
-        let (mut expr, should_dummy_span) =
-          if params.trim().starts_with('(') && params.trim().ends_with(')') {
-            // SAFETY: use `()` as wrap
-            let expr = unsafe { self.parse_expression(span, b"(", b"=>0)", &allocator)? };
-            (expr, false)
-          } else {
-            // SAFETY: use `(` and `)` as wrap
-            let expr = unsafe { self.parse_expression(span, b"((", b")=>0)", &allocator)? };
-            (expr, true)
-          };
-
-        let Expression::ArrowFunctionExpression(expression) = &mut expr else {
-          unreachable!();
-        };
-
-        let mut params = expression.params.take_in(self.ast.allocator);
-        if should_dummy_span {
-          params.span = SPAN;
-        }
-
-        wrapper.set_params(params.clone_in(self.allocator));
+      let span = Span::new(
+        exp_span.start + alias.aliases_start as u32,
+        exp_span.start + alias.aliases_end as u32,
+      );
+      let allocator = Allocator::new();
+      let trimmed = alias.aliases.trim();
+      let (mut expr, should_dummy_span) = if trimmed.starts_with('(') && trimmed.ends_with(')') {
+        // SAFETY: use `()` as wrap
+        let expr = unsafe { self.parse_expression(span, b"(", b"=>0)", &allocator)? };
+        (expr, false)
       } else {
-        self.invalid_v_for_expression(dir_span)?;
+        // SAFETY: use `(` and `)` as wrap
+        let expr = unsafe { self.parse_expression(span, b"((", b")=>0)", &allocator)? };
+        (expr, true)
+      };
+
+      let Expression::ArrowFunctionExpression(expression) = &mut expr else {
+        unreachable!();
+      };
+
+      let mut params = expression.params.take_in(self.ast.allocator);
+      if should_dummy_span {
+        params.span = SPAN;
       }
+      wrapper.set_params(params.clone_in(self.allocator));
 
       Some(())
     })();
   }
 }
 
-/// Wrap the JSX element with a function call, similar to jsx {items.map(items => <div key={item.id} />)} but with vue semantic.
+/// Wrap the JSX element with a function call, similar to jsx
+/// `{items.map(item => <div key={item.id} />)}` but with Vue semantics.
 impl<'a, 'b> VForWrapper<'a, 'b> {
   pub const fn new(ast: &'a AstBuilder<'b>) -> Self {
     Self { ast, data_origin: None, params: None }
