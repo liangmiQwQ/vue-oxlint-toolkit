@@ -152,9 +152,9 @@ impl<'a> ParserImpl<'a> {
 
         let tag_text = node.loc.span().source_text(self.source_text);
         if tag_text.starts_with("<script") {
-          children.push(self.parse_element_ref(node, Some(self.ast.vec())).0);
+          children.push(self.parse_element(node, Some(self.ast.vec())).0);
         } else if tag_text.starts_with("<template") {
-          children.push(self.parse_element_ref(node, None).0);
+          children.push(self.parse_element(node, None).0);
         } else {
           // Process other tags like <style>
           let text = if let Some(first) = node.children.first() {
@@ -167,7 +167,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.vec()
           };
 
-          children.push(self.parse_element_ref(node, Some(text)).0);
+          children.push(self.parse_element(node, Some(text)).0);
         }
       }
     }

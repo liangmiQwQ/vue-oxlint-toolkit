@@ -39,7 +39,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     for child in children {
       match child {
         TemplateChildNode::Element(node) => {
-          let (child, v_if) = self.parse_element_ref(node, None);
+          let (child, v_if) = self.parse_element(node, None);
           if let Some(v_if) = v_if {
             if let Some(child) = self.add_v_if(child, v_if, &mut v_if_manager) {
               // There are three cases to return Some(child) for add_v_if function
@@ -72,7 +72,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     result
   }
 
-  pub fn parse_element_ref(
+  pub fn parse_element(
     &mut self,
     node: &ElementNode<'_>,
     children: Option<ArenaVec<'a, JSXChild<'a>>>,
@@ -80,12 +80,14 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     let ast = self.ast;
     let tag_name = node.tag.as_str();
 
+    // Vize doesn't provide span of opening / ending element, so we calculate it manually
     let open_element_span = {
       let start = node.loc.start.offset;
       let tag_name_end = node
         .props
         .last()
-        .map_or_else(|| start + 1 + tag_name.len() as u32, |prop| prop.loc().end.offset);
+        .map_or_else(|| start + 1 /* < */ + tag_name.len() as u32, |prop| prop.loc().end.offset);
+
       let end = memchr::memchr(b'>', &self.source_text.as_bytes()[tag_name_end as usize..])
         .map(|i| tag_name_end + i as u32 + 1)
         .unwrap(); // SAFETY: the tag must be closed, otherwise vize would have panicked.
@@ -100,13 +102,14 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       (Span::new(node.loc.start.offset, close_span.end), close_span)
     };
 
+    // Use different JSXElementName for component and normal element
     let allocator = Allocator::new();
     let mut element_name = {
       let name_span = node.name_span();
 
       if tag_name.contains('.')
         && let Some(expr) = unsafe {
-          let original_source_type = self.source_type;
+          let original_source_type = self.source_type; // [`SourceType`] implemented [`Copy`] trait
           self.source_type = self.source_type.with_jsx(true);
 
           // Delegate to oxc_parser because it's too complex to process <a.b.c.d.e />
@@ -222,8 +225,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         let dir_span = dir.full_span(self.source_text);
         let dir_name = self.parse_directive_name(dir);
 
-        // Side-effects on wrappers — these need to run regardless of how we render
-        // the directive value.
+        // Side-effects on wrappers — these need to run regardless of how we render the directive value.
         match dir.name.as_str() {
           "slot" => self.analyze_v_slot(dir, v_slot_wrapper, &dir_name),
           "for" => self.analyze_v_for(dir, v_for_wrapper),
@@ -235,9 +237,9 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
           error::v_if_else_without_expression(&mut self.errors, dir_span);
         }
 
-        // `v-bind="expr"` (and `:="expr"`) — argument-less binding compiles to
-        // a JSX spread attribute, mirroring Vue's `<div v-bind="obj" />`
-        // behavior. See https://play.vuejs.org/#eNqVkbtOwzAUhl/FOkuWNC2CKQqVAFWiDICA0UuID8HFsS1f0khR3h3bVS9DVamb/V/s7+iM8KB10XuEEiqHnRa1wyWVhFSM96SfffPJ7imMhLOSZLXWWU4aUVsbbtvZzWKRkYnCkjyvSTUPlWO3vLJWzU/+hxycbZT84W2xsUoGvDG+TKFRneYCzZt2XElLoSTJiV4thNq+JM0Zj/leb36x+Tujb+wQNQrvBi2aHikcPFebFt3OXn2+4hDOB7NTzIuQvmB+oFXCR8Zd7NFLFrBPcol23WllHJftl10NDqXdDxVBY3JKeQphR08XRj/i3hZ3qUflBNM/rC6XVg==
+        // `v-bind="expr"` (and `:="expr"`)
+        // Argument-less binding compiles to a JSX spread attribute, mirroring Vue's `<div v-bind="obj" />` behavior.
+        // https://play.vuejs.org/#eNqVkbtOwzAUhl/FOkuWNC2CKQqVAFWiDICA0UuID8HFsS1f0khR3h3bVS9DVamb/V/s7+iM8KB10XuEEiqHnRa1wyWVhFSM96SfffPJ7imMhLOSZLXWWU4aUVsbbtvZzWKRkYnCkjyvSTUPlWO3vLJWzU/+hxycbZT84W2xsUoGvDG+TKFRneYCzZt2XElLoSTJiV4thNq+JM0Zj/leb36x+Tujb+wQNQrvBi2aHikcPFebFt3OXn2+4hDOB7NTzIuQvmB+oFXCR8Zd7NFLFrBPcol23WllHJftl10NDqXdDxVBY3JKeQphR08XRj/i3hZ3qUflBNM/rC6XVg==
         if dir.name.as_str() == "bind"
           && dir.arg.is_none()
           && let Some(exp) = &dir.exp
@@ -417,7 +419,11 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
 
   /// Parse expression with [`oxc_parser`]
   /// The reason we don't wrap the expression with `(` and `)` is to avoid unnecessary copy
-  /// `b"(("` and `b")=>{})"` is much more efficient than passing `b"("` `b")=>{}"`, which needs to copy it in a [`Vec`] and push and slice
+  /// `b"(("` and `b")=>{})"` is more efficient than passing `b"("` `b")=>{}"` which needs to copy it in a [`Vec`]
+  ///
+  /// ## Safety
+  /// - `start_wrap` must start with `(`
+  /// - `end_wrap` must end with `)`
   pub unsafe fn parse_expression(
     &mut self,
     span: Span,
