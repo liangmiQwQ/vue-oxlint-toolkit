@@ -28,6 +28,25 @@ mod v_for;
 mod v_if;
 mod v_slot;
 
+/// Convert kebab-case to camel-like case.
+/// `pascal: true` -> `PascalCase` (e.g. `keep-alive` -> `KeepAlive`)
+/// `pascal: false` -> `camelCase`  (e.g. `msg-id` -> `msgId`)
+fn kebab_to_case(s: &str, pascal: bool) -> String {
+  let mut result = String::with_capacity(s.len());
+  let mut capitalize_next = pascal;
+  for ch in s.chars() {
+    if ch == '-' {
+      capitalize_next = true;
+    } else if capitalize_next {
+      result.extend(ch.to_uppercase());
+      capitalize_next = false;
+    } else {
+      result.push(ch);
+    }
+  }
+  result
+}
+
 impl<'a: 'b, 'b> ParserImpl<'a> {
   fn parse_children(
     &mut self,
@@ -178,6 +197,8 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
           let original_source_type = self.source_type;
           self.source_type = self.source_type.with_jsx(true);
 
+          // Directly call oxc_parser because it's too complex to process <a.b.c.d.e />
+          // SAFETY: use `()` as wrap
           let expr = self.parse_expression(name_span, b"(<", b"/>)", &allocator);
 
           self.source_type = original_source_type;
@@ -186,17 +207,11 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         }
         && let Expression::JSXElement(mut jsx_element) = expr
       {
+        // For namespace tag name, e.g. <motion.div />
         jsx_element.opening_element.name.take_in(self.allocator)
       } else if tag_name_str.contains('-') {
-        let name = tag_name_str
-          .split('-')
-          .map(|s| {
-            let mut bytes = s.as_bytes().to_vec();
-            bytes[0] = bytes[0].to_ascii_uppercase();
-            String::from_utf8(bytes).unwrap()
-          })
-          .collect::<String>();
-
+        // For <keep-alive />
+        let name = kebab_to_case(tag_name_str, true);
         ast.jsx_element_name_identifier_reference(name_span, ast.str(&name))
       } else {
         let name = ast.str(tag_name_str);
@@ -355,6 +370,19 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         {
           // v-slot:[name]
           Some(ast.jsx_attribute_value_expression_container(SPAN, argument.into()))
+        } else if dir.name.as_str() == "bind"
+          && let Some(arg) = &dir.arg
+          && is_static_arg(arg)
+        {
+          // :prop without value -> synthesize :prop="prop" (identifier reference).
+          // Vue normalizes dashed prop names to camelCase (:msg-id -> msgId).
+          let raw_arg = arg.loc().span().source_text(self.source_text);
+          let ident_name = kebab_to_case(raw_arg, false);
+          let ident_str = ast.str(&ident_name);
+          Some(ast.jsx_attribute_value_expression_container(
+            SPAN,
+            JSXExpression::from(ast.expression_identifier(SPAN, ident_str)),
+          ))
         } else if dir_end > dir_loc_end as u32 {
           // Empty quoted value like v-for="" — create ExpressionContainer for `""`
           let container_span = Span::new(dir_end - 2, dir_end);
@@ -460,6 +488,8 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
   }
 
   /// Parse expression with [`oxc_parser`]
+  /// The reason we don't wrap the expression with `(` and `)` is to avoid unnecessary copy.
+  /// `b\"((\"` and `b\")=>{})\"` is more efficient than passing small wrappers and reassembling.
   ///
   /// ## Safety
   /// - `start_wrap` must start with `(`
@@ -471,10 +501,15 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     end_wrap: &[u8],
     allocator: &'b Allocator,
   ) -> Option<Expression<'b>> {
+    // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it.
     let (_, mut body, _) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
-    let Some(Statement::ExpressionStatement(stmt)) = body.get_mut(0) else { unreachable!() };
+    let Some(Statement::ExpressionStatement(stmt)) = body.get_mut(0) else {
+      // SAFETY: We always wrap the source in parentheses, so it should always be an expression statement.
+      unreachable!()
+    };
     let Expression::ParenthesizedExpression(expression) = &mut stmt.expression else {
+      // SAFETY: We always wrap the source in parentheses, so it should always be a parenthesized expression.
       unreachable!()
     };
     Some(expression.expression.take_in(self.allocator))
