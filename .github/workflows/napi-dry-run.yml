@@ -1,0 +1,35 @@
+name: NAPI Dry Run
+
+# Validates the full NAPI release pipeline (build matrix + publish checks)
+# without actually publishing to npm. Use this before cutting a real tag.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/napi-dry-run.yml'
+      - '.github/workflows/reusable-release-napi.yml'
+      - 'packages/vue-oxlint-toolkit/**'
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  push:
+    branches:
+      - 'refactor/**'
+      - 'ci/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-napi-dry-run:
+    name: Release NAPI (dry run)
+    uses: ./.github/workflows/reusable-release-napi.yml
+    with:
+      name: vue-oxlint-toolkit
+      dry-run: true
+    permissions:
+      id-token: write
