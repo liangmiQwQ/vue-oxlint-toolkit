@@ -6,7 +6,6 @@ _default:
 
 
 init:
-  cargo install cargo-binstall
   cargo binstall cargo-insta cargo-shear cargo-workspaces cargo-edit -y
   just install-hook
   

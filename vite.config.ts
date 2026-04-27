@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
   run: {
@@ -11,9 +11,19 @@ export default defineConfig({
     },
   },
   lint: {
-    include: ['packages/**/*.{ts,js}'],
+ options: {
+      typeAware: true,
+      typeCheck: true,
+    },
   },
   fmt: {
-    include: ['packages/**/*.{ts,js}', '*.{ts,js}'],
+    singleQuote: true,
+    semi: false,
+    sortPackageJson: true,
+    exclude: ['**/*.vue'],
   },
-});
+  staged: {
+    '*.{js,ts,tsx,vue,svelte}': 'vp check --fix',
+    '*.{rs}': 'just fix',
+  },
+})

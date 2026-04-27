@@ -24,16 +24,16 @@ The **Structural JSX Fragment** serves as the "return" of the component's struct
 export default {
   data() {
     return {
-      count: 0
-    };
-  }
+      count: 0,
+    }
+  },
 }
 </script>
 
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const count = ref(0);
+const count = ref(0)
 </script>
 
 <template>
@@ -42,26 +42,26 @@ const count = ref(0);
 ```
 
 ```jsx
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 export default {
   data() {
     return {
-      count: 0
-    };
-  } 
-};
+      count: 0,
+    }
+  },
+}
 
-async () => {
-  const count = ref(0);
-  <>
+;async () => {
+  const count = ref(0)
+  ;<>
     <script></script>
     <script setup></script>
     <template>
-      <div>{ count }</div>
+      <div>{count}</div>
     </template>
-  </>;
-};
+  </>
+}
 ```
 
 ## Elements and Components
@@ -86,7 +86,7 @@ The `closing_element` of a `JSXElement` is determined by the tag syntax:
 ```vue
 <template>
   <img />
-  <input>
+  <input />
   <div></div>
 </template>
 ```

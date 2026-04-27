@@ -1,19 +1,16 @@
 {
   "name": "vue-oxlint-workspace",
-  "private": true,
   "version": "0.11.0",
+  "private": true,
   "description": "Monorepo for vue-oxlint tooling.",
   "license": "MIT",
-  "packageManager": "pnpm@10.0.0",
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
-    "build": "vp run -r build",
-    "test": "vp run -r test",
-    "check": "vp check"
+    "init": "cargo binstall cargo-insta cargo-shear cargo-workspaces cargo-edit -y",
+    "prepare": "vp config"
   },
   "devDependencies": {
-    "vite-plus": "latest"
-  }
+    "vite-plus": "catalog:devtools",
+    "@types/node": "catalog:types"
+  },
+  "packageManager": "pnpm@10.0.0"
 }

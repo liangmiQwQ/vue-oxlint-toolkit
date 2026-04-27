@@ -13,7 +13,7 @@ vp install @vue-oxlint/plugin
 ## Usage
 
 ```js
-import plugin from '@vue-oxlint/plugin';
+import plugin from '@vue-oxlint/plugin'
 ```
 
 ## Building from source

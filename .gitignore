@@ -11,3 +11,7 @@ temp
 *.tgz
 lib-cov
 logs
+
+# JavaScript
+node_modules
+dist

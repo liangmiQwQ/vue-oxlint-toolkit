@@ -19,6 +19,9 @@ We use [Vite+](https://viteplus.dev/) to manage all linting / bundling features 
 You can easily setup project by running the following command:
 
 ```bash
+# If you didn't use cargo-binstall
+cargo install cargo-binstall
+
 vpr init
 ```
 

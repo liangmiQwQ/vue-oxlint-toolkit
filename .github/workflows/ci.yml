@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches-ignore:
-      - "**/graphite-base/**"
+      - '**/graphite-base/**'
   push:
     branches:
       - main

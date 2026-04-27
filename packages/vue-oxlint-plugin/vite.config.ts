@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
   // `vp pack` (tsdown) builds the JS wrapper and generates .d.ts from the
@@ -11,4 +11,4 @@ export default defineConfig({
   test: {
     include: ['__test__/**/*.spec.ts'],
   },
-});
+})

@@ -147,7 +147,7 @@ jobs:
           path: packages/vue-oxlint-plugin/*.node
           if-no-files-found: error
 
-# ── Publish ──────────────────────────────────────────────────────────────────
+  # ── Publish ──────────────────────────────────────────────────────────────────
 
   publish:
     name: Publish to npm
