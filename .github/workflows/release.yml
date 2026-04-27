@@ -47,16 +47,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Set node
         uses: actions/setup-node@v5
         with:
           node-version: lts/*
 
       - name: Generate Changelog
-        run: pnpm dlx changelogithub
+        run: vpx changelogithub
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
