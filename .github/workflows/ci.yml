@@ -13,15 +13,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Set node
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
+          cache: true
+          run-install: true
 
       - name: Setup Rust
         uses: oxc-project/setup-rust@v1.0.9
@@ -29,17 +25,11 @@ jobs:
           tools: just,cargo-shear
           components: clippy rustfmt
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
       - name: Lint
         run: just lint
 
       - name: Format
         run: just fmt
-
-      - name: Typecheck
-        run: pnpm typecheck
 
       - name: Build
         run: just build
@@ -57,23 +47,16 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Set node ${{ matrix.node }}
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: ${{ matrix.node }}
+          cache: true
+          run-install: true
 
       - name: Setup Rust
         uses: oxc-project/setup-rust@v1.0.9
         with:
           tools: just
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: just build
