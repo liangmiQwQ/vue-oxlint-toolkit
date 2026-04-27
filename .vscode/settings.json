@@ -7,9 +7,8 @@
 
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "package.json": "pnpm*, tsconfig*, .node-version, VERSION_INFO",
+    "package.json": "pnpm*, tsconfig*, .node-version, VERSION_INFO, bumpp.config.ts",
     "Cargo.toml": "Cargo.lock, .rustfmt.toml, rust-toolchain.toml, .cargo",
-    "AGENTS.md": "CLAUDE.md",
     "README.md": "CONTRIBUTING.md, LICENSE, AGENTS.md, CLAUDE.md"
   }
 }
