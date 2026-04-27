@@ -2,7 +2,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vpr vue-oxlint-toolkit#build:js",
+    "build": "vpr vue-oxlint-toolkit#build:debug",
     "prepare": "vp config"
   },
   "devDependencies": {

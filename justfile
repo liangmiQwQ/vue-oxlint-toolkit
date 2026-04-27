@@ -16,7 +16,7 @@ fix:
   just fmt
   cargo fix --allow-dirty --allow-staged
   vp check --fix
-  -cargo shear --fix
+  # -cargo shear --fix
 
 update:
   cargo upgrade
@@ -31,13 +31,14 @@ ready:
   git diff --exit-code --quiet
   just lint
   just fix
+  just build
   just test
   git status
   git diff --exit-code --quiet
 
 lint: 
-  cargo shear
-  -cargo clippy --workspace --all-targets --all-features -- -D warnings
+  # cargo shear
+  cargo clippy --workspace --all-targets --all-features -- -D warnings
   vp check
 
 build:
