@@ -17,6 +17,7 @@ crate-type = ["cdylib"]
 [dependencies]
 napi = { workspace = true }
 napi-derive = { workspace = true }
+vue_oxlint_parser = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }

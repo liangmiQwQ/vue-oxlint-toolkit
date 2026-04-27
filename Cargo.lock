@@ -1757,6 +1757,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "vue_oxlint_parser",
 ]
 
 [[package]]

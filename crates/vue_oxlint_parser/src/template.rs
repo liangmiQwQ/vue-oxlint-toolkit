@@ -52,7 +52,8 @@ pub fn build_block_element<'a>(
     VStartTag { r#type: "VStartTag", range: start_tag_range, self_closing, attributes: attrs },
     alloc,
   );
-  let end_tag = end_tag_range.map(|r| ArenaBox::new_in(VEndTag { r#type: "VEndTag", range: r }, alloc));
+  let end_tag =
+    end_tag_range.map(|r| ArenaBox::new_in(VEndTag { r#type: "VEndTag", range: r }, alloc));
   ArenaBox::new_in(
     VElement {
       r#type: "VElement",
@@ -165,10 +166,7 @@ impl<'a> TemplateParser<'a> {
     if !bytes[after..after + nb.len()].eq_ignore_ascii_case(nb) {
       return false;
     }
-    matches!(
-      bytes.get(after + nb.len()),
-      Some(b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n') | None
-    )
+    matches!(bytes.get(after + nb.len()), Some(b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n') | None)
   }
 
   fn parse_mustache(&mut self) -> Option<ArenaBox<'a, VExpressionContainer<'a>>> {
@@ -470,9 +468,7 @@ fn classify_key<'a>(
     _ if raw.starts_with("v-") => {
       // `v-name[:arg][.mod]*`
       let after = &raw[2..];
-      let name_end = after
-        .find(|c: char| c == ':' || c == '.')
-        .map_or(after.len(), |idx| idx);
+      let name_end = after.find(|c: char| c == ':' || c == '.').map_or(after.len(), |idx| idx);
       let name = &after[..name_end];
       let consumed = 2 + name_end;
       return parse_directive_key(alloc, raw, name, consumed, span);
@@ -512,11 +508,7 @@ fn parse_directive_key<'a>(
     // Shorthand argument follows immediately (e.g. `:foo`, `@click`, `#default`).
     let dot = rest.find('.').unwrap_or(rest.len());
     let arg = &rest[..dot];
-    if arg.is_empty() {
-      (None, consumed)
-    } else {
-      (Some(arg), consumed + dot)
-    }
+    if arg.is_empty() { (None, consumed) } else { (Some(arg), consumed + dot) }
   } else {
     (None, consumed)
   };

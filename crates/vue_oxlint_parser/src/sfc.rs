@@ -95,8 +95,8 @@ pub fn split(source: &str) -> Result<SfcLayout<'_>, SfcError> {
       }
       let name = &source[name_start..j];
       // Find end of start tag — handle quoted attribute values, self-closing.
-      let (start_tag_end, self_closing) = find_start_tag_end(bytes, j)
-        .ok_or(SfcError::UnterminatedStartTag(tag_open as u32))?;
+      let (start_tag_end, self_closing) =
+        find_start_tag_end(bytes, j).ok_or(SfcError::UnterminatedStartTag(tag_open as u32))?;
       let raw_attrs = source[j..start_tag_end - if self_closing { 2 } else { 1 }].trim();
       let start_tag_range = Span::new(tag_open as u32, start_tag_end as u32);
 

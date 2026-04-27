@@ -83,10 +83,7 @@ where
     if let Some(&(span, txt)) = text_iter.peek().copied()
       && span.start == next_offset
     {
-      let node = ArenaBox::new_in(
-        VText { r#type: "VText", range: span, value: txt },
-        vue_alloc,
-      );
+      let node = ArenaBox::new_in(VText { r#type: "VText", range: span, value: txt }, vue_alloc);
       root_children.push(VRootChild::Text(node));
       next_offset = span.end;
       text_iter.next();
@@ -113,9 +110,8 @@ where
         }
         v
       };
-      let raw_attrs_offset = source[..block.start_tag_range.start as usize].len() as u32
-        + 1
-        + block.tag.len() as u32;
+      let raw_attrs_offset =
+        source[..block.start_tag_range.start as usize].len() as u32 + 1 + block.tag.len() as u32;
       let element = build_block_element(
         vue_alloc,
         source,
@@ -137,10 +133,8 @@ where
     break;
   }
 
-  let document = ArenaBox::new_in(
-    VDocumentFragment::new(Span::new(0, total_len), root_children),
-    vue_alloc,
-  );
+  let document =
+    ArenaBox::new_in(VDocumentFragment::new(Span::new(0, total_len), root_children), vue_alloc);
 
   // Parse <script> blocks via oxc_parser into the JS allocator.
   let mut scripts: Vec<ParsedScript<'j>> = Vec::new();
@@ -256,7 +250,8 @@ mod tests {
 
   #[test]
   fn basic_sfc_round_trip() {
-    let src = "<template><div class=\"a\">hi {{ x }}</div></template>\n<script setup>let x = 1</script>\n";
+    let src =
+      "<template><div class=\"a\">hi {{ x }}</div></template>\n<script setup>let x = 1</script>\n";
     let json = parse_to_json(src, &ParseOptions::default()).unwrap();
     assert!(json.contains("\"VDocumentFragment\""));
     assert!(json.contains("\"VElement\""));
