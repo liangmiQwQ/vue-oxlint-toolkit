@@ -4,11 +4,11 @@ A Rust + Node.js monorepo providing Vue SFC parsing and linting infrastructure b
 
 ## Workspace
 
-| Crate / Package | Description |
-|---|---|
-| [`vue_oxlint_parser`](crates/vue_oxlint_parser) | Rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser) — Vue SFC AST types and parser |
-| [`vue_oxlint_jsx`](crates/vue_oxlint_jsx) | Transforms Vue SFCs into an OXC-compatible JSX/TSX `Program` for linting |
-| [`@vue-oxlint/plugin`](packages/vue-oxlint-plugin) | napi-rs bindings exposing the parser to [oxlint](https://oxc.rs/docs/guide/usage/linter.html) |
+| Crate / Package                                    | Description                                                                                                 |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [`vue_oxlint_parser`](crates/vue_oxlint_parser)    | Rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser) — Vue SFC AST types and parser |
+| [`vue_oxlint_jsx`](crates/vue_oxlint_jsx)          | Transforms Vue SFCs into an OXC-compatible JSX/TSX `Program` for linting                                    |
+| [`@vue-oxlint/plugin`](packages/vue-oxlint-plugin) | napi-rs bindings exposing the parser to [oxlint](https://oxc.rs/docs/guide/usage/linter.html)               |
 
 ## Quick Start
 

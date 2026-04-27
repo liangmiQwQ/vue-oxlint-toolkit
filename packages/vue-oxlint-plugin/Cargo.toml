@@ -4,9 +4,9 @@ version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 repository.workspace = true
 rust-version.workspace = true
-publish = false
 description = "napi-rs bindings exposing vue_oxlint_parser to oxlint."
 
 [lib]
@@ -15,8 +15,8 @@ crate-type = ["cdylib"]
 [dependencies]
 napi = { workspace = true }
 napi-derive = { workspace = true }
-vue_oxlint_parser = { workspace = true }
 vue_oxlint_jsx = { workspace = true }
+vue_oxlint_parser = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }

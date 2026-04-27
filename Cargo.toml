@@ -31,8 +31,8 @@ too_many_lines = { level = "allow" }
 criterion = "0.8.2"
 insta = "1.47.2"
 
-vue_oxlint_parser = { path = "crates/vue_oxlint_parser" }
 vue_oxlint_jsx = { path = "crates/vue_oxlint_jsx" }
+vue_oxlint_parser = { path = "crates/vue_oxlint_parser" }
 
 oxc_allocator = ">=0.127.0"
 oxc_ast = ">=0.127.0"
@@ -48,5 +48,5 @@ regex = "1.12.3"
 vue-compiler-core = "0.1.0"
 
 napi = { version = "3", features = ["napi9"] }
-napi-derive = "3"
 napi-build = "2"
+napi-derive = "3"

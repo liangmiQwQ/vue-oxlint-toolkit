@@ -6,5 +6,5 @@ use napi_derive::napi;
 /// This is a placeholder — implement by calling vue_oxlint_parser::VueParser.
 #[napi]
 pub fn parse(_source: String) -> String {
-    todo!("wire up vue_oxlint_parser::VueParser")
+  todo!("wire up vue_oxlint_parser::VueParser")
 }

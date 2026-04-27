@@ -1,6 +1,6 @@
 {
   "name": "@vue-oxlint/plugin",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "oxlint plugin for Vue SFCs, powered by vue_oxlint_parser (napi-rs).",
   "main": "index.js",
   "types": "index.d.ts",
@@ -10,20 +10,28 @@
     "url": "https://github.com/liangmiQwQ/vue-oxlint-toolkit"
   },
   "scripts": {
-    "build:native": "napi build --platform --release",
-    "build:native:debug": "napi build --platform",
-    "build": "vp run build:native && vp pack",
-    "test": "vp test",
-    "prepublishOnly": "napi prepublish -t npm"
+    "build-native": "napi build --platform --release",
+    "build-native:debug": "napi build --platform",
+    "build": "pnpm run build-native",
+    "publish-native": "node --experimental-strip-types ./publish-native-addons.ts",
+    "test": "vp test"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.4",
+    "@napi-rs/cli": "^3.0.0",
     "vite-plus": "latest"
   },
   "napi": {
-    "name": "vue-oxlint-plugin",
-    "triples": {
-      "defaults": true
-    }
+    "binaryName": "vue-oxlint-plugin",
+    "packageName": "@vue-oxlint/plugin",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc"
+    ]
   }
 }
