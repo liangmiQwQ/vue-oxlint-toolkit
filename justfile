@@ -7,27 +7,25 @@ _default:
 
 init:
   cargo binstall cargo-insta cargo-shear cargo-workspaces cargo-edit -y
-  just install-hook
+  vp install
   
 fmt: 
   cargo fmt --all -- --emit=files
-  vp fmt
-
-install-hook:
-  echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
-  chmod +x .git/hooks/pre-commit
 
 fix:
   just fmt
   cargo fix --allow-dirty --allow-staged
+  vp check --fix
   -cargo shear --fix
 
 update:
   cargo upgrade
   cargo update
+  vp update major
 
 test: 
   cargo test --all-features --workspace
+  vp test
 
 ready:
   git diff --exit-code --quiet
@@ -40,9 +38,11 @@ ready:
 lint: 
   cargo shear
   cargo clippy --workspace --all-targets --all-features -- -D warnings
+  vp check
 
 build:
   cargo build
+  vpr build
 
 bench:
   cargo bench -p benchmark
