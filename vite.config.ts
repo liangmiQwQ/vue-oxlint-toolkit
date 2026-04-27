@@ -1,29 +1,23 @@
 import { defineConfig } from 'vite-plus'
 
+const ignorePatterns = ['**/*.vue']
+
 export default defineConfig({
-  run: {
-    tasks: {
-      // Build the native napi-rs module for the current platform.
-      // The Rust compilation itself is handled by `cargo build` inside napi.
-      'build:native': {
-        command: 'vp run --filter @vue-oxlint/plugin build:native',
-      },
-    },
-  },
   lint: {
- options: {
+    options: {
       typeAware: true,
       typeCheck: true,
     },
+    ignorePatterns,
   },
   fmt: {
     singleQuote: true,
     semi: false,
     sortPackageJson: true,
-    exclude: ['**/*.vue'],
+    excludeFiles: [],
+    ignorePatterns,
   },
   staged: {
     '*.{js,ts,tsx,vue,svelte}': 'vp check --fix',
-    '*.{rs}': 'just fix',
   },
 })

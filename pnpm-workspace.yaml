@@ -6,4 +6,4 @@ catalogs:
     vite-plus: ^0.1.19
 
   types:
-    "@types/node": ^25.6.0
+    '@types/node': ^25.6.0

@@ -1,1 +1,1 @@
-crates/vue_oxc_toolkit/fixtures/** text=auto eol=lf
+**/*.vue text=auto eol=lf

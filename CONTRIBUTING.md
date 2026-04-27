@@ -14,7 +14,7 @@ For new feature proposals, please open an Issue or start a Discussion first to g
 
 This project is built with [Rust](https://rust-lang.org/), if you aren't familiar with them, please read the [official Rust book](https://doc.rust-lang.org/book/) to instal basic rust environment and learn the basic concepts.
 
-We use [Vite+](https://viteplus.dev/) to manage all linting / bundling features for JavaScript code, as well as a task runner.
+We use [Vite+](https://viteplus.dev/) to manage all linting / bundling features for JavaScript code, `just` to manage tasks.
 
 You can easily setup project by running the following command:
 
@@ -22,13 +22,19 @@ You can easily setup project by running the following command:
 # If you didn't use cargo-binstall
 cargo install cargo-binstall
 
-vpr init
+just init
+```
+
+View all commands available:
+
+```bash
+just
 ```
 
 To make sure your code can be passed by CI, you can also preview the result by running:
 
 ```bash
-vpr ready
+just ready
 ```
 
 ## Creating Pull Request

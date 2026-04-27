@@ -1,4 +1,4 @@
-# Vue-Oxc-Toolkit Node Mapping
+# `vue-oxlint-jsx` AST Node Mapping
 
 This document explains how Vue template nodes are transformed into [Oxc](https://github.com/oxc-project/oxc) AST nodes. The toolkit represents Vue templates using a standard JavaScript/JSX AST, enabling use of existing JavaScript tooling.
 
@@ -51,7 +51,6 @@ export default {
     }
   },
 }
-
 ;async () => {
   const count = ref(0)
   ;<>
