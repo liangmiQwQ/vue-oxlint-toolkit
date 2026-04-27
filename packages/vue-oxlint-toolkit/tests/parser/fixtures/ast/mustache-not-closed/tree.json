@@ -1,0 +1,94 @@
+[
+    {
+        "type": "VElement",
+        "text": "<template>\n    {{a<br>}}\n    {{b<!--comment-->}}\n    {{c</>}}\n    {{</>d}}\n    {{</>}}\n    <br>{{<br>\n    {{{{invalid}}}}\n</template>",
+        "children": [
+            {
+                "type": "VStartTag",
+                "text": "<template>",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{a<br>}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{b<!--comment-->}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{c</>}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{</>d}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{</>}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VElement",
+                "text": "<br>",
+                "children": [
+                    {
+                        "type": "VStartTag",
+                        "text": "<br>",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "type": "VExpressionContainer",
+                "text": "{{<br>\n    {{{{invalid}}",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "}}\n",
+                "children": []
+            },
+            {
+                "type": "VEndTag",
+                "text": "</template>",
+                "children": []
+            }
+        ]
+    }
+]

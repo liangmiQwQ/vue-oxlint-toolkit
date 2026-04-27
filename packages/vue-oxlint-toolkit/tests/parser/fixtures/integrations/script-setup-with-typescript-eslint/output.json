@@ -1,0 +1,37 @@
+[
+    {
+        "filePath": "/no-undef/invalid/generic.vue",
+        "messages": [
+            {
+                "ruleId": "no-undef",
+                "line": 6,
+                "message": "'U' is not defined."
+            }
+        ]
+    },
+    {
+        "filePath": "/no-undef/invalid/with-defaults.vue",
+        "messages": [
+            {
+                "ruleId": "no-undef",
+                "line": 8,
+                "message": "'withDefaults' is not defined."
+            },
+            {
+                "ruleId": "no-undef",
+                "line": 8,
+                "message": "'defineProps' is not defined."
+            }
+        ]
+    },
+    {
+        "filePath": "/ts-no-unused-vars/invalid/generic.vue",
+        "messages": [
+            {
+                "ruleId": "@typescript-eslint/no-unused-vars",
+                "line": 4,
+                "message": "'Baz' is defined but never used."
+            }
+        ]
+    }
+]

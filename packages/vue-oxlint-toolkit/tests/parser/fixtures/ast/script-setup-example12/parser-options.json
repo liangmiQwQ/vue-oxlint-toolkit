@@ -1,0 +1,5 @@
+{
+  "sourceType": "module",
+  "ecmaVersion": 2022,
+  "parser": "espree"
+}

@@ -1,0 +1,800 @@
+{
+    "type": "Program",
+    "range": [
+        25,
+        97
+    ],
+    "body": [
+        {
+            "type": "VariableDeclaration",
+            "declarations": [
+                {
+                    "type": "VariableDeclarator",
+                    "definite": false,
+                    "id": {
+                        "type": "Identifier",
+                        "decorators": [],
+                        "name": "slots",
+                        "optional": false,
+                        "range": [
+                            31,
+                            36
+                        ],
+                        "loc": {
+                            "end": {
+                                "line": 2,
+                                "column": 11
+                            },
+                            "start": {
+                                "line": 2,
+                                "column": 6
+                            }
+                        }
+                    },
+                    "init": {
+                        "type": "CallExpression",
+                        "arguments": [],
+                        "callee": {
+                            "type": "Identifier",
+                            "decorators": [],
+                            "name": "defineSlots",
+                            "optional": false,
+                            "range": [
+                                39,
+                                50
+                            ],
+                            "loc": {
+                                "end": {
+                                    "line": 2,
+                                    "column": 25
+                                },
+                                "start": {
+                                    "line": 2,
+                                    "column": 14
+                                }
+                            }
+                        },
+                        "optional": false,
+                        "typeArguments": {
+                            "type": "TSTypeParameterInstantiation",
+                            "range": [
+                                50,
+                                94
+                            ],
+                            "params": [
+                                {
+                                    "type": "TSTypeLiteral",
+                                    "members": [
+                                        {
+                                            "type": "TSMethodSignature",
+                                            "computed": false,
+                                            "key": {
+                                                "type": "Identifier",
+                                                "decorators": [],
+                                                "name": "default",
+                                                "optional": false,
+                                                "range": [
+                                                    55,
+                                                    62
+                                                ],
+                                                "loc": {
+                                                    "end": {
+                                                        "line": 3,
+                                                        "column": 9
+                                                    },
+                                                    "start": {
+                                                        "line": 3,
+                                                        "column": 2
+                                                    }
+                                                }
+                                            },
+                                            "kind": "method",
+                                            "optional": false,
+                                            "params": [
+                                                {
+                                                    "type": "Identifier",
+                                                    "decorators": [],
+                                                    "name": "props",
+                                                    "optional": false,
+                                                    "typeAnnotation": {
+                                                        "type": "TSTypeAnnotation",
+                                                        "loc": {
+                                                            "end": {
+                                                                "line": 3,
+                                                                "column": 32
+                                                            },
+                                                            "start": {
+                                                                "line": 3,
+                                                                "column": 15
+                                                            }
+                                                        },
+                                                        "range": [
+                                                            68,
+                                                            85
+                                                        ],
+                                                        "typeAnnotation": {
+                                                            "type": "TSTypeLiteral",
+                                                            "members": [
+                                                                {
+                                                                    "type": "TSPropertySignature",
+                                                                    "computed": false,
+                                                                    "key": {
+                                                                        "type": "Identifier",
+                                                                        "decorators": [],
+                                                                        "name": "msg",
+                                                                        "optional": false,
+                                                                        "range": [
+                                                                            72,
+                                                                            75
+                                                                        ],
+                                                                        "loc": {
+                                                                            "end": {
+                                                                                "line": 3,
+                                                                                "column": 22
+                                                                            },
+                                                                            "start": {
+                                                                                "line": 3,
+                                                                                "column": 19
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "optional": false,
+                                                                    "readonly": false,
+                                                                    "static": false,
+                                                                    "typeAnnotation": {
+                                                                        "type": "TSTypeAnnotation",
+                                                                        "loc": {
+                                                                            "end": {
+                                                                                "line": 3,
+                                                                                "column": 30
+                                                                            },
+                                                                            "start": {
+                                                                                "line": 3,
+                                                                                "column": 22
+                                                                            }
+                                                                        },
+                                                                        "range": [
+                                                                            75,
+                                                                            83
+                                                                        ],
+                                                                        "typeAnnotation": {
+                                                                            "type": "TSStringKeyword",
+                                                                            "range": [
+                                                                                77,
+                                                                                83
+                                                                            ],
+                                                                            "loc": {
+                                                                                "end": {
+                                                                                    "line": 3,
+                                                                                    "column": 30
+                                                                                },
+                                                                                "start": {
+                                                                                    "line": 3,
+                                                                                    "column": 24
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "range": [
+                                                                        72,
+                                                                        83
+                                                                    ],
+                                                                    "loc": {
+                                                                        "end": {
+                                                                            "line": 3,
+                                                                            "column": 30
+                                                                        },
+                                                                        "start": {
+                                                                            "line": 3,
+                                                                            "column": 19
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "range": [
+                                                                70,
+                                                                85
+                                                            ],
+                                                            "loc": {
+                                                                "end": {
+                                                                    "line": 3,
+                                                                    "column": 32
+                                                                },
+                                                                "start": {
+                                                                    "line": 3,
+                                                                    "column": 17
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "range": [
+                                                        63,
+                                                        85
+                                                    ],
+                                                    "loc": {
+                                                        "end": {
+                                                            "line": 3,
+                                                            "column": 32
+                                                        },
+                                                        "start": {
+                                                            "line": 3,
+                                                            "column": 10
+                                                        }
+                                                    }
+                                                }
+                                            ],
+                                            "readonly": false,
+                                            "returnType": {
+                                                "type": "TSTypeAnnotation",
+                                                "loc": {
+                                                    "end": {
+                                                        "line": 3,
+                                                        "column": 38
+                                                    },
+                                                    "start": {
+                                                        "line": 3,
+                                                        "column": 33
+                                                    }
+                                                },
+                                                "range": [
+                                                    86,
+                                                    91
+                                                ],
+                                                "typeAnnotation": {
+                                                    "type": "TSAnyKeyword",
+                                                    "range": [
+                                                        88,
+                                                        91
+                                                    ],
+                                                    "loc": {
+                                                        "end": {
+                                                            "line": 3,
+                                                            "column": 38
+                                                        },
+                                                        "start": {
+                                                            "line": 3,
+                                                            "column": 35
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "static": false,
+                                            "range": [
+                                                55,
+                                                91
+                                            ],
+                                            "loc": {
+                                                "end": {
+                                                    "line": 3,
+                                                    "column": 38
+                                                },
+                                                "start": {
+                                                    "line": 3,
+                                                    "column": 2
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "range": [
+                                        51,
+                                        93
+                                    ],
+                                    "loc": {
+                                        "end": {
+                                            "line": 4,
+                                            "column": 1
+                                        },
+                                        "start": {
+                                            "line": 2,
+                                            "column": 26
+                                        }
+                                    }
+                                }
+                            ],
+                            "loc": {
+                                "end": {
+                                    "line": 4,
+                                    "column": 2
+                                },
+                                "start": {
+                                    "line": 2,
+                                    "column": 25
+                                }
+                            }
+                        },
+                        "range": [
+                            39,
+                            96
+                        ],
+                        "loc": {
+                            "end": {
+                                "line": 4,
+                                "column": 4
+                            },
+                            "start": {
+                                "line": 2,
+                                "column": 14
+                            }
+                        }
+                    },
+                    "range": [
+                        31,
+                        96
+                    ],
+                    "loc": {
+                        "end": {
+                            "line": 4,
+                            "column": 4
+                        },
+                        "start": {
+                            "line": 2,
+                            "column": 6
+                        }
+                    }
+                }
+            ],
+            "declare": false,
+            "kind": "const",
+            "range": [
+                25,
+                96
+            ],
+            "loc": {
+                "end": {
+                    "line": 4,
+                    "column": 4
+                },
+                "start": {
+                    "line": 2,
+                    "column": 0
+                }
+            }
+        }
+    ],
+    "comments": [],
+    "sourceType": "module",
+    "tokens": [
+        {
+            "type": "Punctuator",
+            "range": [
+                0,
+                24
+            ],
+            "loc": {
+                "start": {
+                    "line": 1,
+                    "column": 0
+                },
+                "end": {
+                    "line": 1,
+                    "column": 24
+                }
+            },
+            "value": "<script>"
+        },
+        {
+            "type": "Keyword",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 5
+                },
+                "start": {
+                    "line": 2,
+                    "column": 0
+                }
+            },
+            "range": [
+                25,
+                30
+            ],
+            "value": "const"
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 11
+                },
+                "start": {
+                    "line": 2,
+                    "column": 6
+                }
+            },
+            "range": [
+                31,
+                36
+            ],
+            "value": "slots"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 13
+                },
+                "start": {
+                    "line": 2,
+                    "column": 12
+                }
+            },
+            "range": [
+                37,
+                38
+            ],
+            "value": "="
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 25
+                },
+                "start": {
+                    "line": 2,
+                    "column": 14
+                }
+            },
+            "range": [
+                39,
+                50
+            ],
+            "value": "defineSlots"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 26
+                },
+                "start": {
+                    "line": 2,
+                    "column": 25
+                }
+            },
+            "range": [
+                50,
+                51
+            ],
+            "value": "<"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 2,
+                    "column": 27
+                },
+                "start": {
+                    "line": 2,
+                    "column": 26
+                }
+            },
+            "range": [
+                51,
+                52
+            ],
+            "value": "{"
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 9
+                },
+                "start": {
+                    "line": 3,
+                    "column": 2
+                }
+            },
+            "range": [
+                55,
+                62
+            ],
+            "value": "default"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 10
+                },
+                "start": {
+                    "line": 3,
+                    "column": 9
+                }
+            },
+            "range": [
+                62,
+                63
+            ],
+            "value": "("
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 15
+                },
+                "start": {
+                    "line": 3,
+                    "column": 10
+                }
+            },
+            "range": [
+                63,
+                68
+            ],
+            "value": "props"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 16
+                },
+                "start": {
+                    "line": 3,
+                    "column": 15
+                }
+            },
+            "range": [
+                68,
+                69
+            ],
+            "value": ":"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 18
+                },
+                "start": {
+                    "line": 3,
+                    "column": 17
+                }
+            },
+            "range": [
+                70,
+                71
+            ],
+            "value": "{"
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 22
+                },
+                "start": {
+                    "line": 3,
+                    "column": 19
+                }
+            },
+            "range": [
+                72,
+                75
+            ],
+            "value": "msg"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 23
+                },
+                "start": {
+                    "line": 3,
+                    "column": 22
+                }
+            },
+            "range": [
+                75,
+                76
+            ],
+            "value": ":"
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 30
+                },
+                "start": {
+                    "line": 3,
+                    "column": 24
+                }
+            },
+            "range": [
+                77,
+                83
+            ],
+            "value": "string"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 32
+                },
+                "start": {
+                    "line": 3,
+                    "column": 31
+                }
+            },
+            "range": [
+                84,
+                85
+            ],
+            "value": "}"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 33
+                },
+                "start": {
+                    "line": 3,
+                    "column": 32
+                }
+            },
+            "range": [
+                85,
+                86
+            ],
+            "value": ")"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 34
+                },
+                "start": {
+                    "line": 3,
+                    "column": 33
+                }
+            },
+            "range": [
+                86,
+                87
+            ],
+            "value": ":"
+        },
+        {
+            "type": "Identifier",
+            "loc": {
+                "end": {
+                    "line": 3,
+                    "column": 38
+                },
+                "start": {
+                    "line": 3,
+                    "column": 35
+                }
+            },
+            "range": [
+                88,
+                91
+            ],
+            "value": "any"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 4,
+                    "column": 1
+                },
+                "start": {
+                    "line": 4,
+                    "column": 0
+                }
+            },
+            "range": [
+                92,
+                93
+            ],
+            "value": "}"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 4,
+                    "column": 2
+                },
+                "start": {
+                    "line": 4,
+                    "column": 1
+                }
+            },
+            "range": [
+                93,
+                94
+            ],
+            "value": ">"
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 4,
+                    "column": 3
+                },
+                "start": {
+                    "line": 4,
+                    "column": 2
+                }
+            },
+            "range": [
+                94,
+                95
+            ],
+            "value": "("
+        },
+        {
+            "type": "Punctuator",
+            "loc": {
+                "end": {
+                    "line": 4,
+                    "column": 4
+                },
+                "start": {
+                    "line": 4,
+                    "column": 3
+                }
+            },
+            "range": [
+                95,
+                96
+            ],
+            "value": ")"
+        },
+        {
+            "type": "Punctuator",
+            "range": [
+                97,
+                106
+            ],
+            "loc": {
+                "start": {
+                    "line": 5,
+                    "column": 0
+                },
+                "end": {
+                    "line": 5,
+                    "column": 9
+                }
+            },
+            "value": "</script>"
+        }
+    ],
+    "loc": {
+        "end": {
+            "line": 5,
+            "column": 0
+        },
+        "start": {
+            "line": 2,
+            "column": 0
+        }
+    }
+}

@@ -1,0 +1,98 @@
+[
+    {
+        "type": "VElement",
+        "text": "<template>\n    <SVG Width=\"100\" heiGht=\"100\" viewbox=\"0 0 100 100\">\n    </svg>\n</template>",
+        "children": [
+            {
+                "type": "VStartTag",
+                "text": "<template>",
+                "children": []
+            },
+            {
+                "type": "VText",
+                "text": "\n    ",
+                "children": []
+            },
+            {
+                "type": "VElement",
+                "text": "<SVG Width=\"100\" heiGht=\"100\" viewbox=\"0 0 100 100\">\n    </svg>",
+                "children": [
+                    {
+                        "type": "VStartTag",
+                        "text": "<SVG Width=\"100\" heiGht=\"100\" viewbox=\"0 0 100 100\">",
+                        "children": [
+                            {
+                                "type": "VAttribute",
+                                "text": "Width=\"100\"",
+                                "children": [
+                                    {
+                                        "type": "VIdentifier",
+                                        "text": "Width",
+                                        "children": []
+                                    },
+                                    {
+                                        "type": "VLiteral",
+                                        "text": "\"100\"",
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "VAttribute",
+                                "text": "heiGht=\"100\"",
+                                "children": [
+                                    {
+                                        "type": "VIdentifier",
+                                        "text": "heiGht",
+                                        "children": []
+                                    },
+                                    {
+                                        "type": "VLiteral",
+                                        "text": "\"100\"",
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "VAttribute",
+                                "text": "viewbox=\"0 0 100 100\"",
+                                "children": [
+                                    {
+                                        "type": "VIdentifier",
+                                        "text": "viewbox",
+                                        "children": []
+                                    },
+                                    {
+                                        "type": "VLiteral",
+                                        "text": "\"0 0 100 100\"",
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "VText",
+                        "text": "\n    ",
+                        "children": []
+                    },
+                    {
+                        "type": "VEndTag",
+                        "text": "</svg>",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "type": "VText",
+                "text": "\n",
+                "children": []
+            },
+            {
+                "type": "VEndTag",
+                "text": "</template>",
+                "children": []
+            }
+        ]
+    }
+]

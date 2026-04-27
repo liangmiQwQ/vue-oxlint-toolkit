@@ -1,0 +1,17 @@
+[
+    "<template",
+    ">",
+    "\n    ",
+    "<button",
+    "@",
+    "click",
+    "=",
+    "\"function() { err( }\"",
+    ">",
+    "</button",
+    ">",
+    "\n",
+    "</template",
+    ">",
+    "\n"
+]

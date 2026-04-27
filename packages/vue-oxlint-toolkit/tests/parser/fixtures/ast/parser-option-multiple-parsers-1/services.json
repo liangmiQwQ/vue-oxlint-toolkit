@@ -1,0 +1,13 @@
+[
+    "defineCustomBlocksVisitor",
+    "defineDocumentVisitor",
+    "defineTemplateBodyVisitor",
+    "emitDecoratorMetadata",
+    "esTreeNodeToTSNodeMap",
+    "experimentalDecorators",
+    "getDocumentFragment",
+    "getTemplateBodyTokenStore",
+    "isolatedDeclarations",
+    "program",
+    "tsNodeToESTreeNodeMap"
+]
