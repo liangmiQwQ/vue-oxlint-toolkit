@@ -1,0 +1,254 @@
+# Forked from https://github.com/oxc-project/oxc/blob/56e7e4458f8d2e01f05369d0ea4209164336b8cd/.github/workflows/reusable_release_napi.yml
+name: Release NAPI
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: 'The component name'
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    env:
+      name: ${{ inputs.name }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            build: pnpm build --target x86_64-pc-windows-msvc
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            build: pnpm build --target aarch64-pc-windows-msvc
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            build: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            build: pnpm build --target x86_64-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            build: pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            build: pnpm build --target aarch64-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            build: pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            build: pnpm build --target x86_64-apple-darwin
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            build: pnpm build --target aarch64-apple-darwin
+
+          - os: ubuntu-latest
+            target: wasm32-wasip1-threads
+            build: pnpm build --target wasm32-wasip1-threads
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: |
+              export CFLAGS="-fuse-ld=lld"
+              pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm build --target aarch64-linux-android
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm build --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm build --target aarch64-unknown-linux-ohos
+
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: oxc-project/setup-node@v1.0.4
+
+      - run: rustup target add ${{ matrix.target }}
+
+      - name: Setup OpenHarmony SDK
+        if: ${{ contains(matrix.target, 'ohos') }}
+        uses: Boshen/setup-ohos-sdk@v1.0.0
+
+      - uses: goto-bus-stop/setup-zig@v2
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.13.0
+
+      - name: Build
+        working-directory: packages/${{ inputs.name }}
+        run: ${{ matrix.build }}
+        shell: bash
+        env:
+          TARGET_CC: clang # for mimalloc
+
+      - uses: actions/upload-artifact@v5
+        with:
+          if-no-files-found: error
+          name: bindings-${{ matrix.target }}
+          # `**/*.node` because in `packages/parser`, binaries are in `napi` subdirectory
+          path: |
+            packages/${{ inputs.name }}/**/*.node
+            packages/${{ inputs.name }}/**/*.wasm
+
+  build-freebsd:
+    name: Build FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - name: Build
+        id: build
+        uses: cross-platform-actions/action@v0.30.0
+        env:
+          DEBUG: napi:*
+          RUSTUP_IO_THREADS: 1
+        with:
+          operating_system: freebsd
+          version: '14.2'
+          memory: 8G
+          cpu_count: 3
+          environment_variables: 'DEBUG RUSTUP_IO_THREADS'
+          shell: bash
+          run: |
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake
+            curl https://sh.rustup.rs -sSf --output rustup.sh
+            sh rustup.sh -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            echo "~~~~ rustc --version ~~~~"
+            rustc --version
+            echo "~~~~ node -v ~~~~"
+            node -v
+            pwd
+            ls -lah
+            whoami
+            env
+            cd packages/${{ inputs.name }}
+            export COREPACK_INTEGRITY_KEYS=0
+            sudo corepack enable
+            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
+            pnpm build --target x86_64-unknown-freebsd
+            rm -rf node_modules
+            rm -rf target
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          if-no-files-found: error
+          name: bindings-freebsd
+          # `**/*.node` because in `packages/parser`, binary is in `napi` subdirectory
+          path: packages/${{ inputs.name }}/**/*.node
+
+  publish:
+    name: Publish NAPI
+    needs:
+      - build
+      - build-freebsd
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # for `pnpm publish --provenance`
+    env:
+      name: ${{ inputs.name }}
+      package_path: packages/${{ inputs.name }}
+      npm_dir: release-dir
+      PUBLISH_FLAGS: '--provenance --access public --no-git-checks'
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: oxc-project/setup-node@v1.0.4
+
+      - uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+
+      - run: mkdir -p ${npm_dir}
+
+      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+
+      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path}/napi --npm-dir ${npm_dir}
+
+      - run: npm install -g npm@latest # For trusted publishing support
+
+      - name: Set Tag
+        run: |
+          VERSION=$(jq -r '.version' ${package_path}/package.json)
+          if [[ $VERSION == *"alpha"* ]]; then
+            TAG="alpha"
+          elif [[ $VERSION == *"beta"* ]]; then
+            TAG="beta"
+          elif [[ $VERSION == *"rc"* ]]; then
+            TAG="rc"
+          else
+            TAG="latest"
+          fi
+          echo "Using npm tag: $TAG for version $VERSION"
+          pnpm config set tag "$TAG"
+          npm config set tag "$TAG"
+          echo "Tag config set for both pnpm and npm"
+
+      - name: Check Publish
+        run: |
+          # Check subpackages
+          for package in ${npm_dir}/*
+          do
+            echo $package
+            ls $package
+            cat $package/package.json
+            # Check publish files exist
+            jq -r '.files[]' $package/package.json | while read -r file ; do
+              if ! [ -f $package/$file ] ; then
+                echo "File does not exist." $package/$file
+                exit 1
+              fi
+            done
+            pnpm publish $package/ ${PUBLISH_FLAGS} --dry-run
+            echo ''
+          done
+
+          # Check root package
+          echo ${package_path}
+          ls ${package_path}
+          cat ${package_path}/package.json
+          # Check publish files exist
+          jq -r '.files[]' ${package_path}/package.json | while read -r file ; do
+            if ! [ -f ${package_path}/$file ]; then
+              echo "File does not exist." ${package_path}/$file
+              exit 1
+            fi
+          done
+          pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
+
+      - name: Trusted Publish
+        run: |
+          # Trusted publishing is configured, publish token is not required.
+          # Publish sub-packages and adds `optionalDependencies` to `package_path`.
+          pnpm install --no-frozen-lockfile
+          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          pnpm install --no-frozen-lockfile
+          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}

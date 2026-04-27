@@ -1,111 +1,82 @@
-name: CI
-
-permissions: {}
+name: Commit Check
 
 on:
-  workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
-    branches-ignore:
-      - '**/graphite-base/**'
   push:
     branches:
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: ${{ github.ref_name != 'main' }}
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  test-linux:
-    name: Test (Linux x64)
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: oxc-project/setup-rust@v1
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set node
+        uses: actions/setup-node@v5
         with:
+          node-version: lts/*
+
+      - name: Setup Rust
+        uses: oxc-project/setup-rust@v1.0.9
+        with:
+          tools: just,cargo-shear
           components: clippy rustfmt
-          tools: just,cargo-shear,dprint
-      - uses: Swatinem/rust-cache@v2
-        with:
-          save-if: ${{ github.ref_name == 'main' }}
-      - run: just lint
-      - run: just fmt
-      - run: git diff --exit-code
-      - run: just test
 
-  test-linux-aarch64:
-    name: Test (Linux arm64)
-    if: ${{ github.ref_name == 'main' }}
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: oxc-project/setup-rust@v1
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm-aarch64
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: aarch64
-          save-if: ${{ github.ref_name == 'main' }}
-      - run: cargo test --all-features --workspace
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-  test-macos:
-    name: Test (macOS)
-    if: ${{ github.ref_name == 'main' }}
-    runs-on: macos-latest
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: oxc-project/setup-rust@v1
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm-macos
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: macos
-          save-if: ${{ github.ref_name == 'main' }}
-      - run: cargo test --all-features --workspace
+      - name: Lint
+        run: just lint
 
-  test-windows:
-    name: Test (Windows)
-    if: ${{ github.ref_name == 'main' }}
-    runs-on: windows-latest
+      - name: Format
+        run: just fmt
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: just build
+
+      - name: Check Files
+        run: git diff --exit-code --quiet
+
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node: [lts/*]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+
     steps:
-      - run: git config --system core.longpaths true
-      - uses: taiki-e/checkout-action@v1
-      - uses: samypr100/setup-dev-drive@v4
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set node ${{ matrix.node }}
+        uses: actions/setup-node@v5
         with:
-          workspace-copy: true
-          drive-size: 6GB
-          drive-format: ReFS
-          env-mapping: |
-            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
-            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-      - name: Install Rust (MSRV)
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        shell: bash
-        run: |
-          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' \
-                 -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
-          rustup set profile minimal
-          rustup show
-          git restore .
-      - uses: Swatinem/rust-cache@v2
+          node-version: ${{ matrix.node }}
+
+      - name: Setup Rust
+        uses: oxc-project/setup-rust@v1.0.9
         with:
-          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
-          shared-key: windows
-          save-if: ${{ github.ref_name == 'main' }}
+          tools: just
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: just build
+
       - name: Test
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        shell: bash
-        run: cargo test --all-features --workspace
-
-  doc:
-    name: Docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: oxc-project/setup-rust@v1
-      - uses: Swatinem/rust-cache@v2
-      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
+        run: just test
