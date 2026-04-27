@@ -1,0 +1,26 @@
+[package]
+name = "vue_oxlint_parser"
+version.workspace = true
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Rust port of vue-eslint-parser: AST types and SFC parser for Vue single-file components."
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_span = { workspace = true }
+
+memchr = { workspace = true }
+vue-compiler-core = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[lints]
+workspace = true

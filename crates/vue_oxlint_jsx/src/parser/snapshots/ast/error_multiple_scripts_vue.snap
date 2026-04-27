@@ -1,0 +1,70 @@
+---
+source: crates/vue_oxlint_transformer/src/test.rs
+expression: result
+---
+=============== Program ===============
+Program {
+    span: Span {
+        start: 0,
+        end: 0,
+    },
+    node_id: Cell {
+        value: NodeId(0),
+    },
+    scope_id: Cell {
+        value: None,
+    },
+    source_text: "",
+    comments: Vec(
+        [],
+    ),
+    hashbang: None,
+    directives: Vec(
+        [],
+    ),
+    body: Vec(
+        [],
+    ),
+    source_type: SourceType {
+        language: JavaScript,
+        module_kind: Script,
+        variant: Standard,
+        extension: None,
+    },
+}
+
+===============  Error  ===============
+[
+    OxcDiagnostic {
+        inner: OxcDiagnosticInner {
+            message: "Single file component can contain only one <script> element.",
+            labels: Some(
+                [
+                    LabeledSpan {
+                        label: None,
+                        span: SourceSpan {
+                            offset: SourceOffset(
+                                32,
+                            ),
+                            length: 31,
+                        },
+                        primary: false,
+                    },
+                ],
+            ),
+            help: None,
+            note: None,
+            severity: Error,
+            code: OxcCode {
+                scope: None,
+                number: None,
+            },
+            url: None,
+        },
+    },
+]
+
+=============== Codegen ===============
+
+
+===============  Spans  ===============

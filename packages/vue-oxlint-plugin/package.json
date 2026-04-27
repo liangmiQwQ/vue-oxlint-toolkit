@@ -1,0 +1,29 @@
+{
+  "name": "@vue-oxlint/plugin",
+  "version": "0.1.0",
+  "description": "oxlint plugin for Vue SFCs, powered by vue_oxlint_parser (napi-rs).",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liangmiQwQ/vue-oxlint-toolkit"
+  },
+  "scripts": {
+    "build:native": "napi build --platform --release",
+    "build:native:debug": "napi build --platform",
+    "build": "vp run build:native && vp pack",
+    "test": "vp test",
+    "prepublishOnly": "napi prepublish -t npm"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4",
+    "vite-plus": "latest"
+  },
+  "napi": {
+    "name": "vue-oxlint-plugin",
+    "triples": {
+      "defaults": true
+    }
+  }
+}

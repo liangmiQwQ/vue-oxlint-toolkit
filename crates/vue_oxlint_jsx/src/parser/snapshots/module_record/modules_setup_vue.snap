@@ -1,0 +1,96 @@
+---
+source: crates/vue_oxlint_transformer/src/test.rs
+expression: result
+---
+Module Record: ModuleRecord {
+    has_module_syntax: true,
+    requested_modules: {
+        "vue": Vec(
+            [
+                RequestedModule {
+                    statement_span: Span {
+                        start: 57,
+                        end: 83,
+                    },
+                    span: Span {
+                        start: 77,
+                        end: 82,
+                    },
+                    is_type: false,
+                    is_import: true,
+                },
+            ],
+        ),
+    },
+    import_entries: Vec(
+        [
+            ImportEntry {
+                statement_span: Span {
+                    start: 57,
+                    end: 83,
+                },
+                module_request: NameSpan {
+                    span: Span {
+                        start: 77,
+                        end: 82,
+                    },
+                    name: "vue",
+                },
+                import_name: Name(
+                    NameSpan {
+                        span: Span {
+                            start: 66,
+                            end: 69,
+                        },
+                        name: "ref",
+                    },
+                ),
+                local_name: NameSpan {
+                    span: Span {
+                        start: 66,
+                        end: 69,
+                    },
+                    name: "ref",
+                },
+                is_type: false,
+            },
+        ],
+    ),
+    local_export_entries: Vec(
+        [
+            ExportEntry {
+                span: Span {
+                    start: 0,
+                    end: 0,
+                },
+                statement_span: Span {
+                    start: 0,
+                    end: 0,
+                },
+                module_request: None,
+                import_name: Null,
+                export_name: Default(
+                    Span {
+                        start: 0,
+                        end: 0,
+                    },
+                ),
+                local_name: Null,
+                is_type: false,
+            },
+        ],
+    ),
+    indirect_export_entries: Vec(
+        [],
+    ),
+    star_export_entries: Vec(
+        [],
+    ),
+    exported_bindings: {},
+    dynamic_imports: Vec(
+        [],
+    ),
+    import_metas: Vec(
+        [],
+    ),
+}

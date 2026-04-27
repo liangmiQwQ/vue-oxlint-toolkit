@@ -1,0 +1,203 @@
+name: Release NAPI
+
+permissions: {}
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Each matrix entry builds a platform-specific .node binary and uploads it as
+# an artifact named "bindings-<platform>". The publish job downloads them all,
+# arranges them with `napi artifacts`, and publishes to npm.
+
+jobs:
+  build:
+    name: Build ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Linux GNU ──────────────────────────────────────────────────────
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: bindings-linux-x64-gnu
+
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact: bindings-linux-arm64-gnu
+
+          # ── Linux musl (Alpine) — cross-compile via Docker ─────────────────
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: bindings-linux-x64-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            artifact: bindings-linux-arm64-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+
+          # ── macOS ──────────────────────────────────────────────────────────
+          - os: macos-13
+            target: x86_64-apple-darwin
+            artifact: bindings-darwin-x64
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: bindings-darwin-arm64
+
+          # ── Windows ────────────────────────────────────────────────────────
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: bindings-win32-x64-msvc
+
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: pnpm/action-setup@v4
+        if: ${{ !matrix.docker }}
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        if: ${{ !matrix.docker }}
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: oxc-project/setup-rust@v1
+        if: ${{ !matrix.docker }}
+        with:
+          targets: ${{ matrix.target }}
+          save-cache: false
+
+      - uses: Swatinem/rust-cache@v2
+        if: ${{ !matrix.docker }}
+        with:
+          shared-key: napi-${{ matrix.target }}
+
+      - name: Install JS dependencies
+        if: ${{ !matrix.docker }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build native module
+        if: ${{ !matrix.docker }}
+        working-directory: packages/vue-oxlint-plugin
+        run: pnpm run build:native -- --target ${{ matrix.target }}
+
+      - name: Build native module (musl / Docker)
+        if: ${{ matrix.docker }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.docker }}
+          options: --user 0:0 -v ${{ github.workspace }}:/build -w /build
+          run: |
+            set -eux
+            corepack enable
+            pnpm install --frozen-lockfile
+            if [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+              rustup target add aarch64-unknown-linux-musl
+            fi
+            cd packages/vue-oxlint-plugin
+            pnpm run build:native -- --target ${{ matrix.target }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: packages/vue-oxlint-plugin/*.node
+          if-no-files-found: error
+
+  # Build a universal macOS binary by combining x64 and arm64 with lipo.
+  build-darwin-universal:
+    name: Build darwin universal
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-darwin-x64
+          path: artifacts/bindings-darwin-x64
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-darwin-arm64
+          path: artifacts/bindings-darwin-arm64
+
+      - name: Create universal binary
+        run: |
+          lipo -create \
+            artifacts/bindings-darwin-x64/*.node \
+            artifacts/bindings-darwin-arm64/*.node \
+            -output vue-oxlint-plugin.darwin-universal.node
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bindings-darwin-universal
+          path: vue-oxlint-plugin.darwin-universal.node
+          if-no-files-found: error
+
+  publish:
+    name: Publish to npm
+    needs:
+      - build
+      - build-darwin-universal
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: packages/vue-oxlint-plugin/artifacts
+          pattern: bindings-*
+          merge-multiple: false
+
+      - name: Arrange artifacts with napi CLI
+        working-directory: packages/vue-oxlint-plugin
+        # napi artifacts copies each platform's .node file into the package dir
+        # and generates an index.js that loads the right binary at runtime.
+        run: npx @napi-rs/cli@latest artifacts --dir artifacts --dist .
+
+      - name: List prepared files
+        working-directory: packages/vue-oxlint-plugin
+        run: ls -la *.node
+
+      - name: Publish @vue-oxlint/plugin
+        working-directory: packages/vue-oxlint-plugin
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: packages/vue-oxlint-plugin/*.node
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use oxc_allocator::Allocator;
-use vue_oxc_toolkit::VueOxcParser;
+use vue_oxlint_jsx::VueOxcParser;
 
 fn bench(c: &mut Criterion) {
   let mut group = c.benchmark_group("vue_parse_by_size");

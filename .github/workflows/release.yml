@@ -1,4 +1,6 @@
-name: Release
+name: Release Crates
+
+permissions: {}
 
 on:
   push:
@@ -10,41 +12,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release:
-    name: Release Crates
+  publish-crates:
+    name: Publish to crates.io
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: taiki-e/checkout-action@v1
 
-      - name: Setup Rust
-        uses: oxc-project/setup-rust@v1.0.9
+      - uses: oxc-project/setup-rust@v1
+
+      - uses: Swatinem/rust-cache@v2
 
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
 
-      - name: Publish
-        run: cargo publish
+      - name: Publish vue_oxlint_parser
+        run: cargo publish -p vue_oxlint_parser --no-verify
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish vue_oxlint_jsx
+        run: cargo publish -p vue_oxlint_jsx --no-verify
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
   github-release:
+    name: GitHub Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: taiki-e/checkout-action@v1
         with:
           fetch-depth: 0
 
-      - name: Set node
-        uses: actions/setup-node@v5
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
-      - name: Generate Changelog
+      - name: Generate changelog
         run: npx changelogithub
         continue-on-error: true
         env:

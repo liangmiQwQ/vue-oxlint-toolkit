@@ -1,50 +1,111 @@
-name: Commit Check
+name: CI
+
+permissions: {}
 
 on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
   push:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  lint:
+  test-linux:
+    name: Test (Linux x64)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Rust
-        uses: oxc-project/setup-rust@v1.0.9
+      - uses: taiki-e/checkout-action@v1
+      - uses: oxc-project/setup-rust@v1
         with:
-          tools: just,cargo-shear,dprint
           components: clippy rustfmt
-
-      - name: Lint
-        run: just lint
-
-      - name: Format
-        run: just fmt
-
-      - name: Check Files
-        run: git diff --exit-code --quiet
-
-  test:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Rust
-        uses: oxc-project/setup-rust@v1.0.9
+          tools: just,cargo-shear,dprint
+      - uses: Swatinem/rust-cache@v2
         with:
-          tools: just
+          save-if: ${{ github.ref_name == 'main' }}
+      - run: just lint
+      - run: just fmt
+      - run: git diff --exit-code
+      - run: just test
 
+  test-linux-aarch64:
+    name: Test (Linux arm64)
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: oxc-project/setup-rust@v1
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm-aarch64
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: aarch64
+          save-if: ${{ github.ref_name == 'main' }}
+      - run: cargo test --all-features --workspace
+
+  test-macos:
+    name: Test (macOS)
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: macos-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: oxc-project/setup-rust@v1
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm-macos
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: macos
+          save-if: ${{ github.ref_name == 'main' }}
+      - run: cargo test --all-features --workspace
+
+  test-windows:
+    name: Test (Windows)
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: windows-latest
+    steps:
+      - run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@v1
+      - uses: samypr100/setup-dev-drive@v4
+        with:
+          workspace-copy: true
+          drive-size: 6GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      - name: Install Rust (MSRV)
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' \
+                 -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          shared-key: windows
+          save-if: ${{ github.ref_name == 'main' }}
       - name: Test
-        run: just test
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: cargo test --all-features --workspace
+
+  doc:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: oxc-project/setup-rust@v1
+      - uses: Swatinem/rust-cache@v2
+      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features

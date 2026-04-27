@@ -1,0 +1,19 @@
+{
+  "name": "vue-oxlint-workspace",
+  "private": true,
+  "version": "0.11.0",
+  "description": "Monorepo for vue-oxlint tooling.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "vp run -r build",
+    "test": "vp run -r test",
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "vite-plus": "latest"
+  }
+}
