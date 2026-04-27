@@ -13,4 +13,4 @@ The [`vue_oxc_parser`](./crates/vue_oxc_parser) crate is a rust port of [vue-esl
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE) License - see [LICENSE](LICENSE) file for details.
