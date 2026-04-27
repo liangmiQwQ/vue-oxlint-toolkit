@@ -12,16 +12,15 @@
   "files": [
     "dist"
   ],
-  "main": "index.js",
-  "types": "index.d.ts",
+  "type": "module",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release --output-dir bindings && vp pack",
-    "build:debug": "napi build --platform --output-dir bindings && vp pack",
+    "build": "napi build --esm --platform --release --output-dir bindings && vp pack",
+    "build:debug": "napi build --esm --platform --output-dir bindings && vp pack",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version"
   },
