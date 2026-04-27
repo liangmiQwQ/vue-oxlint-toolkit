@@ -12,7 +12,7 @@ rust-version.workspace = true
 description.workspace = true
 
 [[bench]]
-name = "parse"
+name = "jsx"
 harness = false
 
 [dev-dependencies]
