@@ -48,16 +48,14 @@ fn ast_fixtures() {
         .collect::<Vec<_>>()
         .join("\n")
     };
-    panic!(
-      "{failed}/{total} ast fixtures failed (set AST_FIXTURE_VERBOSE=1 for diffs):\n{body}"
-    );
+    panic!("{failed}/{total} ast fixtures failed (set AST_FIXTURE_VERBOSE=1 for diffs):\n{body}");
   }
 }
 
 fn run_one(name: &str) -> Result<(), String> {
   let dir = fixtures_dir().join(name);
-  let source = std::fs::read_to_string(dir.join("source.vue"))
-    .map_err(|e| format!("read source.vue: {e}"))?;
+  let source =
+    std::fs::read_to_string(dir.join("source.vue")).map_err(|e| format!("read source.vue: {e}"))?;
   let expected: Value = serde_json::from_str(
     &std::fs::read_to_string(dir.join("tree.json")).map_err(|e| format!("read tree.json: {e}"))?,
   )
