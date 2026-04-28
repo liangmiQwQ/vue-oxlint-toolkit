@@ -40,6 +40,7 @@ lint:
   # cargo shear
   cargo clippy --workspace --all-targets --all-features -- -D warnings
   vp check
+  cargo fmt --all -- --check
 
 build:
   cargo build
