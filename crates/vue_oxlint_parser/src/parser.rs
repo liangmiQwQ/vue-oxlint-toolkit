@@ -91,10 +91,8 @@ where
     if let Some(&(span, txt)) = text_iter.peek().copied()
       && span.start == next_offset
     {
-      let node = ArenaBox::new_in(
-        VText { r#type: "VText", range: span, value: Str::from(txt) },
-        vue_alloc,
-      );
+      let node =
+        ArenaBox::new_in(VText { r#type: "VText", range: span, value: Str::from(txt) }, vue_alloc);
       root_children.push(VRootChild::Text(node));
       next_offset = span.end;
       text_iter.next();
