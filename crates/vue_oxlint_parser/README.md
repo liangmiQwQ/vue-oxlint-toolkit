@@ -2,13 +2,11 @@
 
 A Vue parser generated [AST](https://github.com/vuejs/vue-eslint-parser/blob/master/docs/ast.md) for linting purpose.
 
-## Feature
+## Features
 
--
-
-Rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser).
-
-The [`vue_oxlint_jsx`](../vue_oxlint_jsx) crate consumes this AST and converts it into an OXC-compatible `Program` for downstream linting.
+- **Good Compatibility** Generate the same AST as [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser), keep error messages as same as possible.
+- **JavaScript Support** Use `serde` to make sure AST is available on JavaScript side via `napi`, make existing ESLint rules can be reused.
+- **High Performance** Follow the tokenization/parsing architecture, use `oxc` for inner script parsing.
 
 ## Credits
 
