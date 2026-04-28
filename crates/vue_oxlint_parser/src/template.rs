@@ -114,8 +114,15 @@ impl<'a> TemplateParser<'a> {
             self.flush_text(text_start, self.pos, &mut out);
             return out;
           }
-          // Stray end tag — consume it as text.
-          self.pos += 1;
+          // Stray end tag — silently consume up to and including `>`.
+          self.flush_text(text_start, self.pos, &mut out);
+          while self.pos < len && bytes[self.pos] != b'>' {
+            self.pos += 1;
+          }
+          if self.pos < len {
+            self.pos += 1;
+          }
+          text_start = self.pos;
           continue;
         }
         if next == b'!' {
@@ -187,7 +194,7 @@ impl<'a> TemplateParser<'a> {
     }
     let expr_hi = self.pos;
     self.pos += 2; // `}}`
-    let raw = self.src[expr_lo..expr_hi].trim();
+    let raw = &self.src[expr_lo..expr_hi];
     Some(ArenaBox::new_in(
       VExpressionContainer {
         r#type: "VExpressionContainer",
@@ -214,11 +221,9 @@ impl<'a> TemplateParser<'a> {
     }
     let name = &self.src[name_lo..self.pos];
     let attrs_lo = self.pos;
-    let Some((start_tag_end, self_closing)) = find_tag_end(bytes, self.pos) else {
-      self.pos = lo + 1;
-      return None;
-    };
-    let attrs_hi = start_tag_end - if self_closing { 2 } else { 1 };
+    let (start_tag_end, self_closing) = find_tag_end(bytes, self.pos);
+    let trim = if self_closing { 2 } else { 1 };
+    let attrs_hi = start_tag_end.saturating_sub(trim).max(attrs_lo);
     let raw_attrs = &self.src[attrs_lo..attrs_hi];
     let attrs = parse_attributes(self.alloc, self.src, raw_attrs, self.base + attrs_lo as u32);
     self.pos = start_tag_end;
@@ -287,11 +292,11 @@ impl<'a> TemplateParser<'a> {
   }
 }
 
-fn find_tag_end(bytes: &[u8], mut pos: usize) -> Option<(usize, bool)> {
+fn find_tag_end(bytes: &[u8], mut pos: usize) -> (usize, bool) {
   while pos < bytes.len() {
     match bytes[pos] {
-      b'>' => return Some((pos + 1, false)),
-      b'/' if pos + 1 < bytes.len() && bytes[pos + 1] == b'>' => return Some((pos + 2, true)),
+      b'>' => return (pos + 1, false),
+      b'/' if pos + 1 < bytes.len() && bytes[pos + 1] == b'>' => return (pos + 2, true),
       b'"' | b'\'' => {
         let q = bytes[pos];
         pos += 1;
@@ -305,7 +310,8 @@ fn find_tag_end(bytes: &[u8], mut pos: usize) -> Option<(usize, bool)> {
       _ => pos += 1,
     }
   }
-  None
+  // Tolerate EOF in start tag: return current position with no `>` consumed.
+  (pos, false)
 }
 
 const fn is_tag_name_part(b: u8) -> bool {
@@ -314,7 +320,7 @@ const fn is_tag_name_part(b: u8) -> bool {
 
 fn is_void_html_element(name: &str) -> bool {
   matches!(
-    name.to_ascii_lowercase().as_str(),
+    name,
     "area"
       | "base"
       | "br"
@@ -368,33 +374,39 @@ pub fn parse_attributes<'a>(
     while probe < len && bytes[probe].is_ascii_whitespace() {
       probe += 1;
     }
-    let mut value: Option<(usize, usize, &str)> = None;
+    // (span_lo, span_hi, inner_lo, inner_hi, inner_text). span_lo..span_hi
+    // covers the value as it appears in source (including any quote chars);
+    // inner_lo..inner_hi covers just the unquoted inner expression text.
+    let mut value: Option<(usize, usize, usize, usize, &str)> = None;
     let mut attr_hi = key_hi;
     if probe < len && bytes[probe] == b'=' {
       probe += 1;
+      attr_hi = probe;
       while probe < len && bytes[probe].is_ascii_whitespace() {
         probe += 1;
       }
       if probe < len {
         let q = bytes[probe];
         if q == b'"' || q == b'\'' {
-          let v_lo = probe + 1;
-          let mut v_hi = v_lo;
-          while v_hi < len && bytes[v_hi] != q {
-            v_hi += 1;
+          let inner_lo = probe + 1;
+          let mut inner_hi = inner_lo;
+          while inner_hi < len && bytes[inner_hi] != q {
+            inner_hi += 1;
           }
-          let txt = &raw[v_lo..v_hi];
-          value = Some((v_lo, v_hi, txt));
-          attr_hi = v_hi + 1;
-          i = v_hi + usize::from(v_hi < len);
+          let txt = &raw[inner_lo..inner_hi];
+          let closed = inner_hi < len;
+          let span_hi = if closed { inner_hi + 1 } else { inner_hi };
+          value = Some((probe, span_hi, inner_lo, inner_hi, txt));
+          attr_hi = span_hi;
+          i = span_hi;
         } else {
           let v_lo = probe;
           let mut v_hi = probe;
-          while v_hi < len && !bytes[v_hi].is_ascii_whitespace() {
+          while v_hi < len && !bytes[v_hi].is_ascii_whitespace() && bytes[v_hi] != b'>' {
             v_hi += 1;
           }
           let txt = &raw[v_lo..v_hi];
-          value = Some((v_lo, v_hi, txt));
+          value = Some((v_lo, v_hi, v_lo, v_hi, txt));
           attr_hi = v_hi;
           i = v_hi;
         }
@@ -409,15 +421,16 @@ pub fn parse_attributes<'a>(
     let attr_span = Span::new(raw_offset + key_lo as u32, raw_offset + attr_hi as u32);
 
     let (key_node, is_directive) = classify_key(alloc, key_text, key_span);
-    let value_node = value.map(|(v_lo, v_hi, txt)| {
+    let value_node = value.map(|(v_lo, v_hi, inner_lo, inner_hi, txt)| {
       let span = Span::new(raw_offset + v_lo as u32, raw_offset + v_hi as u32);
+      let inner_span = Span::new(raw_offset + inner_lo as u32, raw_offset + inner_hi as u32);
       if is_directive {
         ArenaBox::new_in(
           VAttributeValue::Expression(VExpressionContainer {
             r#type: "VExpressionContainer",
             range: span,
             raw_expression: Str::from(txt),
-            expression_range: span,
+            expression_range: inner_span,
             raw: false,
           }),
           alloc,
@@ -465,17 +478,15 @@ fn classify_key<'a>(
       false,
     );
   }
-  let (name, arg_offset, _shorthand) = match bytes[0] {
-    b':' => ("bind", 1, true),
-    b'@' => ("on", 1, true),
-    b'#' => ("slot", 1, true),
+  // Determine the directive `name` slice (and its byte length) from the raw
+  // source. Shorthands keep their literal prefix character as the name, to
+  // match upstream `vue-eslint-parser` behavior.
+  let name_len = match bytes[0] {
+    b':' | b'@' | b'#' => 1,
     _ if raw.starts_with("v-") => {
-      // `v-name[:arg][.mod]*`
       let after = &raw[2..];
-      let name_end = after.find([':', '.']).unwrap_or(after.len());
-      let name = &after[..name_end];
-      let consumed = 2 + name_end;
-      return parse_directive_key(alloc, raw, name, consumed, span);
+      let after_end = after.find([':', '.']).unwrap_or(after.len());
+      2 + after_end
     }
     _ => {
       return (
@@ -492,38 +503,67 @@ fn classify_key<'a>(
       );
     }
   };
-  parse_directive_key(alloc, raw, name, arg_offset, span)
+  parse_directive_key(alloc, raw, name_len, span)
 }
 
 #[allow(clippy::option_if_let_else)]
 fn parse_directive_key<'a>(
   alloc: &'a Allocator,
   raw: &'a str,
-  name: &'a str,
-  consumed: usize,
+  name_len: usize,
   span: Span,
 ) -> (ArenaBox<'a, VAttributeKey<'a>>, bool) {
-  // After `consumed` chars, optionally `:arg`, then `.mod` parts.
-  let rest = &raw[consumed..];
-  let (argument, after_arg_idx) = if let Some(rest_after_colon) = rest.strip_prefix(':') {
-    let dot = rest_after_colon.find('.').unwrap_or(rest_after_colon.len());
-    let arg = &rest_after_colon[..dot];
-    (Some(arg), consumed + 1 + dot)
-  } else if !rest.is_empty() && rest.as_bytes()[0] != b'.' && consumed < raw.len() {
-    // Shorthand argument follows immediately (e.g. `:foo`, `@click`, `#default`).
-    let dot = rest.find('.').unwrap_or(rest.len());
-    let arg = &rest[..dot];
-    if arg.is_empty() { (None, consumed) } else { (Some(arg), consumed + dot) }
-  } else {
-    (None, consumed)
+  let name_text = &raw[..name_len];
+  let name_ident = VIdentifier {
+    r#type: "VIdentifier",
+    range: Span::new(span.start, span.start + name_len as u32),
+    name: Str::from(name_text),
+    raw_name: Str::from(name_text),
   };
 
-  let mut modifiers: ArenaVec<'a, Str<'a>> = ArenaVec::new_in(alloc);
-  let mut tail = &raw[after_arg_idx..];
-  while let Some(t) = tail.strip_prefix('.') {
-    let next = t.find('.').unwrap_or(t.len());
-    modifiers.push(Str::from(&t[..next]));
-    tail = &t[next..];
+  // After the name, optionally `:arg` (only for `v-foo` form) or the
+  // shorthand argument that follows the prefix immediately, then `.mod`s.
+  let rest = &raw[name_len..];
+  let bytes0 = raw.as_bytes()[0];
+  let is_shorthand = matches!(bytes0, b':' | b'@' | b'#');
+
+  let (arg_offset, arg_text, after_arg_idx) =
+    if !is_shorthand && let Some(after_colon) = rest.strip_prefix(':') {
+      let dot = after_colon.find('.').unwrap_or(after_colon.len());
+      (name_len + 1, &after_colon[..dot], name_len + 1 + dot)
+    } else if is_shorthand && !rest.is_empty() && rest.as_bytes()[0] != b'.' {
+      let dot = rest.find('.').unwrap_or(rest.len());
+      (name_len, &rest[..dot], name_len + dot)
+    } else {
+      (name_len, "", name_len)
+    };
+
+  let argument = if arg_text.is_empty() {
+    None
+  } else {
+    Some(VIdentifier {
+      r#type: "VIdentifier",
+      range: Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32),
+      name: Str::from(arg_text),
+      raw_name: Str::from(arg_text),
+    })
+  };
+
+  let mut modifiers: ArenaVec<'a, VIdentifier<'a>> = ArenaVec::new_in(alloc);
+  let mut cursor = after_arg_idx;
+  while cursor < raw.len() && raw.as_bytes()[cursor] == b'.' {
+    let mod_lo = cursor + 1;
+    let rest = &raw[mod_lo..];
+    let dot = rest.find('.').unwrap_or(rest.len());
+    let mod_hi = mod_lo + dot;
+    let text = &raw[mod_lo..mod_hi];
+    modifiers.push(VIdentifier {
+      r#type: "VIdentifier",
+      range: Span::new(span.start + mod_lo as u32, span.start + mod_hi as u32),
+      name: Str::from(text),
+      raw_name: Str::from(text),
+    });
+    cursor = mod_hi;
   }
 
   (
@@ -531,8 +571,8 @@ fn parse_directive_key<'a>(
       VAttributeKey::Directive(VDirectiveKey {
         r#type: "VDirectiveKey",
         range: span,
-        name: Str::from(name),
-        argument: argument.map(Str::from),
+        name: name_ident,
+        argument,
         modifiers,
         raw: Str::from(raw),
       }),

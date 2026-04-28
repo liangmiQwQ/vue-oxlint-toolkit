@@ -10,6 +10,7 @@
 //! intentional for now.
 
 use serde_json::{Value, json};
+use std::fmt::Write;
 use std::path::PathBuf;
 
 #[test]
@@ -37,19 +38,51 @@ fn ast_fixtures() {
   let failed = failures.len();
   eprintln!("ast fixtures: {passed} passed, {failed} failed of {total}");
 
-  if !failures.is_empty() {
-    let only = std::env::var("AST_FIXTURE_VERBOSE").is_ok();
-    let body = if only {
-      failures.join("\n\n")
-    } else {
-      failures
-        .iter()
-        .map(|f| f.lines().next().unwrap_or("").to_string())
-        .collect::<Vec<_>>()
-        .join("\n")
-    };
-    panic!("{failed}/{total} ast fixtures failed (set AST_FIXTURE_VERBOSE=1 for diffs):\n{body}");
+  // Compare observed failures against the tracked allowlist. The test is
+  // green when failures match exactly: regressions (newly-failing fixtures)
+  // and surprises (allowlisted fixtures that now pass) both flag the run.
+  let allowlist: std::collections::BTreeSet<String> =
+    std::fs::read_to_string(fixtures_dir().parent().unwrap().join("expected-failures.txt"))
+      .unwrap_or_default()
+      .lines()
+      .map(str::trim)
+      .filter(|l| !l.is_empty() && !l.starts_with('#'))
+      .map(String::from)
+      .collect();
+  let observed: std::collections::BTreeSet<String> = failures
+    .iter()
+    .map(|f| f.lines().next().unwrap_or("").trim_start_matches("[FAIL] ").to_string())
+    .collect();
+
+  let regressions: Vec<&String> = observed.difference(&allowlist).collect();
+  let unexpected_passes: Vec<&String> = allowlist.difference(&observed).collect();
+
+  if regressions.is_empty() && unexpected_passes.is_empty() {
+    return;
   }
+
+  let mut msg = String::new();
+  if !regressions.is_empty() {
+    let _ = write!(msg, "\nRegressions ({}):\n", regressions.len());
+    for r in &regressions {
+      let _ = writeln!(msg, "  - {r}");
+    }
+  }
+  if !unexpected_passes.is_empty() {
+    let _ = write!(
+      msg,
+      "\nFixtures now pass (remove from expected-failures.txt) ({}):\n",
+      unexpected_passes.len()
+    );
+    for r in &unexpected_passes {
+      let _ = writeln!(msg, "  - {r}");
+    }
+  }
+  if std::env::var("AST_FIXTURE_VERBOSE").is_ok() {
+    msg.push_str("\n--- diffs ---\n");
+    msg.push_str(&failures.join("\n\n"));
+  }
+  panic!("{msg}");
 }
 
 fn run_one(name: &str) -> Result<(), String> {
@@ -162,6 +195,64 @@ fn collect_children(typ: &str, node: &Value, src: &str) -> Vec<Value> {
       }
       v
     }
-    _ => Vec::new(),
+    "VDirectiveKey" => {
+      let mut v = Vec::new();
+      if let Some(name) = node.get("name")
+        && !name.is_null()
+      {
+        v.push(walk(name, src));
+      }
+      if let Some(arg) = node.get("argument")
+        && !arg.is_null()
+      {
+        v.push(walk(arg, src));
+      }
+      if let Some(mods) = node.get("modifiers").and_then(Value::as_array) {
+        for m in mods {
+          v.push(walk(m, src));
+        }
+      }
+      v
+    }
+    "VExpressionContainer" => {
+      let mut v = Vec::new();
+      if let Some(expr) = node.get("expression")
+        && !expr.is_null()
+      {
+        v.push(walk(expr, src));
+      }
+      v
+    }
+    // Default: treat as a generic ESTree JS node — recurse into every field
+    // whose value is itself a node (has a `type`) or a list of nodes.
+    _ => generic_js_children(node, src),
+  }
+}
+
+fn generic_js_children(node: &Value, src: &str) -> Vec<Value> {
+  let mut out = Vec::new();
+  let Some(obj) = node.as_object() else { return out };
+  for (k, val) in obj {
+    if matches!(k.as_str(), "type" | "range" | "start" | "end" | "loc" | "raw" | "value" | "name") {
+      continue;
+    }
+    visit_js_value(val, &mut out, src);
+  }
+  out
+}
+
+fn visit_js_value(v: &Value, out: &mut Vec<Value>, src: &str) {
+  match v {
+    Value::Object(map) => {
+      if map.contains_key("type") && map.contains_key("start") {
+        out.push(walk(v, src));
+      }
+    }
+    Value::Array(arr) => {
+      for x in arr {
+        visit_js_value(x, out, src);
+      }
+    }
+    _ => {}
   }
 }

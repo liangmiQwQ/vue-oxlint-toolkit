@@ -16,6 +16,7 @@
 #![deny(clippy::all)]
 
 pub mod ast;
+pub mod expr;
 pub mod parser;
 pub mod sfc;
 pub mod template;

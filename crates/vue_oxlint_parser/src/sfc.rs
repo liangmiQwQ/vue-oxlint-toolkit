@@ -162,21 +162,25 @@ pub fn split(source: &str) -> Result<SfcLayout<'_>, OxcDiagnostic> {
         }
         k += 1;
       }
-      if depth != 0 {
-        return Err(missing_end_tag(name, tag_open as u32, start_tag_end as u32));
-      }
+      // Tolerate unclosed top-level blocks (mirrors upstream's lenient
+      // recovery): treat the block as extending to EOF with no end tag.
+      let (final_content_end, final_end_close, end_tag_range) = if depth == 0 {
+        (content_end, end_tag_close, Some(Span::new(content_end as u32, end_tag_close as u32)))
+      } else {
+        (len, len, None)
+      };
 
       blocks.push(SfcBlock {
         tag: name,
-        range: Span::new(tag_open as u32, end_tag_close as u32),
+        range: Span::new(tag_open as u32, final_end_close as u32),
         start_tag_range,
-        end_tag_range: Some(Span::new(content_end as u32, end_tag_close as u32)),
-        content_range: Span::new(body_start as u32, content_end as u32),
+        end_tag_range,
+        content_range: Span::new(body_start as u32, final_content_end as u32),
         raw_attributes: raw_attrs,
         self_closing: false,
       });
-      text_start = end_tag_close;
-      i = end_tag_close;
+      text_start = final_end_close;
+      i = final_end_close;
       continue;
     }
     i += 1;

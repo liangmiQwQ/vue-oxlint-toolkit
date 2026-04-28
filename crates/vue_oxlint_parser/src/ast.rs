@@ -114,9 +114,8 @@ pub struct VText<'a> {
   pub value: Str<'a>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct VExpressionContainer<'a> {
-  #[serde(rename = "type")]
   pub r#type: &'static str,
   pub range: Span,
   /// Raw expression source between the delimiters (`{{` / `}}` for mustache,
@@ -127,6 +126,31 @@ pub struct VExpressionContainer<'a> {
   /// `true` when this container holds a `v-for` or otherwise non-expression
   /// payload that the simple parser does not analyse beyond text capture.
   pub raw: bool,
+}
+
+impl Serialize for VExpressionContainer<'_> {
+  fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+    use serde::ser::SerializeStruct;
+    let expr = if self.raw {
+      None
+    } else {
+      crate::expr::parse_expression_to_raw(
+        self.raw_expression.as_ref(),
+        self.expression_range.start,
+      )
+    };
+    let mut s = ser.serialize_struct("VExpressionContainer", 6)?;
+    s.serialize_field("type", &self.r#type)?;
+    s.serialize_field("range", &self.range)?;
+    s.serialize_field("raw_expression", self.raw_expression.as_ref())?;
+    s.serialize_field("expression_range", &self.expression_range)?;
+    s.serialize_field("raw", &self.raw)?;
+    match &expr {
+      Some(v) => s.serialize_field("expression", v.as_ref())?,
+      None => s.serialize_field("expression", &Option::<()>::None)?,
+    }
+    s.end()
+  }
 }
 
 #[derive(Debug, Serialize)]
@@ -160,12 +184,12 @@ pub struct VDirectiveKey<'a> {
   #[serde(rename = "type")]
   pub r#type: &'static str,
   pub range: Span,
-  /// Directive name without the `v-` / shorthand prefix (e.g. `bind`, `on`,
-  /// `slot`, `for`, `model`).
-  pub name: Str<'a>,
-  /// Argument source text (e.g. for `:foo` or `v-bind:foo`, this is `foo`).
-  pub argument: Option<Str<'a>>,
-  pub modifiers: ArenaVec<'a, Str<'a>>,
+  /// Directive name as it appears in source — for shorthands this is the
+  /// literal prefix (`:`, `@`, `#`); otherwise the full `v-foo` form.
+  pub name: VIdentifier<'a>,
+  /// Argument identifier (e.g. for `:foo` or `v-bind:foo`, this is `foo`).
+  pub argument: Option<VIdentifier<'a>>,
+  pub modifiers: ArenaVec<'a, VIdentifier<'a>>,
   /// Raw source text of the whole key (e.g. `v-bind:foo.sync`, `:foo`,
   /// `@click.stop`, `#default`).
   pub raw: Str<'a>,
