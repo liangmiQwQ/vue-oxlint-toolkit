@@ -1,8 +1,0 @@
-<script setup>
-defineOptions({
-  inheritAttrs: false,
-  customOptions: {
-    /* ... */
-  }
-})
-</script>
