@@ -158,11 +158,7 @@ impl<'a> Lexer<'a> {
     let text = std::str::from_utf8(&bytes[lo as usize..p]).unwrap_or("");
     Token {
       span: Span::new(lo, p as u32),
-      kind: TokenKind::AttrValue {
-        value: text,
-        quote: None,
-        inner_span: Span::new(lo, p as u32),
-      },
+      kind: TokenKind::AttrValue { value: text, quote: None, inner_span: Span::new(lo, p as u32) },
     }
   }
 

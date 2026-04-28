@@ -55,8 +55,7 @@ fn build_one<'a>(
   source_type: SourceType,
 ) -> VAttribute<'a> {
   let is_v_pre_attr = a.key == "v-pre";
-  let (key_node, is_directive) =
-    classify_key(alloc, a.key, a.key_span, in_v_pre && !is_v_pre_attr);
+  let (key_node, is_directive) = classify_key(alloc, a.key, a.key_span, in_v_pre && !is_v_pre_attr);
 
   let attr_span = Span::new(a.key_span.start, a.attr_end);
 
@@ -83,11 +82,7 @@ fn build_one<'a>(
     let is_bind = name_str.as_ref() == ":" || name_str.as_ref().eq_ignore_ascii_case("v-bind");
     if is_bind && let Some(VDirectiveKeyArgument::Identifier(id)) = &dk.argument {
       let n = id.name.as_str();
-      if !n.is_empty() && is_plausible_arg_name(n) {
-        Some((id.range, n))
-      } else {
-        None
-      }
+      if !n.is_empty() && is_plausible_arg_name(n) { Some((id.range, n)) } else { None }
     } else {
       None
     }

@@ -70,9 +70,12 @@ impl<'a> Parser<'a, '_> {
   }
 
   /// Merge adjacent `VText` children that come from contiguous source
-   /// regions. This unifies `text + v-pre mustache + text` into one `VText`,
-   /// matching upstream behavior.
-  fn coalesce_text(&self, list: ArenaVec<'a, VElementChild<'a>>) -> ArenaVec<'a, VElementChild<'a>> {
+  /// regions. This unifies `text + v-pre mustache + text` into one `VText`,
+  /// matching upstream behavior.
+  fn coalesce_text(
+    &self,
+    list: ArenaVec<'a, VElementChild<'a>>,
+  ) -> ArenaVec<'a, VElementChild<'a>> {
     let mut out: ArenaVec<'a, VElementChild<'a>> = ArenaVec::new_in(self.alloc);
     for item in list {
       if let VElementChild::Text(ref new_text) = item
@@ -113,9 +116,9 @@ impl<'a> Parser<'a, '_> {
             let raw = self.body_text(tok.span);
             out.push(self.make_text(tok.span, raw));
           } else {
-            out.push(VElementChild::ExpressionContainer(self.make_expr_container(
-              tok.span, expr, expr_span,
-            )));
+            out.push(VElementChild::ExpressionContainer(
+              self.make_expr_container(tok.span, expr, expr_span),
+            ));
           }
         }
         TokenKind::EndTag { name, .. } => {
@@ -144,7 +147,10 @@ impl<'a> Parser<'a, '_> {
             out.push(VElementChild::Element(el));
           }
         }
-        TokenKind::Comment | TokenKind::Cdata | TokenKind::Bang | TokenKind::ProcessingInstruction => {
+        TokenKind::Comment
+        | TokenKind::Cdata
+        | TokenKind::Bang
+        | TokenKind::ProcessingInstruction => {
           self.next();
         }
         _ => {
@@ -290,9 +296,9 @@ impl<'a> Parser<'a, '_> {
             let raw = self.body_text(t.span);
             out.push(self.make_text(t.span, raw));
           } else {
-            out.push(VElementChild::ExpressionContainer(self.make_expr_container(
-              t.span, expr, expr_span,
-            )));
+            out.push(VElementChild::ExpressionContainer(
+              self.make_expr_container(t.span, expr, expr_span),
+            ));
           }
         }
         _ => break,
@@ -339,11 +345,7 @@ fn read_attrs<'a>(lexer: &mut Lexer<'a>) -> (Vec<AttrTok<'a>>, Token<'a>) {
   super::read_start_tag_attrs(lexer)
 }
 
-fn shift_attrs<'a>(
-  attrs: &[AttrTok<'a>],
-  base: u32,
-  _alloc: &'a Allocator,
-) -> Vec<AttrTok<'a>> {
+fn shift_attrs<'a>(attrs: &[AttrTok<'a>], base: u32, _alloc: &'a Allocator) -> Vec<AttrTok<'a>> {
   attrs
     .iter()
     .map(|a| AttrTok {

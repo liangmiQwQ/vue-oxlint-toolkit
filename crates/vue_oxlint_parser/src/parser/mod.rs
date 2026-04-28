@@ -27,7 +27,9 @@ use crate::token::{LexMode, Token, TokenKind};
 /// the closing token. Handles `key`, `key=`, `key=value`, `key="v"`, and
 /// `key='v'`, with the `attr_end` field tracking how far each attribute
 /// span reaches into the source.
-pub(crate) fn read_start_tag_attrs<'a>(lexer: &mut Lexer<'a>) -> (Vec<attr::AttrTok<'a>>, Token<'a>) {
+pub(crate) fn read_start_tag_attrs<'a>(
+  lexer: &mut Lexer<'a>,
+) -> (Vec<attr::AttrTok<'a>>, Token<'a>) {
   let mut out: Vec<attr::AttrTok<'a>> = Vec::new();
   let mut state: AttrState<'a> = AttrState::Idle;
   loop {
@@ -116,8 +118,7 @@ enum AttrState<'a> {
 fn flush<'a>(state: &mut AttrState<'a>, out: &mut Vec<attr::AttrTok<'a>>) {
   match std::mem::replace(state, AttrState::Idle) {
     AttrState::Idle => {}
-    AttrState::HaveKey { span, name, attr_end }
-    | AttrState::AfterEq { span, name, attr_end } => {
+    AttrState::HaveKey { span, name, attr_end } | AttrState::AfterEq { span, name, attr_end } => {
       out.push(attr::AttrTok { key_span: span, key: name, value: None, attr_end });
     }
   }
@@ -227,11 +228,7 @@ fn detect_template_source_type(layout: &[sfc::LayoutBlock<'_>]) -> SourceType {
       continue;
     }
     let lang = block.attrs.iter().find_map(|a| {
-      if a.key.eq_ignore_ascii_case("lang") {
-        a.value.as_ref().map(|v| v.text)
-      } else {
-        None
-      }
+      if a.key.eq_ignore_ascii_case("lang") { a.value.as_ref().map(|v| v.text) } else { None }
     });
     let mut st = SourceType::default().with_module(true);
     match lang {
@@ -292,10 +289,8 @@ where
     }
     st
   });
-  let body =
-    &source[block.content_range.start as usize..block.content_range.end as usize];
-  let ParserReturn { program, errors, .. } =
-    JsParser::new(js_alloc, body, source_type).parse();
+  let body = &source[block.content_range.start as usize..block.content_range.end as usize];
+  let ParserReturn { program, errors, .. } = JsParser::new(js_alloc, body, source_type).parse();
   ScriptProgram {
     tag: block.tag.to_string(),
     setup,

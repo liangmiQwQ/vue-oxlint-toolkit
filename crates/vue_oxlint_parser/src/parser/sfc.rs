@@ -75,10 +75,7 @@ pub fn parse_sfc<'a>(_alloc: &'a Allocator, source: &'a str) -> ParsedLayout<'a>
   }
 
   if text_lo < total_len {
-    texts.push((
-      Span::new(text_lo, total_len),
-      &source[text_lo as usize..total_len as usize],
-    ));
+    texts.push((Span::new(text_lo, total_len), &source[text_lo as usize..total_len as usize]));
   }
 
   ParsedLayout { blocks, text_segments: texts }
@@ -148,10 +145,7 @@ fn scan_block_body(source: &str, name: &str, body_lo: u32) -> (u32, Option<Span>
       if k + close_b.len() <= len
         && bytes[k..k + close_b.len()].eq_ignore_ascii_case(close_b)
         && (k + close_b.len() == len
-          || matches!(
-            bytes[k + close_b.len()],
-            b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n'
-          ))
+          || matches!(bytes[k + close_b.len()], b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n'))
       {
         depth -= 1;
         if depth == 0 {
@@ -166,10 +160,7 @@ fn scan_block_body(source: &str, name: &str, body_lo: u32) -> (u32, Option<Span>
       } else if k + open_b.len() <= len
         && bytes[k..k + open_b.len()].eq_ignore_ascii_case(open_b)
         && (k + open_b.len() == len
-          || matches!(
-            bytes[k + open_b.len()],
-            b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n'
-          ))
+          || matches!(bytes[k + open_b.len()], b'>' | b'/' | b' ' | b'\t' | b'\r' | b'\n'))
       {
         depth += 1;
       }
@@ -200,10 +191,8 @@ pub fn build_document<'a>(
     if let Some(&(span, txt)) = text_iter.peek().copied()
       && span.start == next_offset
     {
-      let node = ArenaBox::new_in(
-        VText { r#type: "VText", range: span, value: Str::from(txt) },
-        alloc,
-      );
+      let node =
+        ArenaBox::new_in(VText { r#type: "VText", range: span, value: Str::from(txt) }, alloc);
       root.push(VRootChild::Text(node));
       next_offset = span.end;
       text_iter.next();
@@ -246,29 +235,25 @@ fn build_block_element<'a>(
     },
     alloc,
   );
-  let end_tag = block
-    .end_tag_range
-    .map(|r| ArenaBox::new_in(VEndTag { r#type: "VEndTag", range: r }, alloc));
+  let end_tag =
+    block.end_tag_range.map(|r| ArenaBox::new_in(VEndTag { r#type: "VEndTag", range: r }, alloc));
 
-  let children: ArenaVec<'a, VElementChild<'a>> = if block.tag.eq_ignore_ascii_case("template")
-    && !block.self_closing
-  {
-    let body = &source
-      [block.content_range.start as usize..block.content_range.end as usize];
-    template::parse_template_body(alloc, body, block.content_range.start, template_source_type)
-  } else {
-    let mut v: ArenaVec<'a, VElementChild<'a>> = ArenaVec::new_in(alloc);
-    if !block.self_closing && block.content_range.end > block.content_range.start {
-      let txt = &source
-        [block.content_range.start as usize..block.content_range.end as usize];
-      let n = ArenaBox::new_in(
-        VText { r#type: "VText", range: block.content_range, value: Str::from(txt) },
-        alloc,
-      );
-      v.push(VElementChild::Text(n));
-    }
-    v
-  };
+  let children: ArenaVec<'a, VElementChild<'a>> =
+    if block.tag.eq_ignore_ascii_case("template") && !block.self_closing {
+      let body = &source[block.content_range.start as usize..block.content_range.end as usize];
+      template::parse_template_body(alloc, body, block.content_range.start, template_source_type)
+    } else {
+      let mut v: ArenaVec<'a, VElementChild<'a>> = ArenaVec::new_in(alloc);
+      if !block.self_closing && block.content_range.end > block.content_range.start {
+        let txt = &source[block.content_range.start as usize..block.content_range.end as usize];
+        let n = ArenaBox::new_in(
+          VText { r#type: "VText", range: block.content_range, value: Str::from(txt) },
+          alloc,
+        );
+        v.push(VElementChild::Text(n));
+      }
+      v
+    };
 
   ArenaBox::new_in(
     VElement {
