@@ -13,8 +13,9 @@ use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_str::Str;
 
 use crate::ast::{
-  Span, VAttribute, VAttributeKey, VAttributeValue, VDirectiveKey, VElement, VElementChild,
-  VEndTag, VExpressionContainer, VIdentifier, VLiteral, VNamespace, VStartTag, VText,
+  Span, VAttribute, VAttributeKey, VAttributeValue, VDirectiveKey, VDirectiveKeyArgument, VElement,
+  VElementChild, VEndTag, VExpressionContainer, VIdentifier, VLiteral, VNamespace, VStartTag,
+  VText,
 };
 
 /// Parse the contents of a `<template>` block (the inner HTML, not including
@@ -27,8 +28,9 @@ pub fn parse_template_body<'a>(
   body: &'a str,
   body_offset: u32,
 ) -> ArenaVec<'a, VElementChild<'a>> {
-  let mut p = TemplateParser { alloc, src: body, base: body_offset, pos: 0 };
-  p.parse_children(None)
+  let mut p =
+    TemplateParser { alloc, src: body, base: body_offset, pos: 0, open_stack: Vec::new() };
+  p.parse_children(&[])
 }
 
 /// Parse a single element from a top-level SFC block.
@@ -77,6 +79,9 @@ struct TemplateParser<'a> {
   src: &'a str,
   base: u32,
   pos: usize,
+  /// Names of currently-open elements, outermost first. Used to detect
+  /// implicit-close on stray ancestor end tags and on auto-closing siblings.
+  open_stack: Vec<&'a str>,
 }
 
 impl<'a> TemplateParser<'a> {
@@ -88,7 +93,8 @@ impl<'a> TemplateParser<'a> {
     Span::new(self.base + lo as u32, self.base + hi as u32)
   }
 
-  fn parse_children(&mut self, parent_close: Option<&str>) -> ArenaVec<'a, VElementChild<'a>> {
+  fn parse_children(&mut self, ancestors: &[&str]) -> ArenaVec<'a, VElementChild<'a>> {
+    let parent_close = ancestors.first().copied();
     let mut out: ArenaVec<'a, VElementChild<'a>> = ArenaVec::new_in(self.alloc);
     let bytes = self.bytes();
     let len = bytes.len();
@@ -106,11 +112,17 @@ impl<'a> TemplateParser<'a> {
       }
       if b == b'<' && self.pos + 1 < len {
         let next = bytes[self.pos + 1];
-        // End tag — defer to caller.
+        // End tag.
         if next == b'/' {
           if let Some(name) = parent_close
             && self.matches_end_tag(name)
           {
+            self.flush_text(text_start, self.pos, &mut out);
+            return out;
+          }
+          // End tag for an outer ancestor — close the current frame so
+          // the ancestor can match the tag. (HTML5 implicit close.)
+          if ancestors.iter().skip(1).any(|n| self.matches_end_tag(n)) {
             self.flush_text(text_start, self.pos, &mut out);
             return out;
           }
@@ -138,6 +150,16 @@ impl<'a> TemplateParser<'a> {
           continue;
         }
         if next.is_ascii_alphabetic() {
+          // Auto-close the current element when its content model
+          // forbids the upcoming start tag (HTML5: `<p>` is closed by
+          // any flow-level sibling, `<dt>`/`<dd>` close each other).
+          if let Some(parent) = ancestors.first()
+            && let Some(name) = peek_tag_name(self.bytes(), self.pos + 1)
+            && auto_closes(parent, name)
+          {
+            self.flush_text(text_start, self.pos, &mut out);
+            return out;
+          }
           self.flush_text(text_start, self.pos, &mut out);
           if let Some(el) = self.parse_element() {
             out.push(VElementChild::Element(el));
@@ -202,6 +224,8 @@ impl<'a> TemplateParser<'a> {
         raw_expression: Str::from(raw),
         expression_range: self.span(expr_lo, expr_hi),
         raw: false,
+        synthetic_identifier: false,
+        kind: crate::ast::VExprKind::Default,
       },
       self.alloc,
     ))
@@ -254,7 +278,12 @@ impl<'a> TemplateParser<'a> {
       ));
     }
 
-    let children = self.parse_children(Some(name));
+    self.open_stack.push(name);
+    // `parse_children` wants the ancestor chain with the immediate parent
+    // first; our stack is outermost-first, so reverse on the way in.
+    let chain: Vec<&str> = self.open_stack.iter().rev().copied().collect();
+    let children = self.parse_children(&chain);
+    self.open_stack.pop();
     let mut end_tag = None;
     let element_end;
     if self.matches_end_tag(name) {
@@ -292,6 +321,53 @@ impl<'a> TemplateParser<'a> {
   }
 }
 
+/// Inspect the argument-and-tail slice of a directive key (everything after
+/// the directive name and a possible separating `:`) and classify it into:
+/// `(arg_offset_in_raw, arg_text, end_of_arg_in_raw, is_dynamic)`.
+///
+/// `arg_offset_in_raw` is the position of the first byte of the argument
+/// span within the parent raw string (the start of `[` for dynamic args, or
+/// of the static identifier text otherwise). `end_of_arg_in_raw` points one
+/// past the last byte of the argument span (just past `]` or just before the
+/// first `.modifier`).
+fn is_plausible_arg_name(s: &str) -> bool {
+  let bytes = s.as_bytes();
+  if bytes.is_empty() {
+    return false;
+  }
+  // Must start with a letter or underscore; later bytes may include `-`.
+  if !(bytes[0].is_ascii_alphabetic() || bytes[0] == b'_') {
+    return false;
+  }
+  bytes.iter().all(|b| b.is_ascii_alphanumeric() || *b == b'_' || *b == b'-')
+}
+
+fn classify_arg(after: &str, base_in_raw: usize) -> (usize, &str, usize, bool) {
+  after.strip_prefix('[').map_or_else(
+    || {
+      let dot = after.find('.').unwrap_or(after.len());
+      (base_in_raw, &after[..dot], base_in_raw + dot, false)
+    },
+    |rest| {
+      // Find matching `]`. When unclosed, fall back to a static-identifier
+      // argument with the literal `[…` text — matches upstream parse-error
+      // recovery, which does not attempt to interpret a malformed bracket
+      // group as a dynamic argument.
+      rest.find(']').map_or_else(
+        || {
+          let dot = after.find('.').unwrap_or(after.len());
+          (base_in_raw, &after[..dot], base_in_raw + dot, false)
+        },
+        |end_inner| {
+          let inner = &rest[..end_inner];
+          let consumed = end_inner + 2;
+          (base_in_raw, inner, base_in_raw + consumed, true)
+        },
+      )
+    },
+  )
+}
+
 fn find_tag_end(bytes: &[u8], mut pos: usize) -> (usize, bool) {
   while pos < bytes.len() {
     match bytes[pos] {
@@ -316,6 +392,75 @@ fn find_tag_end(bytes: &[u8], mut pos: usize) -> (usize, bool) {
 
 const fn is_tag_name_part(b: u8) -> bool {
   b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b':' || b == b'.'
+}
+
+/// Peek the tag name starting at `pos` (which should point one past `<`).
+/// Returns `None` if no tag-name characters follow.
+fn peek_tag_name(bytes: &[u8], pos: usize) -> Option<&str> {
+  let mut end = pos;
+  while end < bytes.len() && is_tag_name_part(bytes[end]) {
+    end += 1;
+  }
+  if end == pos {
+    return None;
+  }
+  std::str::from_utf8(&bytes[pos..end]).ok()
+}
+
+/// HTML5 content-model-driven auto-close: when `parent` is open and `child`
+/// is encountered as a sibling start tag, should `parent` be implicitly
+/// closed before `child` opens?
+fn auto_closes(parent: &str, child: &str) -> bool {
+  // Only apply HTML5 implicit-close to plain lowercase element names.
+  // Custom components (`<Address>`, `<my-comp>`) follow Vue's component
+  // resolution and are not subject to native content-model rules.
+  if !child.chars().next().is_some_and(|c| c.is_ascii_lowercase()) {
+    return false;
+  }
+  if child.contains('-') {
+    return false;
+  }
+  let p = parent.to_ascii_lowercase();
+  let c = child.to_ascii_lowercase();
+  match p.as_str() {
+    "p" => matches!(
+      c.as_str(),
+      "address"
+        | "article"
+        | "aside"
+        | "blockquote"
+        | "details"
+        | "div"
+        | "dl"
+        | "fieldset"
+        | "figcaption"
+        | "figure"
+        | "footer"
+        | "form"
+        | "h1"
+        | "h2"
+        | "h3"
+        | "h4"
+        | "h5"
+        | "h6"
+        | "header"
+        | "hgroup"
+        | "hr"
+        | "main"
+        | "menu"
+        | "nav"
+        | "ol"
+        | "p"
+        | "pre"
+        | "section"
+        | "table"
+        | "ul"
+    ),
+    "dt" | "dd" => matches!(c.as_str(), "dt" | "dd"),
+    "li" => c == "li",
+    "rb" | "rt" | "rp" | "rtc" => matches!(c.as_str(), "rb" | "rt" | "rp" | "rtc"),
+    _ => false,
+  }
 }
 
 fn is_void_html_element(name: &str) -> bool {
@@ -421,6 +566,50 @@ pub fn parse_attributes<'a>(
     let attr_span = Span::new(raw_offset + key_lo as u32, raw_offset + attr_hi as u32);
 
     let (key_node, is_directive) = classify_key(alloc, key_text, key_span);
+
+    // Determine the directive kind so the value container can be parsed
+    // appropriately (statement-list for v-on, binding pattern for v-slot,
+    // alias-and-iter for v-for).
+    let value_kind: crate::ast::VExprKind = if let VAttributeKey::Directive(dk) = &*key_node {
+      let n = dk.name.name.as_str();
+      if n == "@" || n.eq_ignore_ascii_case("v-on") {
+        crate::ast::VExprKind::VOn
+      } else if n == "#" || n.eq_ignore_ascii_case("v-slot") || n.eq_ignore_ascii_case("slot-scope")
+      {
+        crate::ast::VExprKind::VSlot
+      } else if n.eq_ignore_ascii_case("v-for") {
+        crate::ast::VExprKind::VFor
+      } else {
+        crate::ast::VExprKind::Default
+      }
+    } else {
+      crate::ast::VExprKind::Default
+    };
+
+    // `v-bind` same-name shorthand: a `:foo` / `v-bind:foo` directive with
+    // a static argument and no value synthesises a value expression
+    // container whose expression is an `Identifier` named like the argument.
+    let synth_value: Option<(Span, &'a str)> = {
+      let mut s = None;
+      if value.is_none()
+        && is_directive
+        && let VAttributeKey::Directive(dk) = &*key_node
+      {
+        let name_str = dk.name.name;
+        let is_bind = name_str.as_ref() == ":" || name_str.as_ref().eq_ignore_ascii_case("v-bind");
+        if is_bind && let Some(VDirectiveKeyArgument::Identifier(id)) = &dk.argument {
+          let n = id.name.as_str();
+          // Skip synthesis when the argument text isn't a plausible
+          // identifier — e.g. the parse-error fallback for an unclosed
+          // dynamic-argument bracket leaves text like `["a` here.
+          if !n.is_empty() && is_plausible_arg_name(n) {
+            s = Some((id.range, n));
+          }
+        }
+      }
+      s
+    };
+
     let value_node = value.map(|(v_lo, v_hi, inner_lo, inner_hi, txt)| {
       let span = Span::new(raw_offset + v_lo as u32, raw_offset + v_hi as u32);
       let inner_span = Span::new(raw_offset + inner_lo as u32, raw_offset + inner_hi as u32);
@@ -432,6 +621,8 @@ pub fn parse_attributes<'a>(
             raw_expression: Str::from(txt),
             expression_range: inner_span,
             raw: false,
+            synthetic_identifier: false,
+            kind: value_kind,
           }),
           alloc,
         )
@@ -445,6 +636,23 @@ pub fn parse_attributes<'a>(
           alloc,
         )
       }
+    });
+
+    let value_node = value_node.or_else(|| {
+      synth_value.map(|(arg_span, name)| {
+        ArenaBox::new_in(
+          VAttributeValue::Expression(VExpressionContainer {
+            r#type: "VExpressionContainer",
+            range: arg_span,
+            raw_expression: Str::from(name),
+            expression_range: arg_span,
+            raw: false,
+            synthetic_identifier: true,
+            kind: crate::ast::VExprKind::Default,
+          }),
+          alloc,
+        )
+      })
     });
 
     out.push(VAttribute {
@@ -482,7 +690,7 @@ fn classify_key<'a>(
   // source. Shorthands keep their literal prefix character as the name, to
   // match upstream `vue-eslint-parser` behavior.
   let name_len = match bytes[0] {
-    b':' | b'@' | b'#' => 1,
+    b':' | b'@' | b'#' | b'.' => 1,
     _ if raw.starts_with("v-") => {
       let after = &raw[2..];
       let after_end = after.find([':', '.']).unwrap_or(after.len());
@@ -525,28 +733,42 @@ fn parse_directive_key<'a>(
   // shorthand argument that follows the prefix immediately, then `.mod`s.
   let rest = &raw[name_len..];
   let bytes0 = raw.as_bytes()[0];
-  let is_shorthand = matches!(bytes0, b':' | b'@' | b'#');
+  let is_shorthand = matches!(bytes0, b':' | b'@' | b'#' | b'.');
+  let is_prop_shorthand = bytes0 == b'.';
 
-  let (arg_offset, arg_text, after_arg_idx) =
+  let (arg_offset, arg_text, after_arg_idx, dynamic) =
     if !is_shorthand && let Some(after_colon) = rest.strip_prefix(':') {
-      let dot = after_colon.find('.').unwrap_or(after_colon.len());
-      (name_len + 1, &after_colon[..dot], name_len + 1 + dot)
+      classify_arg(after_colon, name_len + 1)
     } else if is_shorthand && !rest.is_empty() && rest.as_bytes()[0] != b'.' {
-      let dot = rest.find('.').unwrap_or(rest.len());
-      (name_len, &rest[..dot], name_len + dot)
+      classify_arg(rest, name_len)
     } else {
-      (name_len, "", name_len)
+      (name_len, "", name_len, false)
     };
 
-  let argument = if arg_text.is_empty() {
+  let argument = if arg_text.is_empty() && !dynamic {
     None
+  } else if dynamic {
+    // Dynamic argument: `[expr]`. The argument node is a
+    // VExpressionContainer covering the brackets; its inner expression
+    // covers just the text inside.
+    let outer = Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32);
+    let inner = Span::new(outer.start + 1, outer.end - 1);
+    Some(VDirectiveKeyArgument::Expression(VExpressionContainer {
+      r#type: "VExpressionContainer",
+      range: outer,
+      raw_expression: Str::from(arg_text),
+      expression_range: inner,
+      raw: false,
+      synthetic_identifier: false,
+      kind: crate::ast::VExprKind::Default,
+    }))
   } else {
-    Some(VIdentifier {
+    Some(VDirectiveKeyArgument::Identifier(VIdentifier {
       r#type: "VIdentifier",
       range: Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32),
       name: Str::from(arg_text),
       raw_name: Str::from(arg_text),
-    })
+    }))
   };
 
   let mut modifiers: ArenaVec<'a, VIdentifier<'a>> = ArenaVec::new_in(alloc);
@@ -564,6 +786,20 @@ fn parse_directive_key<'a>(
       raw_name: Str::from(text),
     });
     cursor = mod_hi;
+  }
+
+  // The `.` shorthand for `v-bind:foo.prop` always has the implicit `prop`
+  // modifier. When the user wrote it as `.foo` (no explicit modifiers),
+  // synthesise an empty-named modifier at the end of the key span — this
+  // matches upstream's marker for "prop shorthand without explicit prop".
+  if is_prop_shorthand && modifiers.is_empty() {
+    let end = span.end;
+    modifiers.push(VIdentifier {
+      r#type: "VIdentifier",
+      range: Span::new(end, end),
+      name: Str::from(""),
+      raw_name: Str::from(""),
+    });
   }
 
   (
