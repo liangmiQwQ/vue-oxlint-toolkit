@@ -90,7 +90,7 @@ where
 
   let result = f(&ret);
 
-  let snapshot_name = file_path.replace(['/', '.'], "_");
+  let snapshot_name = snapshot_name(file_path);
   let mut settings = insta::Settings::clone_current();
   settings.set_snapshot_path(format!("snapshots/{folder}"));
   settings.set_prepend_module_to_snapshot(false);
@@ -101,6 +101,10 @@ where
 
 pub fn read_file(file_path: &str) -> String {
   std::fs::read_to_string(format!("fixtures/{file_path}")).expect("Failed to read test file")
+}
+
+fn snapshot_name(file_path: &str) -> String {
+  file_path.replace(['/', '\\', '.'], "_")
 }
 
 fn format_string_slice(s: &str) -> String {

@@ -35,7 +35,7 @@ fn validate_all_codegen_syntax() {
         let codegen = js.code;
 
         // Store codegen as snapshot
-        let snap_name = file_path.replace(['/', '.'], "_");
+        let snap_name = super::snapshot_name(file_path);
         let mut settings = insta::Settings::clone_current();
         settings.set_snapshot_path("snapshots/codegen");
         settings.set_prepend_module_to_snapshot(false);
@@ -64,7 +64,7 @@ fn validate_all_codegen_syntax() {
   if !invalid.is_empty() {
     println!("Invalid codegen syntax in:");
     for (file_path, errors) in &invalid {
-      let snap_name = file_path.replace(['/', '.'], "_");
+      let snap_name = super::snapshot_name(file_path);
       println!("  {file_path}  (src/snapshots/codegen/{snap_name}.snap)");
       for error in errors {
         println!("{error}");
