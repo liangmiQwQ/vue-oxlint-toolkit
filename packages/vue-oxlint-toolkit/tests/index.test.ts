@@ -13,7 +13,7 @@ const msg: string = 'hello'
   expect(result.scriptKind).toBe('tsx')
   expect(result.sourceText).toContain('const msg: string = "hello";')
   expect(result.sourceText).toContain('<div>{msg}</div>')
-  expect(result.mapping).toBeUndefined()
+  expect(result.mappings).toBeUndefined()
 })
 
 it('returns parser metadata', () => {
