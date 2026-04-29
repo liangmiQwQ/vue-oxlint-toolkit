@@ -1,6 +1,5 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/mod.rs
-assertion_line: 98
 expression: result
 ---
 =============== Program ===============

@@ -1,13 +1,12 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/mod.rs
-assertion_line: 98
 expression: result
 ---
 =============== Program ===============
 Program {
     span: Span {
         start: 0,
-        end: 149,
+        end: 282,
     },
     node_id: Cell {
         value: NodeId(0),
@@ -15,9 +14,88 @@ Program {
     scope_id: Cell {
         value: None,
     },
-    source_text: "<template>\n  <div>\n    {{ count }}\n  </div>\n</template>\n\n<script lang=\"js\" setup>\nconst count = 1;\n</script>\n\n<style>\ndiv {\n  color: red;\n}\n</style>\n",
+    source_text: "<template>\n  <div :key=\"1 /* vue is full of magic */\">\n    <!-- Good Morning -->\n  </div>\n</template>\n\n<script lang=\"ts\">\n// Hello, everyone\n/* \n  I love Vue, JavaScript/TypeScript and Rust!\n  What about you?\n */\n</script>\n\n<script lang=\"ts\" setup>\n// Hello\n/* Me too! */\n</script>\n",
     comments: Vec(
-        [],
+        [
+            Comment {
+                span: Span {
+                    start: 26,
+                    end: 52,
+                },
+                attached_to: 52,
+                kind: SingleLineBlock,
+                position: Leading,
+                newlines: CommentNewlines(
+                    0x0,
+                ),
+                content: None,
+            },
+            Comment {
+                span: Span {
+                    start: 60,
+                    end: 79,
+                },
+                attached_to: 0,
+                kind: SingleLineBlock,
+                position: Trailing,
+                newlines: CommentNewlines(
+                    0x0,
+                ),
+                content: None,
+            },
+            Comment {
+                span: Span {
+                    start: 122,
+                    end: 140,
+                },
+                attached_to: 213,
+                kind: Line,
+                position: Leading,
+                newlines: CommentNewlines(
+                    Leading | Trailing,
+                ),
+                content: None,
+            },
+            Comment {
+                span: Span {
+                    start: 141,
+                    end: 212,
+                },
+                attached_to: 213,
+                kind: MultiLineBlock,
+                position: Leading,
+                newlines: CommentNewlines(
+                    Leading | Trailing,
+                ),
+                content: None,
+            },
+            Comment {
+                span: Span {
+                    start: 249,
+                    end: 257,
+                },
+                attached_to: 272,
+                kind: Line,
+                position: Leading,
+                newlines: CommentNewlines(
+                    Leading | Trailing,
+                ),
+                content: None,
+            },
+            Comment {
+                span: Span {
+                    start: 258,
+                    end: 271,
+                },
+                attached_to: 272,
+                kind: SingleLineBlock,
+                position: Leading,
+                newlines: CommentNewlines(
+                    Leading | Trailing,
+                ),
+                content: None,
+            },
+        ],
     ),
     hashbang: None,
     directives: Vec(
@@ -75,68 +153,6 @@ Program {
                                 ),
                                 statements: Vec(
                                     [
-                                        VariableDeclaration(
-                                            VariableDeclaration {
-                                                span: Span {
-                                                    start: 82,
-                                                    end: 98,
-                                                },
-                                                node_id: Cell {
-                                                    value: NodeId(0),
-                                                },
-                                                kind: Const,
-                                                declare: false,
-                                                declarations: Vec(
-                                                    [
-                                                        VariableDeclarator {
-                                                            span: Span {
-                                                                start: 88,
-                                                                end: 97,
-                                                            },
-                                                            node_id: Cell {
-                                                                value: NodeId(0),
-                                                            },
-                                                            kind: Const,
-                                                            definite: false,
-                                                            id: BindingIdentifier(
-                                                                BindingIdentifier {
-                                                                    span: Span {
-                                                                        start: 88,
-                                                                        end: 93,
-                                                                    },
-                                                                    node_id: Cell {
-                                                                        value: NodeId(0),
-                                                                    },
-                                                                    symbol_id: Cell {
-                                                                        value: None,
-                                                                    },
-                                                                    name: "count",
-                                                                },
-                                                            ),
-                                                            type_annotation: None,
-                                                            init: Some(
-                                                                NumericLiteral(
-                                                                    NumericLiteral {
-                                                                        span: Span {
-                                                                            start: 96,
-                                                                            end: 97,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        base: Decimal,
-                                                                        raw: Some(
-                                                                            "1",
-                                                                        ),
-                                                                        value: 1.0,
-                                                                    },
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ],
-                                                ),
-                                            },
-                                        ),
                                         ExpressionStatement(
                                             ExpressionStatement {
                                                 span: Span {
@@ -170,7 +186,7 @@ Program {
                                                                     JSXElement {
                                                                         span: Span {
                                                                             start: 0,
-                                                                            end: 55,
+                                                                            end: 101,
                                                                         },
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
@@ -221,7 +237,7 @@ Program {
                                                                                     JSXElement {
                                                                                         span: Span {
                                                                                             start: 13,
-                                                                                            end: 43,
+                                                                                            end: 89,
                                                                                         },
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
@@ -229,7 +245,7 @@ Program {
                                                                                         opening_element: JSXOpeningElement {
                                                                                             span: Span {
                                                                                                 start: 13,
-                                                                                                end: 18,
+                                                                                                end: 54,
                                                                                             },
                                                                                             node_id: Cell {
                                                                                                 value: NodeId(0),
@@ -248,64 +264,102 @@ Program {
                                                                                             ),
                                                                                             type_arguments: None,
                                                                                             attributes: Vec(
-                                                                                                [],
+                                                                                                [
+                                                                                                    Attribute(
+                                                                                                        JSXAttribute {
+                                                                                                            span: Span {
+                                                                                                                start: 18,
+                                                                                                                end: 53,
+                                                                                                            },
+                                                                                                            node_id: Cell {
+                                                                                                                value: NodeId(0),
+                                                                                                            },
+                                                                                                            name: NamespacedName(
+                                                                                                                JSXNamespacedName {
+                                                                                                                    span: Span {
+                                                                                                                        start: 18,
+                                                                                                                        end: 22,
+                                                                                                                    },
+                                                                                                                    node_id: Cell {
+                                                                                                                        value: NodeId(0),
+                                                                                                                    },
+                                                                                                                    namespace: JSXIdentifier {
+                                                                                                                        span: Span {
+                                                                                                                            start: 18,
+                                                                                                                            end: 19,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
+                                                                                                                        },
+                                                                                                                        name: "v-bind",
+                                                                                                                    },
+                                                                                                                    name: JSXIdentifier {
+                                                                                                                        span: Span {
+                                                                                                                            start: 19,
+                                                                                                                            end: 22,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
+                                                                                                                        },
+                                                                                                                        name: "key",
+                                                                                                                    },
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            value: Some(
+                                                                                                                ExpressionContainer(
+                                                                                                                    JSXExpressionContainer {
+                                                                                                                        span: Span {
+                                                                                                                            start: 23,
+                                                                                                                            end: 53,
+                                                                                                                        },
+                                                                                                                        node_id: Cell {
+                                                                                                                            value: NodeId(0),
+                                                                                                                        },
+                                                                                                                        expression: NumericLiteral(
+                                                                                                                            NumericLiteral {
+                                                                                                                                span: Span {
+                                                                                                                                    start: 24,
+                                                                                                                                    end: 25,
+                                                                                                                                },
+                                                                                                                                node_id: Cell {
+                                                                                                                                    value: NodeId(0),
+                                                                                                                                },
+                                                                                                                                base: Decimal,
+                                                                                                                                raw: Some(
+                                                                                                                                    "1",
+                                                                                                                                ),
+                                                                                                                                value: 1.0,
+                                                                                                                            },
+                                                                                                                        ),
+                                                                                                                    },
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ],
                                                                                             ),
                                                                                         },
                                                                                         children: Vec(
                                                                                             [
-                                                                                                Text(
-                                                                                                    JSXText {
-                                                                                                        span: Span {
-                                                                                                            start: 18,
-                                                                                                            end: 23,
-                                                                                                        },
-                                                                                                        node_id: Cell {
-                                                                                                            value: NodeId(0),
-                                                                                                        },
-                                                                                                        value: "\n    ",
-                                                                                                        raw: Some(
-                                                                                                            "\n    ",
-                                                                                                        ),
-                                                                                                    },
-                                                                                                ),
                                                                                                 ExpressionContainer(
                                                                                                     JSXExpressionContainer {
                                                                                                         span: Span {
-                                                                                                            start: 23,
-                                                                                                            end: 34,
+                                                                                                            start: 59,
+                                                                                                            end: 80,
                                                                                                         },
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
-                                                                                                        expression: Identifier(
-                                                                                                            IdentifierReference {
+                                                                                                        expression: EmptyExpression(
+                                                                                                            JSXEmptyExpression {
                                                                                                                 span: Span {
-                                                                                                                    start: 26,
-                                                                                                                    end: 31,
+                                                                                                                    start: 0,
+                                                                                                                    end: 0,
                                                                                                                 },
                                                                                                                 node_id: Cell {
                                                                                                                     value: NodeId(0),
                                                                                                                 },
-                                                                                                                reference_id: Cell {
-                                                                                                                    value: None,
-                                                                                                                },
-                                                                                                                name: "count",
                                                                                                             },
-                                                                                                        ),
-                                                                                                    },
-                                                                                                ),
-                                                                                                Text(
-                                                                                                    JSXText {
-                                                                                                        span: Span {
-                                                                                                            start: 34,
-                                                                                                            end: 37,
-                                                                                                        },
-                                                                                                        node_id: Cell {
-                                                                                                            value: NodeId(0),
-                                                                                                        },
-                                                                                                        value: "\n  ",
-                                                                                                        raw: Some(
-                                                                                                            "\n  ",
                                                                                                         ),
                                                                                                     },
                                                                                                 ),
@@ -314,8 +368,8 @@ Program {
                                                                                         closing_element: Some(
                                                                                             JSXClosingElement {
                                                                                                 span: Span {
-                                                                                                    start: 37,
-                                                                                                    end: 43,
+                                                                                                    start: 83,
+                                                                                                    end: 89,
                                                                                                 },
                                                                                                 node_id: Cell {
                                                                                                     value: NodeId(0),
@@ -323,8 +377,8 @@ Program {
                                                                                                 name: Identifier(
                                                                                                     JSXIdentifier {
                                                                                                         span: Span {
-                                                                                                            start: 39,
-                                                                                                            end: 42,
+                                                                                                            start: 85,
+                                                                                                            end: 88,
                                                                                                         },
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
@@ -339,8 +393,8 @@ Program {
                                                                                 Text(
                                                                                     JSXText {
                                                                                         span: Span {
-                                                                                            start: 43,
-                                                                                            end: 44,
+                                                                                            start: 89,
+                                                                                            end: 90,
                                                                                         },
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
@@ -356,8 +410,8 @@ Program {
                                                                         closing_element: Some(
                                                                             JSXClosingElement {
                                                                                 span: Span {
-                                                                                    start: 44,
-                                                                                    end: 55,
+                                                                                    start: 90,
+                                                                                    end: 101,
                                                                                 },
                                                                                 node_id: Cell {
                                                                                     value: NodeId(0),
@@ -365,8 +419,8 @@ Program {
                                                                                 name: Identifier(
                                                                                     JSXIdentifier {
                                                                                         span: Span {
-                                                                                            start: 46,
-                                                                                            end: 54,
+                                                                                            start: 92,
+                                                                                            end: 100,
                                                                                         },
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
@@ -381,8 +435,8 @@ Program {
                                                                 Text(
                                                                     JSXText {
                                                                         span: Span {
-                                                                            start: 55,
-                                                                            end: 57,
+                                                                            start: 101,
+                                                                            end: 103,
                                                                         },
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
@@ -396,16 +450,16 @@ Program {
                                                                 Element(
                                                                     JSXElement {
                                                                         span: Span {
-                                                                            start: 57,
-                                                                            end: 108,
+                                                                            start: 103,
+                                                                            end: 222,
                                                                         },
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
                                                                         },
                                                                         opening_element: JSXOpeningElement {
                                                                             span: Span {
-                                                                                start: 57,
-                                                                                end: 81,
+                                                                                start: 103,
+                                                                                end: 121,
                                                                             },
                                                                             node_id: Cell {
                                                                                 value: NodeId(0),
@@ -413,8 +467,8 @@ Program {
                                                                             name: Identifier(
                                                                                 JSXIdentifier {
                                                                                     span: Span {
-                                                                                        start: 58,
-                                                                                        end: 64,
+                                                                                        start: 104,
+                                                                                        end: 110,
                                                                                     },
                                                                                     node_id: Cell {
                                                                                         value: NodeId(0),
@@ -428,8 +482,8 @@ Program {
                                                                                     Attribute(
                                                                                         JSXAttribute {
                                                                                             span: Span {
-                                                                                                start: 65,
-                                                                                                end: 74,
+                                                                                                start: 111,
+                                                                                                end: 120,
                                                                                             },
                                                                                             node_id: Cell {
                                                                                                 value: NodeId(0),
@@ -437,8 +491,8 @@ Program {
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
                                                                                                     span: Span {
-                                                                                                        start: 65,
-                                                                                                        end: 69,
+                                                                                                        start: 111,
+                                                                                                        end: 115,
                                                                                                     },
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
@@ -450,14 +504,131 @@ Program {
                                                                                                 StringLiteral(
                                                                                                     StringLiteral {
                                                                                                         span: Span {
-                                                                                                            start: 71,
-                                                                                                            end: 73,
+                                                                                                            start: 117,
+                                                                                                            end: 119,
                                                                                                         },
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
                                                                                                         lone_surrogates: false,
-                                                                                                        value: "js",
+                                                                                                        value: "ts",
+                                                                                                        raw: None,
+                                                                                                    },
+                                                                                                ),
+                                                                                            ),
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                        },
+                                                                        children: Vec(
+                                                                            [],
+                                                                        ),
+                                                                        closing_element: Some(
+                                                                            JSXClosingElement {
+                                                                                span: Span {
+                                                                                    start: 213,
+                                                                                    end: 222,
+                                                                                },
+                                                                                node_id: Cell {
+                                                                                    value: NodeId(0),
+                                                                                },
+                                                                                name: Identifier(
+                                                                                    JSXIdentifier {
+                                                                                        span: Span {
+                                                                                            start: 215,
+                                                                                            end: 221,
+                                                                                        },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
+                                                                                        name: "script",
+                                                                                    },
+                                                                                ),
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                Text(
+                                                                    JSXText {
+                                                                        span: Span {
+                                                                            start: 222,
+                                                                            end: 224,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        value: "\n\n",
+                                                                        raw: Some(
+                                                                            "\n\n",
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                Element(
+                                                                    JSXElement {
+                                                                        span: Span {
+                                                                            start: 224,
+                                                                            end: 281,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        opening_element: JSXOpeningElement {
+                                                                            span: Span {
+                                                                                start: 224,
+                                                                                end: 248,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
+                                                                            },
+                                                                            name: Identifier(
+                                                                                JSXIdentifier {
+                                                                                    span: Span {
+                                                                                        start: 225,
+                                                                                        end: 231,
+                                                                                    },
+                                                                                    node_id: Cell {
+                                                                                        value: NodeId(0),
+                                                                                    },
+                                                                                    name: "script",
+                                                                                },
+                                                                            ),
+                                                                            type_arguments: None,
+                                                                            attributes: Vec(
+                                                                                [
+                                                                                    Attribute(
+                                                                                        JSXAttribute {
+                                                                                            span: Span {
+                                                                                                start: 232,
+                                                                                                end: 241,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
+                                                                                            },
+                                                                                            name: Identifier(
+                                                                                                JSXIdentifier {
+                                                                                                    span: Span {
+                                                                                                        start: 232,
+                                                                                                        end: 236,
+                                                                                                    },
+                                                                                                    node_id: Cell {
+                                                                                                        value: NodeId(0),
+                                                                                                    },
+                                                                                                    name: "lang",
+                                                                                                },
+                                                                                            ),
+                                                                                            value: Some(
+                                                                                                StringLiteral(
+                                                                                                    StringLiteral {
+                                                                                                        span: Span {
+                                                                                                            start: 238,
+                                                                                                            end: 240,
+                                                                                                        },
+                                                                                                        node_id: Cell {
+                                                                                                            value: NodeId(0),
+                                                                                                        },
+                                                                                                        lone_surrogates: false,
+                                                                                                        value: "ts",
                                                                                                         raw: None,
                                                                                                     },
                                                                                                 ),
@@ -467,8 +638,8 @@ Program {
                                                                                     Attribute(
                                                                                         JSXAttribute {
                                                                                             span: Span {
-                                                                                                start: 75,
-                                                                                                end: 80,
+                                                                                                start: 242,
+                                                                                                end: 247,
                                                                                             },
                                                                                             node_id: Cell {
                                                                                                 value: NodeId(0),
@@ -476,8 +647,8 @@ Program {
                                                                                             name: Identifier(
                                                                                                 JSXIdentifier {
                                                                                                     span: Span {
-                                                                                                        start: 75,
-                                                                                                        end: 80,
+                                                                                                        start: 242,
+                                                                                                        end: 247,
                                                                                                     },
                                                                                                     node_id: Cell {
                                                                                                         value: NodeId(0),
@@ -497,8 +668,8 @@ Program {
                                                                         closing_element: Some(
                                                                             JSXClosingElement {
                                                                                 span: Span {
-                                                                                    start: 99,
-                                                                                    end: 108,
+                                                                                    start: 272,
+                                                                                    end: 281,
                                                                                 },
                                                                                 node_id: Cell {
                                                                                     value: NodeId(0),
@@ -506,8 +677,8 @@ Program {
                                                                                 name: Identifier(
                                                                                     JSXIdentifier {
                                                                                         span: Span {
-                                                                                            start: 101,
-                                                                                            end: 107,
+                                                                                            start: 274,
+                                                                                            end: 280,
                                                                                         },
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
@@ -522,101 +693,8 @@ Program {
                                                                 Text(
                                                                     JSXText {
                                                                         span: Span {
-                                                                            start: 108,
-                                                                            end: 110,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        value: "\n\n",
-                                                                        raw: Some(
-                                                                            "\n\n",
-                                                                        ),
-                                                                    },
-                                                                ),
-                                                                Element(
-                                                                    JSXElement {
-                                                                        span: Span {
-                                                                            start: 110,
-                                                                            end: 148,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        opening_element: JSXOpeningElement {
-                                                                            span: Span {
-                                                                                start: 110,
-                                                                                end: 117,
-                                                                            },
-                                                                            node_id: Cell {
-                                                                                value: NodeId(0),
-                                                                            },
-                                                                            name: Identifier(
-                                                                                JSXIdentifier {
-                                                                                    span: Span {
-                                                                                        start: 111,
-                                                                                        end: 116,
-                                                                                    },
-                                                                                    node_id: Cell {
-                                                                                        value: NodeId(0),
-                                                                                    },
-                                                                                    name: "style",
-                                                                                },
-                                                                            ),
-                                                                            type_arguments: None,
-                                                                            attributes: Vec(
-                                                                                [],
-                                                                            ),
-                                                                        },
-                                                                        children: Vec(
-                                                                            [
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 117,
-                                                                                            end: 140,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\ndiv {\n  color: red;\n}\n",
-                                                                                        raw: Some(
-                                                                                            "\ndiv {\n  color: red;\n}\n",
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                            ],
-                                                                        ),
-                                                                        closing_element: Some(
-                                                                            JSXClosingElement {
-                                                                                span: Span {
-                                                                                    start: 140,
-                                                                                    end: 148,
-                                                                                },
-                                                                                node_id: Cell {
-                                                                                    value: NodeId(0),
-                                                                                },
-                                                                                name: Identifier(
-                                                                                    JSXIdentifier {
-                                                                                        span: Span {
-                                                                                            start: 142,
-                                                                                            end: 147,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        name: "style",
-                                                                                    },
-                                                                                ),
-                                                                            },
-                                                                        ),
-                                                                    },
-                                                                ),
-                                                                Text(
-                                                                    JSXText {
-                                                                        span: Span {
-                                                                            start: 148,
-                                                                            end: 149,
+                                                                            start: 281,
+                                                                            end: 282,
                                                                         },
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
@@ -656,11 +734,11 @@ Program {
         ],
     ),
     source_type: SourceType {
-        language: JavaScript,
+        language: TypeScript,
         module_kind: Unambiguous,
         variant: Jsx,
         extension: Some(
-            Js,
+            Ts,
         ),
     },
 }
@@ -670,47 +748,24 @@ Program {
 
 =============== Codegen ===============
 async () => {
-	const count = 1;
 	<><template>
-  <div>
-    {count}
-  </div>
+  <div v-bind:key={1}>{}</div>
 </template>
 
-<script lang="js" setup></script>
+<script lang="ts"></script>
 
-<style>
-div {
-  color: red;
-}
-</style>
+<script lang="ts" setup></script>
 </>;
 };
 
 
 ===============  Spans  ===============
-Slice: "<template>\n  <div>\n    {{ count }}\n  </d..[OMIT]..\n<style>\ndiv {\n  color: red;\n}\n</style>\n"; 
-Span: (0, 149); 
+Slice: "<template>\n  <div :key=\"1 /* vue is full..[OMIT]..setup>\n// Hello\n/* Me too! */\n</script>\n"; 
+Span: (0, 282); 
 Type: Program; 
 
-Slice: "const count = 1;"; 
-Span: (82, 98); 
-Type: VariableDeclaration; 
-
-Slice: "count = 1"; 
-Span: (88, 97); 
-Type: VariableDeclarator; 
-
-Slice: "count"; 
-Span: (88, 93); 
-Type: BindingIdentifier; 
-
-Slice: "1"; 
-Span: (96, 97); 
-Type: NumericLiteral; 
-
-Slice: "<template>\n  <div>\n    {{ count }}\n  </div>\n</template>"; 
-Span: (0, 55); 
+Slice: "<template>\n  <div :key=\"1 /* vue is full..[OMIT]..-- Good Morning -->\n  </div>\n</template>"; 
+Span: (0, 101); 
 Type: JSXElement; 
 
 Slice: "<template>"; 
@@ -725,126 +780,146 @@ Slice: "\n  ";
 Span: (10, 13); 
 Type: JSXText; 
 
-Slice: "<div>\n    {{ count }}\n  </div>"; 
-Span: (13, 43); 
+Slice: "<div :key=\"1 /* vue is full of magic */\">\n    <!-- Good Morning -->\n  </div>"; 
+Span: (13, 89); 
 Type: JSXElement; 
 
-Slice: "<div>"; 
-Span: (13, 18); 
+Slice: "<div :key=\"1 /* vue is full of magic */\">"; 
+Span: (13, 54); 
 Type: JSXOpeningElement; 
 
 Slice: "div"; 
 Span: (14, 17); 
 Type: JSXIdentifier; 
 
-Slice: "\n    "; 
-Span: (18, 23); 
-Type: JSXText; 
+Slice: ":key=\"1 /* vue is full of magic */\""; 
+Span: (18, 53); 
+Type: JSXAttribute; 
 
-Slice: "{{ count }}"; 
-Span: (23, 34); 
+Slice: ":key"; 
+Span: (18, 22); 
+Type: JSXNamespacedName; 
+
+Slice: ":"; 
+Span: (18, 19); 
+Type: JSXIdentifier; 
+
+Slice: "key"; 
+Span: (19, 22); 
+Type: JSXIdentifier; 
+
+Slice: "\"1 /* vue is full of magic */\""; 
+Span: (23, 53); 
 Type: JSXExpressionContainer; 
 
-Slice: "count"; 
-Span: (26, 31); 
-Type: IdentifierReference; 
+Slice: "1"; 
+Span: (24, 25); 
+Type: NumericLiteral; 
 
-Slice: "\n  "; 
-Span: (34, 37); 
-Type: JSXText; 
+Slice: "<!-- Good Morning -->"; 
+Span: (59, 80); 
+Type: JSXExpressionContainer; 
 
 Slice: "</div>"; 
-Span: (37, 43); 
+Span: (83, 89); 
 Type: JSXClosingElement; 
 
 Slice: "div"; 
-Span: (39, 42); 
+Span: (85, 88); 
 Type: JSXIdentifier; 
 
 Slice: "\n"; 
-Span: (43, 44); 
+Span: (89, 90); 
 Type: JSXText; 
 
 Slice: "</template>"; 
-Span: (44, 55); 
+Span: (90, 101); 
 Type: JSXClosingElement; 
 
 Slice: "template"; 
-Span: (46, 54); 
+Span: (92, 100); 
 Type: JSXIdentifier; 
 
 Slice: "\n\n"; 
-Span: (55, 57); 
+Span: (101, 103); 
 Type: JSXText; 
 
-Slice: "<script lang=\"js\" setup>\nconst count = 1;\n</script>"; 
-Span: (57, 108); 
+Slice: "<script lang=\"ts\">\n// Hello, everyone\n/*..[OMIT]..nd Rust!\n  What about you?\n */\n</script>"; 
+Span: (103, 222); 
 Type: JSXElement; 
 
-Slice: "<script lang=\"js\" setup>"; 
-Span: (57, 81); 
+Slice: "<script lang=\"ts\">"; 
+Span: (103, 121); 
 Type: JSXOpeningElement; 
 
 Slice: "script"; 
-Span: (58, 64); 
+Span: (104, 110); 
 Type: JSXIdentifier; 
 
-Slice: "lang=\"js\""; 
-Span: (65, 74); 
+Slice: "lang=\"ts\""; 
+Span: (111, 120); 
 Type: JSXAttribute; 
 
 Slice: "lang"; 
-Span: (65, 69); 
+Span: (111, 115); 
 Type: JSXIdentifier; 
 
-Slice: "js"; 
-Span: (71, 73); 
+Slice: "ts"; 
+Span: (117, 119); 
 Type: StringLiteral; 
 
-Slice: "setup"; 
-Span: (75, 80); 
-Type: JSXAttribute; 
-
-Slice: "setup"; 
-Span: (75, 80); 
-Type: JSXIdentifier; 
-
 Slice: "</script>"; 
-Span: (99, 108); 
+Span: (213, 222); 
 Type: JSXClosingElement; 
 
 Slice: "script"; 
-Span: (101, 107); 
+Span: (215, 221); 
 Type: JSXIdentifier; 
 
 Slice: "\n\n"; 
-Span: (108, 110); 
+Span: (222, 224); 
 Type: JSXText; 
 
-Slice: "<style>\ndiv {\n  color: red;\n}\n</style>"; 
-Span: (110, 148); 
+Slice: "<script lang=\"ts\" setup>\n// Hello\n/* Me too! */\n</script>"; 
+Span: (224, 281); 
 Type: JSXElement; 
 
-Slice: "<style>"; 
-Span: (110, 117); 
+Slice: "<script lang=\"ts\" setup>"; 
+Span: (224, 248); 
 Type: JSXOpeningElement; 
 
-Slice: "style"; 
-Span: (111, 116); 
+Slice: "script"; 
+Span: (225, 231); 
 Type: JSXIdentifier; 
 
-Slice: "\ndiv {\n  color: red;\n}\n"; 
-Span: (117, 140); 
-Type: JSXText; 
+Slice: "lang=\"ts\""; 
+Span: (232, 241); 
+Type: JSXAttribute; 
 
-Slice: "</style>"; 
-Span: (140, 148); 
+Slice: "lang"; 
+Span: (232, 236); 
+Type: JSXIdentifier; 
+
+Slice: "ts"; 
+Span: (238, 240); 
+Type: StringLiteral; 
+
+Slice: "setup"; 
+Span: (242, 247); 
+Type: JSXAttribute; 
+
+Slice: "setup"; 
+Span: (242, 247); 
+Type: JSXIdentifier; 
+
+Slice: "</script>"; 
+Span: (272, 281); 
 Type: JSXClosingElement; 
 
-Slice: "style"; 
-Span: (142, 147); 
+Slice: "script"; 
+Span: (274, 280); 
 Type: JSXIdentifier; 
 
 Slice: "\n"; 
-Span: (148, 149); 
+Span: (281, 282); 
 Type: JSXText;
