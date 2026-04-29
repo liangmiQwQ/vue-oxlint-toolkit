@@ -96,8 +96,12 @@ impl<'a> ParserImpl<'a> {
 }
 
 fn is_codegen_safe_jsx_identifier(name: &str) -> bool {
-  !name.is_empty()
-    && name.chars().all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '$' | '-'))
+  let Some((&first, rest)) = name.as_bytes().split_first() else {
+    return false;
+  };
+
+  matches!(first, b'a'..=b'z' | b'A'..=b'Z' | b'_' | b'$')
+    && rest.iter().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-'))
 }
 
 #[cfg(test)]
