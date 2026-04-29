@@ -10,7 +10,7 @@ async () => {
 			b
 		};
 	})}></div>
-  <div v-bind:key={}></div>
+  <div v-bind:key={undefined}></div>
 </template>
 
 <script lang="ts" setup></script>

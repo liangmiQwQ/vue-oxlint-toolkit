@@ -338,7 +338,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
                   }
                 }
               })())
-              .unwrap_or_else(|| JSXExpression::EmptyExpression(ast.jsx_empty_expression(SPAN))),
+              .unwrap_or_else(|| self.empty_jsx_attribute_expression()),
             ),
           )
         } else if let Some(argument) = &dir.argument
@@ -411,6 +411,14 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       ))
     } else {
       Some(expression)
+    }
+  }
+
+  fn empty_jsx_attribute_expression(&self) -> JSXExpression<'a> {
+    if self.config.codegen {
+      JSXExpression::from(self.ast.expression_identifier(SPAN, "undefined"))
+    } else {
+      JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(SPAN))
     }
   }
 

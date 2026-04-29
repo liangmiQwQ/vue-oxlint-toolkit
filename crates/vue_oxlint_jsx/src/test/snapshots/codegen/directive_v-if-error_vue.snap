@@ -4,14 +4,14 @@ expression: "&codegen"
 ---
 async () => {
 	<><template>
-  <div v-else-if:={} />
-  <div v-else: />
+  <div v-else-if:__v__={undefined} />
+  <div v-else:__v__ />
 
   
-  {1 ? <><div v-if:={} /></> : undefined}<div v-if:={} />
-  <div v-if: />
-  <div v-else-if:={} />
-  <div v-else-if: />
+  {1 ? <><div v-if:__v__={undefined} /></> : undefined}<div v-if:__v__={undefined} />
+  <div v-if:__v__ />
+  <div v-else-if:__v__={undefined} />
+  <div v-else-if:__v__ />
 </template>
 
 </>;

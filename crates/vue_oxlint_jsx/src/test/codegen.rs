@@ -10,7 +10,7 @@ fn validate_all_codegen_syntax() {
   use oxc_codegen::Codegen;
   use std::path::Path;
 
-  fn visit_dir(path: &Path, results: &mut Vec<String>) {
+  fn visit_dir(path: &Path, results: &mut Vec<(String, Vec<String>)>) {
     for entry in std::fs::read_dir(path).unwrap() {
       let entry = entry.unwrap();
       let path = entry.path();
@@ -49,7 +49,10 @@ fn validate_all_codegen_syntax() {
           .with_options(ParseOptions::default())
           .parse();
         if !reparsed.errors.is_empty() {
-          results.push(file_path.to_string());
+          results.push((
+            file_path.to_string(),
+            reparsed.errors.iter().map(ToString::to_string).collect(),
+          ));
         }
       }
     }
@@ -60,11 +63,15 @@ fn validate_all_codegen_syntax() {
 
   if !invalid.is_empty() {
     println!("Invalid codegen syntax in:");
-    for file in &invalid {
-      let snap_name = file.replace(['/', '.'], "_");
-      println!("  {file}  (src/snapshots/codegen/{snap_name}.snap)");
+    for (file_path, errors) in &invalid {
+      let snap_name = file_path.replace(['/', '.'], "_");
+      println!("  {file_path}  (src/snapshots/codegen/{snap_name}.snap)");
+      for error in errors {
+        println!("{error}");
+      }
     }
   }
 
-  assert!(invalid.is_empty(), "Invalid codegen syntax in: {invalid:?}");
+  let invalid_files = invalid.iter().map(|(file_path, _)| file_path).collect::<Vec<_>>();
+  assert!(invalid.is_empty(), "Invalid codegen syntax in: {invalid_files:?}");
 }
