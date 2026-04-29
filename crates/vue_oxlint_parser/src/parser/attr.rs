@@ -93,25 +93,20 @@ fn build_one<'a>(
   let value_node = a.value.map(|v| {
     if is_directive {
       ArenaBox::new_in(
-        VAttributeValue::Expression(VExpressionContainer {
-          r#type: "VExpressionContainer",
-          range: v.outer_span,
-          raw_expression: Str::from(v.text),
-          expression_range: v.inner_span,
-          raw: false,
-          synthetic_identifier: false,
-          kind: value_kind,
+        VAttributeValue::Expression(VExpressionContainer::new(
+          v.outer_span,
+          Str::from(v.text),
+          v.inner_span,
+          false,
+          false,
+          value_kind,
           source_type,
-        }),
+        )),
         alloc,
       )
     } else {
       ArenaBox::new_in(
-        VAttributeValue::Literal(VLiteral {
-          r#type: "VLiteral",
-          range: v.outer_span,
-          value: Str::from(v.text),
-        }),
+        VAttributeValue::Literal(VLiteral::new(v.outer_span, Str::from(v.text))),
         alloc,
       )
     }
@@ -120,28 +115,21 @@ fn build_one<'a>(
   let value_node = value_node.or_else(|| {
     synth_value.map(|(arg_span, name)| {
       ArenaBox::new_in(
-        VAttributeValue::Expression(VExpressionContainer {
-          r#type: "VExpressionContainer",
-          range: arg_span,
-          raw_expression: Str::from(name),
-          expression_range: arg_span,
-          raw: false,
-          synthetic_identifier: true,
-          kind: VExprKind::Default,
+        VAttributeValue::Expression(VExpressionContainer::new(
+          arg_span,
+          Str::from(name),
+          arg_span,
+          false,
+          true,
+          VExprKind::Default,
           source_type,
-        }),
+        )),
         alloc,
       )
     })
   });
 
-  VAttribute {
-    r#type: "VAttribute",
-    range: attr_span,
-    directive: is_directive,
-    key: key_node,
-    value: value_node,
-  }
+  VAttribute::new(attr_span, is_directive, key_node, value_node)
 }
 
 fn is_plausible_arg_name(s: &str) -> bool {
@@ -183,12 +171,7 @@ fn plain_identifier<'a>(
   span: Span,
 ) -> ArenaBox<'a, VAttributeKey<'a>> {
   ArenaBox::new_in(
-    VAttributeKey::Identifier(VIdentifier {
-      r#type: "VIdentifier",
-      range: span,
-      name: Str::from(raw),
-      raw_name: Str::from(raw),
-    }),
+    VAttributeKey::Identifier(VIdentifier::new(span, Str::from(raw), Str::from(raw))),
     alloc,
   )
 }
@@ -200,12 +183,11 @@ fn parse_directive_key<'a>(
   span: Span,
 ) -> (ArenaBox<'a, VAttributeKey<'a>>, bool) {
   let name_text = &raw[..name_len];
-  let name_ident = VIdentifier {
-    r#type: "VIdentifier",
-    range: Span::new(span.start, span.start + name_len as u32),
-    name: Str::from(name_text),
-    raw_name: Str::from(name_text),
-  };
+  let name_ident = VIdentifier::new(
+    Span::new(span.start, span.start + name_len as u32),
+    Str::from(name_text),
+    Str::from(name_text),
+  );
 
   let rest = &raw[name_len..];
   let bytes0 = raw.as_bytes()[0];
@@ -226,23 +208,21 @@ fn parse_directive_key<'a>(
   } else if dynamic {
     let outer = Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32);
     let inner = Span::new(outer.start + 1, outer.end - 1);
-    Some(VDirectiveKeyArgument::Expression(VExpressionContainer {
-      r#type: "VExpressionContainer",
-      range: outer,
-      raw_expression: Str::from(arg_text),
-      expression_range: inner,
-      raw: false,
-      synthetic_identifier: false,
-      kind: VExprKind::Default,
-      source_type: SourceType::default().with_module(true),
-    }))
+    Some(VDirectiveKeyArgument::Expression(VExpressionContainer::new(
+      outer,
+      Str::from(arg_text),
+      inner,
+      false,
+      false,
+      VExprKind::Default,
+      SourceType::default().with_module(true),
+    )))
   } else {
-    Some(VDirectiveKeyArgument::Identifier(VIdentifier {
-      r#type: "VIdentifier",
-      range: Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32),
-      name: Str::from(arg_text),
-      raw_name: Str::from(arg_text),
-    }))
+    Some(VDirectiveKeyArgument::Identifier(VIdentifier::new(
+      Span::new(span.start + arg_offset as u32, span.start + after_arg_idx as u32),
+      Str::from(arg_text),
+      Str::from(arg_text),
+    )))
   };
 
   let mut modifiers: ArenaVec<'a, VIdentifier<'a>> = ArenaVec::new_in(alloc);
@@ -253,35 +233,28 @@ fn parse_directive_key<'a>(
     let dot = rest.find('.').unwrap_or(rest.len());
     let mod_hi = mod_lo + dot;
     let text = &raw[mod_lo..mod_hi];
-    modifiers.push(VIdentifier {
-      r#type: "VIdentifier",
-      range: Span::new(span.start + mod_lo as u32, span.start + mod_hi as u32),
-      name: Str::from(text),
-      raw_name: Str::from(text),
-    });
+    modifiers.push(VIdentifier::new(
+      Span::new(span.start + mod_lo as u32, span.start + mod_hi as u32),
+      Str::from(text),
+      Str::from(text),
+    ));
     cursor = mod_hi;
   }
 
   if is_prop_shorthand && modifiers.is_empty() {
     let end = span.end;
-    modifiers.push(VIdentifier {
-      r#type: "VIdentifier",
-      range: Span::new(end, end),
-      name: Str::from(""),
-      raw_name: Str::from(""),
-    });
+    modifiers.push(VIdentifier::new(Span::new(end, end), Str::from(""), Str::from("")));
   }
 
   (
     ArenaBox::new_in(
-      VAttributeKey::Directive(VDirectiveKey {
-        r#type: "VDirectiveKey",
-        range: span,
-        name: name_ident,
+      VAttributeKey::Directive(VDirectiveKey::new(
+        span,
+        name_ident,
         argument,
         modifiers,
-        raw: Str::from(raw),
-      }),
+        Str::from(raw),
+      )),
       alloc,
     ),
     true,

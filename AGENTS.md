@@ -43,4 +43,4 @@ Never use emoji no matter where.
 
 Keep code functional. Never use classes. Write simple code and make function reusable if possible. Use Unix philosophy to design your code (Every function should only do one thing and should not be too long or complex).
 
-Run the `just lint` and `just build` and `just test` to you make sure your changes won't break the project.
+Run the `just build && just fix` and `just test` to you make sure your changes won't break the project.

@@ -184,27 +184,21 @@ impl<'a> Parser<'a, '_> {
     );
 
     let start_tag = ArenaBox::new_in(
-      VStartTag {
-        r#type: "VStartTag",
-        range: self.shift(start_tag_range),
-        self_closing,
-        attributes,
-      },
+      VStartTag::new(self.shift(start_tag_range), self_closing, attributes),
       self.alloc,
     );
 
     if self_closing || is_void_html_element(name) {
       return Some(ArenaBox::new_in(
-        VElement {
-          r#type: "VElement",
-          range: self.shift(start_tag_range),
-          name: Str::from(name),
-          raw_name: Str::from(name),
-          namespace: VNamespace::Html,
+        VElement::new(
+          self.shift(start_tag_range),
+          Str::from(name),
+          Str::from(name),
+          VNamespace::Html,
           start_tag,
-          end_tag: None,
-          children: ArenaVec::new_in(self.alloc),
-        },
+          None,
+          ArenaVec::new_in(self.alloc),
+        ),
         self.alloc,
       ));
     }
@@ -234,10 +228,7 @@ impl<'a> Parser<'a, '_> {
     {
       let t = self.next();
       element_end = t.span.end;
-      end_tag = Some(ArenaBox::new_in(
-        VEndTag { r#type: "VEndTag", range: self.shift(t.span) },
-        self.alloc,
-      ));
+      end_tag = Some(ArenaBox::new_in(VEndTag::new(self.shift(t.span)), self.alloc));
     } else {
       // No matching end tag. Element ends just before the next pending
       // token (if any), else at the lexer's current position.
@@ -245,16 +236,15 @@ impl<'a> Parser<'a, '_> {
     }
 
     Some(ArenaBox::new_in(
-      VElement {
-        r#type: "VElement",
-        range: self.shift(Span::new(lo, element_end)),
-        name: Str::from(name),
-        raw_name: Str::from(name),
-        namespace: VNamespace::Html,
+      VElement::new(
+        self.shift(Span::new(lo, element_end)),
+        Str::from(name),
+        Str::from(name),
+        VNamespace::Html,
         start_tag,
         end_tag,
         children,
-      },
+      ),
       self.alloc,
     ))
   }
@@ -309,10 +299,7 @@ impl<'a> Parser<'a, '_> {
   }
 
   fn make_text(&self, span: Span, text: &'a str) -> VElementChild<'a> {
-    VElementChild::Text(ArenaBox::new_in(
-      VText { r#type: "VText", range: self.shift(span), value: Str::from(text) },
-      self.alloc,
-    ))
+    VElementChild::Text(ArenaBox::new_in(VText::new(self.shift(span), Str::from(text)), self.alloc))
   }
 
   fn make_expr_container(
@@ -322,16 +309,15 @@ impl<'a> Parser<'a, '_> {
     expr_span: Span,
   ) -> ArenaBox<'a, VExpressionContainer<'a>> {
     ArenaBox::new_in(
-      VExpressionContainer {
-        r#type: "VExpressionContainer",
-        range: self.shift(outer),
-        raw_expression: Str::from(expr),
-        expression_range: self.shift(expr_span),
-        raw: false,
-        synthetic_identifier: false,
-        kind: VExprKind::Default,
-        source_type: self.source_type,
-      },
+      VExpressionContainer::new(
+        self.shift(outer),
+        Str::from(expr),
+        self.shift(expr_span),
+        false,
+        false,
+        VExprKind::Default,
+        self.source_type,
+      ),
       self.alloc,
     )
   }

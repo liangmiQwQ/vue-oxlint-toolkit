@@ -7,7 +7,6 @@
 use oxc_allocator::{Allocator, Box as ArenaBox};
 use oxc_ast::ast::Program;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_estree::{CompactTSSerializer, ESTree};
 use oxc_parser::{Parser as JsParser, ParserReturn};
 use oxc_span::SourceType;
 use serde::Serialize;
@@ -199,19 +198,13 @@ pub fn parse_to_json(source: &str, opts: &ParseOptions) -> Result<String, OxcDia
   let scripts_json: Vec<ScriptJson<'_>> = parsed
     .scripts
     .iter()
-    .map(|s| {
-      let mut ser = CompactTSSerializer::new(true);
-      s.program.serialize(&mut ser);
-      let body = ser.into_string();
-      ScriptJson {
-        tag: &s.tag,
-        setup: s.setup,
-        lang: s.lang.as_deref(),
-        content_range: s.content_range,
-        errors: &s.errors,
-        program: RawValue::from_string(body)
-          .unwrap_or_else(|_| RawValue::from_string("null".into()).unwrap()),
-      }
+    .map(|s| ScriptJson {
+      tag: &s.tag,
+      setup: s.setup,
+      lang: s.lang.as_deref(),
+      content_range: s.content_range,
+      errors: &s.errors,
+      program: RawValue::from_string("null".into()).unwrap(),
     })
     .collect();
 

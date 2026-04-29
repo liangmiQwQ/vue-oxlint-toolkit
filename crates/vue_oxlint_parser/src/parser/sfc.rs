@@ -191,8 +191,7 @@ pub fn build_document<'a>(
     if let Some(&(span, txt)) = text_iter.peek().copied()
       && span.start == next_offset
     {
-      let node =
-        ArenaBox::new_in(VText { r#type: "VText", range: span, value: Str::from(txt) }, alloc);
+      let node = ArenaBox::new_in(VText::new(span, Str::from(txt)), alloc);
       root.push(VRootChild::Text(node));
       next_offset = span.end;
       text_iter.next();
@@ -226,17 +225,9 @@ fn build_block_element<'a>(
     SourceType::default().with_module(true).with_typescript(true),
   );
 
-  let start_tag = ArenaBox::new_in(
-    VStartTag {
-      r#type: "VStartTag",
-      range: block.start_tag_range,
-      self_closing: block.self_closing,
-      attributes: attrs,
-    },
-    alloc,
-  );
-  let end_tag =
-    block.end_tag_range.map(|r| ArenaBox::new_in(VEndTag { r#type: "VEndTag", range: r }, alloc));
+  let start_tag =
+    ArenaBox::new_in(VStartTag::new(block.start_tag_range, block.self_closing, attrs), alloc);
+  let end_tag = block.end_tag_range.map(|r| ArenaBox::new_in(VEndTag::new(r), alloc));
 
   let children: ArenaVec<'a, VElementChild<'a>> =
     if block.tag.eq_ignore_ascii_case("template") && !block.self_closing {
@@ -246,26 +237,22 @@ fn build_block_element<'a>(
       let mut v: ArenaVec<'a, VElementChild<'a>> = ArenaVec::new_in(alloc);
       if !block.self_closing && block.content_range.end > block.content_range.start {
         let txt = &source[block.content_range.start as usize..block.content_range.end as usize];
-        let n = ArenaBox::new_in(
-          VText { r#type: "VText", range: block.content_range, value: Str::from(txt) },
-          alloc,
-        );
+        let n = ArenaBox::new_in(VText::new(block.content_range, Str::from(txt)), alloc);
         v.push(VElementChild::Text(n));
       }
       v
     };
 
   ArenaBox::new_in(
-    VElement {
-      r#type: "VElement",
-      range: block.range,
-      name: Str::from(block.tag),
-      raw_name: Str::from(block.tag),
-      namespace: VNamespace::Html,
+    VElement::new(
+      block.range,
+      Str::from(block.tag),
+      Str::from(block.tag),
+      VNamespace::Html,
       start_tag,
       end_tag,
       children,
-    },
+    ),
     alloc,
   )
 }

@@ -10,6 +10,8 @@
 //! All nodes derive `serde::Serialize` so the entire tree can be exported
 //! to JSON for transfer across the napi boundary.
 
+#![allow(unused_doc_comments)]
+
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::SourceType;
 use oxc_str::Str;
@@ -19,24 +21,60 @@ use serde::Serialize;
 
 pub use oxc_span::Span;
 
+/// Define a Vue AST node struct with an auto-filled `r#type` field and a
+/// `new` constructor.
+///
+/// ```ignore
+/// define_vue_node! {
+///     #[derive(Debug, Serialize)]
+///     pub struct VText<'a> {
+///         pub range: Span,
+///         pub value: Str<'a>,
+///     }
+///     pub fn new(range: Span, value: Str<'a>);
+/// }
+/// ```
+/// The parameters of `new` must match the field names and order (excluding
+/// `r#type`). The macro fills `r#type: stringify!(StructName)` automatically.
+macro_rules! define_vue_node {
+    (
+        $(#[$meta:meta])*
+        $vis:vis struct $name:ident $(<$lt:lifetime>)? {
+            $($(#[$field_meta:meta])* $field_vis:vis $field:ident: $ty:ty),* $(,)?
+        }
+        $new_vis:vis fn new($($param:ident: $param_ty:ty),* $(,)?);
+    ) => {
+        $(#[$meta])*
+        $vis struct $name $(<$lt>)? {
+            #[serde(rename = "type")]
+            pub r#type: &'static str,
+            $($(#[$field_meta])* $field_vis $field: $ty),*
+        }
+
+        impl $(<$lt>)? $name $(<$lt>)? {
+            #[must_use]
+            $new_vis fn new($($param: $param_ty),*) -> Self {
+                Self {
+                    r#type: stringify!($name),
+                    $($param),*
+                }
+            }
+        }
+    };
+}
+
 /// Top-level result of parsing a `.vue` SFC.
 ///
 /// Note: `script_program` and other `oxc_ast` contents are *not* included in
 /// this struct — they live in the JS allocator and are serialized separately.
 /// See `parser::ParsedSfc`.
-#[derive(Debug, Serialize)]
-pub struct VDocumentFragment<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub children: ArenaVec<'a, VRootChild<'a>>,
-}
-
-impl<'a> VDocumentFragment<'a> {
-  #[must_use]
-  pub const fn new(range: Span, children: ArenaVec<'a, VRootChild<'a>>) -> Self {
-    Self { r#type: "VDocumentFragment", range, children }
-  }
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VDocumentFragment<'a> {
+        pub range: Span,
+        pub children: ArenaVec<'a, VRootChild<'a>>,
+    }
+    pub fn new(range: Span, children: ArenaVec<'a, VRootChild<'a>>);
 }
 
 /// Children of `VDocumentFragment` — top-level SFC blocks plus surrounding
@@ -49,16 +87,35 @@ pub enum VRootChild<'a> {
 }
 
 #[derive(Debug, Serialize)]
-pub struct VElement<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub name: Str<'a>,
-  pub raw_name: Str<'a>,
-  pub namespace: VNamespace,
-  pub start_tag: ArenaBox<'a, VStartTag<'a>>,
-  pub end_tag: Option<ArenaBox<'a, VEndTag>>,
-  pub children: ArenaVec<'a, VElementChild<'a>>,
+pub enum VElementChild<'a> {
+  #[serde(rename = "VElement")]
+  Element(ArenaBox<'a, VElement<'a>>),
+  #[serde(rename = "VText")]
+  Text(ArenaBox<'a, VText<'a>>),
+  #[serde(rename = "VExpressionContainer")]
+  ExpressionContainer(ArenaBox<'a, VExpressionContainer<'a>>),
+}
+
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VElement<'a> {
+        pub range: Span,
+        pub name: Str<'a>,
+        pub raw_name: Str<'a>,
+        pub namespace: VNamespace,
+        pub start_tag: ArenaBox<'a, VStartTag<'a>>,
+        pub end_tag: Option<ArenaBox<'a, VEndTag>>,
+        pub children: ArenaVec<'a, VElementChild<'a>>,
+    }
+    pub fn new(
+        range: Span,
+        name: Str<'a>,
+        raw_name: Str<'a>,
+        namespace: VNamespace,
+        start_tag: ArenaBox<'a, VStartTag<'a>>,
+        end_tag: Option<ArenaBox<'a, VEndTag>>,
+        children: ArenaVec<'a, VElementChild<'a>>,
+    );
 }
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
@@ -71,67 +128,34 @@ pub enum VNamespace {
   MathMl,
 }
 
-#[derive(Debug, Serialize)]
-pub struct VStartTag<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub self_closing: bool,
-  pub attributes: ArenaVec<'a, VAttribute<'a>>,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VStartTag<'a> {
+        pub range: Span,
+        pub self_closing: bool,
+        pub attributes: ArenaVec<'a, VAttribute<'a>>,
+    }
+    pub fn new(range: Span, self_closing: bool, attributes: ArenaVec<'a, VAttribute<'a>>);
 }
 
-#[derive(Debug, Serialize)]
-pub struct VEndTag {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VEndTag {
+        pub range: Span,
+    }
+    pub fn new(range: Span);
 }
 
-#[derive(Debug, Serialize)]
-pub enum VElementChild<'a> {
-  #[serde(rename = "VElement")]
-  Element(ArenaBox<'a, VElement<'a>>),
-  #[serde(rename = "VText")]
-  Text(ArenaBox<'a, VText<'a>>),
-  #[serde(rename = "VExpressionContainer")]
-  ExpressionContainer(ArenaBox<'a, VExpressionContainer<'a>>),
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VText<'a> {
+        pub range: Span,
+        pub value: Str<'a>,
+    }
+    pub fn new(range: Span, value: Str<'a>);
 }
 
-#[derive(Debug, Serialize)]
-pub struct VText<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub value: Str<'a>,
-}
-
-#[derive(Debug)]
-pub struct VExpressionContainer<'a> {
-  pub r#type: &'static str,
-  pub range: Span,
-  /// Raw expression source between the delimiters (`{{` / `}}` for mustache,
-  /// or the attribute value source for directives).
-  pub raw_expression: Str<'a>,
-  /// Span of the inner expression source (excluding mustache delimiters).
-  pub expression_range: Span,
-  /// `true` when this container holds a `v-for` or otherwise non-expression
-  /// payload that the simple parser does not analyse beyond text capture.
-  pub raw: bool,
-  /// When `true`, emit a synthetic `Identifier` `ESTree` node spanning
-  /// `expression_range` whose `name` is `raw_expression`, instead of running
-  /// the JS parser. Used for `v-bind` same-name shorthand where the argument
-  /// text may not be a valid JS identifier (e.g. `:aria-label`).
-  pub synthetic_identifier: bool,
-  /// Kind of expression to produce. Default is a single JS expression; the
-  /// other variants wrap the parsed body in a Vue-specific synthetic node
-  /// (`VOnExpression` / `VSlotScopeExpression` / `VForExpression` /
-  /// `VFilterSequenceExpression`) the way upstream `vue-eslint-parser` does.
-  pub kind: VExprKind,
-  /// Parser mode for the embedded JS/TS source.
-  pub source_type: SourceType,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VExprKind {
   Default,
   VOn,
@@ -139,59 +163,57 @@ pub enum VExprKind {
   VFor,
 }
 
-impl Serialize for VExpressionContainer<'_> {
-  fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-    use serde::ser::SerializeStruct;
-    let expr = if self.raw {
-      None
-    } else if self.synthetic_identifier {
-      expr::synthetic_identifier_raw(self.raw_expression.as_ref(), self.expression_range)
-    } else {
-      match self.kind {
-        VExprKind::Default => expr::parse_expression_to_raw(
-          self.raw_expression.as_ref(),
-          self.expression_range.start,
-          self.source_type,
-        ),
-        VExprKind::VOn => expr::parse_v_on_to_raw(
-          self.raw_expression.as_ref(),
-          self.expression_range,
-          self.source_type,
-        ),
-        VExprKind::VSlot => expr::parse_v_slot_to_raw(
-          self.raw_expression.as_ref(),
-          self.expression_range,
-          self.source_type,
-        ),
-        VExprKind::VFor => expr::parse_v_for_to_raw(
-          self.raw_expression.as_ref(),
-          self.expression_range,
-          self.source_type,
-        ),
-      }
-    };
-    let mut s = ser.serialize_struct("VExpressionContainer", 6)?;
-    s.serialize_field("type", &self.r#type)?;
-    s.serialize_field("range", &self.range)?;
-    s.serialize_field("raw_expression", self.raw_expression.as_ref())?;
-    s.serialize_field("expression_range", &self.expression_range)?;
-    s.serialize_field("raw", &self.raw)?;
-    match &expr {
-      Some(v) => s.serialize_field("expression", v.as_ref())?,
-      None => s.serialize_field("expression", &Option::<()>::None)?,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VExpressionContainer<'a> {
+        pub range: Span,
+        /// Raw expression source between the delimiters (`{{` / `}}` for mustache,
+        /// or the attribute value source for directives).
+        pub raw_expression: Str<'a>,
+        /// Span of the inner expression source (excluding mustache delimiters).
+        pub expression_range: Span,
+        /// `true` when this container holds a `v-for` or otherwise non-expression
+        /// payload that the simple parser does not analyse beyond text capture.
+        pub raw: bool,
+        /// When `true`, emit a synthetic `Identifier` `ESTree` node spanning
+        /// `expression_range` whose `name` is `raw_expression`, instead of running
+        /// the JS parser. Used for `v-bind` same-name shorthand where the argument
+        /// text may not be a valid JS identifier (e.g. `:aria-label`).
+        pub synthetic_identifier: bool,
+        /// Kind of expression to produce. Default is a single JS expression; the
+        /// other variants wrap the parsed body in a Vue-specific synthetic node
+        /// (`VOnExpression` / `VSlotScopeExpression` / `VForExpression` /
+        /// `VFilterSequenceExpression`) the way upstream `vue-eslint-parser` does.
+        pub kind: VExprKind,
+        /// Parser mode for the embedded JS/TS source.
+        #[serde(skip)]
+        pub source_type: SourceType,
     }
-    s.end()
-  }
+    pub fn new(
+        range: Span,
+        raw_expression: Str<'a>,
+        expression_range: Span,
+        raw: bool,
+        synthetic_identifier: bool,
+        kind: VExprKind,
+        source_type: SourceType,
+    );
 }
 
-#[derive(Debug, Serialize)]
-pub struct VAttribute<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub directive: bool,
-  pub key: ArenaBox<'a, VAttributeKey<'a>>,
-  pub value: Option<ArenaBox<'a, VAttributeValue<'a>>>,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VAttribute<'a> {
+        pub range: Span,
+        pub directive: bool,
+        pub key: ArenaBox<'a, VAttributeKey<'a>>,
+        pub value: Option<ArenaBox<'a, VAttributeValue<'a>>>,
+    }
+    pub fn new(
+        range: Span,
+        directive: bool,
+        key: ArenaBox<'a, VAttributeKey<'a>>,
+        value: Option<ArenaBox<'a, VAttributeValue<'a>>>,
+    );
 }
 
 #[derive(Debug, Serialize)]
@@ -201,30 +223,38 @@ pub enum VAttributeKey<'a> {
   Directive(VDirectiveKey<'a>),
 }
 
-#[derive(Debug, Serialize)]
-pub struct VIdentifier<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub name: Str<'a>,
-  pub raw_name: Str<'a>,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VIdentifier<'a> {
+        pub range: Span,
+        pub name: Str<'a>,
+        pub raw_name: Str<'a>,
+    }
+    pub fn new(range: Span, name: Str<'a>, raw_name: Str<'a>);
 }
 
-#[derive(Debug, Serialize)]
-pub struct VDirectiveKey<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  /// Directive name as it appears in source — for shorthands this is the
-  /// literal prefix (`:`, `@`, `#`); otherwise the full `v-foo` form.
-  pub name: VIdentifier<'a>,
-  /// Argument node — a static `VIdentifier` or, for dynamic arguments
-  /// (`:[expr]`), a `VExpressionContainer` wrapping the bracketed expression.
-  pub argument: Option<VDirectiveKeyArgument<'a>>,
-  pub modifiers: ArenaVec<'a, VIdentifier<'a>>,
-  /// Raw source text of the whole key (e.g. `v-bind:foo.sync`, `:foo`,
-  /// `@click.stop`, `#default`).
-  pub raw: Str<'a>,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VDirectiveKey<'a> {
+        pub range: Span,
+        /// Directive name as it appears in source — for shorthands this is the
+        /// literal prefix (`:`, `@`, `#`); otherwise the full `v-foo` form.
+        pub name: VIdentifier<'a>,
+        /// Argument node — a static `VIdentifier` or, for dynamic arguments
+        /// (`:[expr]`), a `VExpressionContainer` wrapping the bracketed expression.
+        pub argument: Option<VDirectiveKeyArgument<'a>>,
+        pub modifiers: ArenaVec<'a, VIdentifier<'a>>,
+        /// Raw source text of the whole key (e.g. `v-bind:foo.sync`, `:foo`,
+        /// `@click.stop`, `#default`).
+        pub raw: Str<'a>,
+    }
+    pub fn new(
+        range: Span,
+        name: VIdentifier<'a>,
+        argument: Option<VDirectiveKeyArgument<'a>>,
+        modifiers: ArenaVec<'a, VIdentifier<'a>>,
+        raw: Str<'a>,
+    );
 }
 
 #[derive(Debug, Serialize)]
@@ -241,10 +271,11 @@ pub enum VAttributeValue<'a> {
   Expression(VExpressionContainer<'a>),
 }
 
-#[derive(Debug, Serialize)]
-pub struct VLiteral<'a> {
-  #[serde(rename = "type")]
-  pub r#type: &'static str,
-  pub range: Span,
-  pub value: Str<'a>,
+define_vue_node! {
+    #[derive(Debug, Serialize)]
+    pub struct VLiteral<'a> {
+        pub range: Span,
+        pub value: Str<'a>,
+    }
+    pub fn new(range: Span, value: Str<'a>);
 }
