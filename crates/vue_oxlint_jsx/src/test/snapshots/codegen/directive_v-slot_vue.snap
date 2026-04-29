@@ -4,19 +4,19 @@ expression: "&codegen"
 ---
 async () => {
 	<><template>
-  <Comp v-slot:__v__={undefined}>{{ default: ({ message }) => <></> }}</Comp>
+  <Comp v-slot:__v___={undefined}>{{ default: ({ message }) => <></> }}</Comp>
   <Comp v-slot:header={undefined}>{{ header: ({ message }) => <>
     {message}
   </> }}</Comp>
   <Comp v-slot:abc>{{ abc: () => <> abc </> }}</Comp>
-  <Comp v-slot:__v__ />{{ default: () => <></> }}
+  <Comp v-slot:__v___ />{{ default: () => <></> }}
   <Comp v-slot:header={undefined}>{{ header: ({ message }) => <>
     {message}
   </> }}</Comp>
-  <Comp v-slot:__v__={undefined}>{{ default: ({ message }) => <>
+  <Comp v-slot:__v___={undefined}>{{ default: ({ message }) => <>
     {message}
   </> }}</Comp>
-  <Comp v-slot:__v_key__={undefined}>{{ [key]: ({ message }) => <>
+  <Comp v-slot:__v_key___={undefined}>{{ [key]: ({ message }) => <>
     {message}
   </> }}</Comp>
   <Comp v-slot:header={undefined}>{{ header: (user) => <>

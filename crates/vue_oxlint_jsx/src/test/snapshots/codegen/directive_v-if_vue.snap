@@ -8,14 +8,14 @@ async () => {
   
   
   
-  {a ? <><div v-if:__v__={undefined}>A</div></> : b ? <><div v-else-if:__v__={undefined}>B</div></> : c ? <><div v-else-if:__v__={undefined}>C</div></> : d ? <><div v-else-if:__v__={undefined}>D</div></> : <><div v-else:__v__>E</div></>}
+  {a ? <><div v-if:__v___={undefined}>A</div></> : b ? <><div v-else-if:__v___={undefined}>B</div></> : c ? <><div v-else-if:__v___={undefined}>C</div></> : d ? <><div v-else-if:__v___={undefined}>D</div></> : <><div v-else:__v___>E</div></>}
   
   
-  {x ? <><div v-if:__v__={undefined}>X</div></> : <><div v-else:__v__>Y</div></>}
+  {x ? <><div v-if:__v___={undefined}>X</div></> : <><div v-else:__v___>Y</div></>}
   
   
-  {z ? <><div v-if:__v__={undefined}>Z</div></> : undefined}
-  {w ? <><div v-if:__v__={undefined}>W</div></> : undefined}<div>K</div>
+  {z ? <><div v-if:__v___={undefined}>Z</div></> : undefined}
+  {w ? <><div v-if:__v___={undefined}>W</div></> : undefined}<div>K</div>
 </template>
 </>;
 };

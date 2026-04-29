@@ -4,11 +4,11 @@ expression: "&codegen"
 ---
 async () => {
 	<><template>
-  <div v-for:__v__={undefined} />
-  <div v-for:__v__={undefined} />
-  <div v-for:__v__={undefined} />
-  <div v-for:__v__={undefined} />
-  <div v-for:__v__={undefined} />
+  <div v-for:__v___={undefined} />
+  <div v-for:__v___={undefined} />
+  <div v-for:__v___={undefined} />
+  <div v-for:__v___={undefined} />
+  <div v-for:__v___={undefined} />
 </template>
 </>;
 };

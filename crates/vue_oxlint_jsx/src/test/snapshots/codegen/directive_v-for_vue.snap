@@ -4,16 +4,16 @@ expression: "&codegen"
 ---
 async () => {
 	<><template>
-  {source((item) => <div v-for:__v__={undefined} />)}
-  {source1((item1) => <div v-for:__v__={undefined} />)}
-  {source2((item2, index2) => <div v-for:__v__={undefined} />)}
-  {source3((item3 = "1", index3 = 99) => <div v-for:__v__={undefined} />)}
-  {users4(({ id4, name4 }) => <div v-for:__v__={undefined} />)}
-  {users5(({ id5, name5 }, index) => <div v-for:__v__={undefined} />)}
-  {users6(({ id6 = 1, name6 = "Liang" }, index) => <div v-for:__v__={undefined} />)}
-  {someObj7((key7, value7, index7) => <div v-for:__v__={undefined} />)}
-  {someIter8(([item8, index8]) => <div v-for:__v__={undefined} />)}
-  {someIter9(([item9 = "hi", index9]) => <div v-for:__v__={undefined} />)}
+  {source((item) => <div v-for:__v___={undefined} />)}
+  {source1((item1) => <div v-for:__v___={undefined} />)}
+  {source2((item2, index2) => <div v-for:__v___={undefined} />)}
+  {source3((item3 = "1", index3 = 99) => <div v-for:__v___={undefined} />)}
+  {users4(({ id4, name4 }) => <div v-for:__v___={undefined} />)}
+  {users5(({ id5, name5 }, index) => <div v-for:__v___={undefined} />)}
+  {users6(({ id6 = 1, name6 = "Liang" }, index) => <div v-for:__v___={undefined} />)}
+  {someObj7((key7, value7, index7) => <div v-for:__v___={undefined} />)}
+  {someIter8(([item8, index8]) => <div v-for:__v___={undefined} />)}
+  {someIter9(([item9 = "hi", index9]) => <div v-for:__v___={undefined} />)}
 </template>
 </>;
 };

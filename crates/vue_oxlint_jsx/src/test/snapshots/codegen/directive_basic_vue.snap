@@ -5,9 +5,9 @@ expression: "&codegen"
 async () => {
 	<><template>
   <div v-bind:class={"w-100"} />
-  <div v-bind:__v_some__={{ [some]: 2 }} />
+  <div v-bind:__v_some___={{ [some]: 2 }} />
   <Some v-slot:default={undefined} />{{ default: ({ a }) => <></> }}
-  <input v-model:__v__={text} />
+  <input v-model:__v___={text} />
   <Some v-bind:__v_some_none__={1} />
   <div v-bind:id={id} />
   <div v-bind:msg-id={msgId} />
