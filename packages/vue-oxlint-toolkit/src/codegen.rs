@@ -1,0 +1,721 @@
+//! AST-aware codegen with internal hooks.
+//!
+//! Walks `oxc_ast` directly and prints to an `oxc_data_structures::CodeBuffer`,
+//! firing a hook on enter / leave for every node so callers can build per-node
+//! source mappings without paying for an estree-JSON round trip.
+//!
+//! Coverage is intentionally pragmatic: the toolkit's parser produces a
+//! Vue-shaped JSX AST, so the printer focuses on the node kinds that show up
+//! there. Anything else falls back to pasting the original source slice and
+//! recording a single mapping for the parent — output stays readable while we
+//! grow coverage incrementally.
+#![allow(clippy::too_many_lines)]
+
+use oxc_ast::ast::*;
+use oxc_data_structures::code_buffer::CodeBuffer;
+use oxc_span::{GetSpan, Span};
+
+/// Receives a callback for every visited AST node. Spans of `0..0` (synthesised
+/// nodes from the Vue → JSX transform) are skipped before the hook is invoked.
+pub trait CodegenHook {
+  fn record(&mut self, kind: &'static str, span: Span, virtual_start: u32, virtual_end: u32);
+}
+
+pub struct Codegen<'a, H: CodegenHook> {
+  buf: CodeBuffer,
+  hook: H,
+  source: &'a str,
+}
+
+impl<'a, H: CodegenHook> Codegen<'a, H> {
+  pub fn new(source: &'a str, hook: H) -> Self {
+    Self { buf: CodeBuffer::new(), hook, source }
+  }
+
+  pub fn build(mut self, program: &Program<'a>) -> (String, H) {
+    self.print_program(program);
+    (self.buf.into_string(), self.hook)
+  }
+
+  // -- low level helpers ----------------------------------------------------
+
+  fn pos(&self) -> u32 {
+    self.buf.len() as u32
+  }
+
+  fn record(&mut self, kind: &'static str, span: Span, start: u32) {
+    if span.is_empty() {
+      return;
+    }
+    let end = self.pos();
+    self.hook.record(kind, span, start, end);
+  }
+
+  fn write(&mut self, s: &str) {
+    self.buf.print_str(s);
+  }
+
+  fn write_byte(&mut self, b: u8) {
+    self.buf.print_ascii_byte(b);
+  }
+
+  fn write_source(&mut self, span: Span) {
+    if let Some(slice) = self.source.get(span.start as usize..span.end as usize) {
+      self.write(slice);
+    }
+  }
+
+  /// Emit a node by pasting its source slice. Used as a fallback for node
+  /// kinds we don't have a specialized printer for. Only valid when the
+  /// node's span points at original JS source (i.e. not synthesised).
+  fn paste(&mut self, kind: &'static str, span: Span) {
+    let start = self.pos();
+    self.write_source(span);
+    self.record(kind, span, start);
+  }
+
+  // -- program / statements -------------------------------------------------
+
+  fn print_program(&mut self, program: &Program<'a>) {
+    let start = self.pos();
+    for (i, stmt) in program.body.iter().enumerate() {
+      if i > 0 {
+        self.write_byte(b'\n');
+      }
+      self.print_statement(stmt);
+    }
+    self.record("Program", program.span, start);
+  }
+
+  fn print_statement(&mut self, stmt: &Statement<'a>) {
+    match stmt {
+      Statement::ExpressionStatement(s) => {
+        let start = self.pos();
+        self.print_expression(&s.expression);
+        self.write_byte(b';');
+        self.record("ExpressionStatement", s.span, start);
+      }
+      Statement::BlockStatement(s) => self.print_block(s),
+      Statement::ReturnStatement(s) => {
+        let start = self.pos();
+        self.write("return");
+        if let Some(arg) = &s.argument {
+          self.write_byte(b' ');
+          self.print_expression(arg);
+        }
+        self.write_byte(b';');
+        self.record("ReturnStatement", s.span, start);
+      }
+      Statement::EmptyStatement(s) => {
+        let start = self.pos();
+        self.write_byte(b';');
+        self.record("EmptyStatement", s.span, start);
+      }
+      Statement::VariableDeclaration(d) => {
+        self.print_variable_decl(d);
+        self.write_byte(b';');
+      }
+      Statement::ImportDeclaration(d) => self.print_import_decl(d),
+      Statement::ExportNamedDeclaration(d) => self.print_export_named(d),
+      Statement::ExportDefaultDeclaration(d) => self.print_export_default(d),
+      Statement::ExportAllDeclaration(d) => self.print_export_all(d),
+      // Other statements (control flow, function/class decls, TS decls, etc.)
+      // either won't appear at top level of the transformed program or have a
+      // span that points at unmodified source — paste it.
+      other => self.paste("Statement", other.span()),
+    }
+  }
+
+  fn print_block(&mut self, block: &BlockStatement<'a>) {
+    let start = self.pos();
+    self.write_byte(b'{');
+    for stmt in &block.body {
+      self.write_byte(b'\n');
+      self.print_statement(stmt);
+    }
+    if !block.body.is_empty() {
+      self.write_byte(b'\n');
+    }
+    self.write_byte(b'}');
+    self.record("BlockStatement", block.span, start);
+  }
+
+  // -- declarations ---------------------------------------------------------
+
+  fn print_variable_decl(&mut self, decl: &VariableDeclaration<'a>) {
+    let start = self.pos();
+    self.write(decl.kind.as_str());
+    self.write_byte(b' ');
+    for (i, d) in decl.declarations.iter().enumerate() {
+      if i > 0 {
+        self.write(", ");
+      }
+      self.print_variable_declarator(d);
+    }
+    self.record("VariableDeclaration", decl.span, start);
+  }
+
+  fn print_variable_declarator(&mut self, d: &VariableDeclarator<'a>) {
+    let start = self.pos();
+    self.print_binding_pattern(&d.id);
+    if let Some(ann) = &d.type_annotation {
+      self.print_type_annotation(ann);
+    }
+    if let Some(init) = &d.init {
+      self.write(" = ");
+      self.print_expression(init);
+    }
+    self.record("VariableDeclarator", d.span, start);
+  }
+
+  fn print_import_decl(&mut self, d: &ImportDeclaration<'a>) {
+    let start = self.pos();
+    self.write("import ");
+    if let Some(specifiers) = &d.specifiers {
+      let mut default: Option<&ImportDefaultSpecifier> = None;
+      let mut namespace: Option<&ImportNamespaceSpecifier> = None;
+      let mut named: Vec<&ImportSpecifier> = Vec::new();
+      for s in specifiers {
+        match s {
+          ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => default = Some(s),
+          ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => namespace = Some(s),
+          ImportDeclarationSpecifier::ImportSpecifier(s) => named.push(s),
+        }
+      }
+      let mut needs_comma = false;
+      if let Some(s) = default {
+        let st = self.pos();
+        self.print_binding_identifier(&s.local);
+        self.record("ImportDefaultSpecifier", s.span, st);
+        needs_comma = true;
+      }
+      if let Some(s) = namespace {
+        if needs_comma {
+          self.write(", ");
+        }
+        let st = self.pos();
+        self.write("* as ");
+        self.print_binding_identifier(&s.local);
+        self.record("ImportNamespaceSpecifier", s.span, st);
+        needs_comma = true;
+      }
+      if !named.is_empty() {
+        if needs_comma {
+          self.write(", ");
+        }
+        self.write("{ ");
+        for (i, s) in named.iter().enumerate() {
+          if i > 0 {
+            self.write(", ");
+          }
+          let st = self.pos();
+          self.print_module_export_name(&s.imported);
+          if module_export_name_text(&s.imported) != s.local.name.as_str() {
+            self.write(" as ");
+            self.print_binding_identifier(&s.local);
+          }
+          self.record("ImportSpecifier", s.span, st);
+        }
+        self.write(" }");
+      }
+      if default.is_some() || namespace.is_some() || !named.is_empty() {
+        self.write(" from ");
+      }
+    }
+    self.print_string_literal(&d.source);
+    self.write_byte(b';');
+    self.record("ImportDeclaration", d.span, start);
+  }
+
+  fn print_module_export_name(&mut self, name: &ModuleExportName<'a>) {
+    match name {
+      ModuleExportName::IdentifierName(n) => self.print_identifier_name(n),
+      ModuleExportName::IdentifierReference(r) => self.print_identifier_reference(r),
+      ModuleExportName::StringLiteral(s) => self.print_string_literal(s),
+    }
+  }
+
+  fn print_export_named(&mut self, d: &ExportNamedDeclaration<'a>) {
+    let start = self.pos();
+    self.write("export ");
+    if let Some(decl) = &d.declaration {
+      match decl {
+        Declaration::VariableDeclaration(v) => {
+          self.print_variable_decl(v);
+          self.write_byte(b';');
+        }
+        other => self.paste("Declaration", other.span()),
+      }
+    } else {
+      self.write("{ ");
+      for (i, s) in d.specifiers.iter().enumerate() {
+        if i > 0 {
+          self.write(", ");
+        }
+        let st = self.pos();
+        self.print_module_export_name(&s.local);
+        if module_export_name_text(&s.local) != module_export_name_text(&s.exported) {
+          self.write(" as ");
+          self.print_module_export_name(&s.exported);
+        }
+        self.record("ExportSpecifier", s.span, st);
+      }
+      self.write(" }");
+      if let Some(src) = &d.source {
+        self.write(" from ");
+        self.print_string_literal(src);
+      }
+      self.write_byte(b';');
+    }
+    self.record("ExportNamedDeclaration", d.span, start);
+  }
+
+  fn print_export_default(&mut self, d: &ExportDefaultDeclaration<'a>) {
+    let start = self.pos();
+    self.write("export default ");
+    let mut emit_semi = true;
+    if let Some(expr) = d.declaration.as_expression() {
+      self.print_expression(expr);
+    } else {
+      // FunctionDeclaration / ClassDeclaration / TS decls — paste source.
+      let span = d.declaration.span();
+      self.paste("Declaration", span);
+      emit_semi = false;
+    }
+    if emit_semi {
+      self.write_byte(b';');
+    }
+    self.record("ExportDefaultDeclaration", d.span, start);
+  }
+
+  fn print_export_all(&mut self, d: &ExportAllDeclaration<'a>) {
+    let start = self.pos();
+    self.write("export *");
+    if let Some(name) = &d.exported {
+      self.write(" as ");
+      self.print_module_export_name(name);
+    }
+    self.write(" from ");
+    self.print_string_literal(&d.source);
+    self.write_byte(b';');
+    self.record("ExportAllDeclaration", d.span, start);
+  }
+
+  // -- patterns -------------------------------------------------------------
+
+  fn print_binding_pattern(&mut self, p: &BindingPattern<'a>) {
+    match p {
+      BindingPattern::BindingIdentifier(id) => self.print_binding_identifier(id),
+      _ => self.paste("BindingPattern", p.span()),
+    }
+  }
+
+  fn print_binding_identifier(&mut self, id: &BindingIdentifier<'a>) {
+    let start = self.pos();
+    self.write(id.name.as_str());
+    self.record("Identifier", id.span, start);
+  }
+
+  fn print_identifier_name(&mut self, id: &IdentifierName<'a>) {
+    let start = self.pos();
+    self.write(id.name.as_str());
+    self.record("Identifier", id.span, start);
+  }
+
+  fn print_identifier_reference(&mut self, id: &IdentifierReference<'a>) {
+    let start = self.pos();
+    self.write(id.name.as_str());
+    self.record("Identifier", id.span, start);
+  }
+
+  fn print_formal_params(&mut self, params: &FormalParameters<'a>) {
+    for (i, p) in params.items.iter().enumerate() {
+      if i > 0 {
+        self.write(", ");
+      }
+      self.print_binding_pattern(&p.pattern);
+    }
+    if let Some(rest) = &params.rest {
+      if !params.items.is_empty() {
+        self.write(", ");
+      }
+      let start = self.pos();
+      self.write("...");
+      self.print_binding_pattern(&rest.rest.argument);
+      self.record("RestElement", rest.span, start);
+    }
+  }
+
+  // -- expressions ----------------------------------------------------------
+
+  fn print_expression(&mut self, expr: &Expression<'a>) {
+    match expr {
+      Expression::Identifier(id) => self.print_identifier_reference(id),
+      Expression::StringLiteral(s) => self.print_string_literal(s),
+      Expression::NumericLiteral(n) => self.paste("Literal", n.span),
+      Expression::BooleanLiteral(b) => {
+        let start = self.pos();
+        self.write(if b.value { "true" } else { "false" });
+        self.record("Literal", b.span, start);
+      }
+      Expression::NullLiteral(n) => {
+        let start = self.pos();
+        self.write("null");
+        self.record("Literal", n.span, start);
+      }
+      Expression::BigIntLiteral(b) => self.paste("Literal", b.span),
+      Expression::RegExpLiteral(r) => self.paste("Literal", r.span),
+      Expression::TemplateLiteral(t) => self.paste("TemplateLiteral", t.span),
+      Expression::ArrowFunctionExpression(a) => self.print_arrow(a),
+      Expression::JSXElement(e) => self.print_jsx_element(e),
+      Expression::JSXFragment(f) => self.print_jsx_fragment(f),
+      Expression::ParenthesizedExpression(p) => {
+        let start = self.pos();
+        self.write_byte(b'(');
+        self.print_expression(&p.expression);
+        self.write_byte(b')');
+        self.record("ParenthesizedExpression", p.span, start);
+      }
+      // Fallback: paste the original source. Correct for unmodified script
+      // bodies (their span points at original JS source verbatim).
+      other => self.paste(expression_kind(other), other.span()),
+    }
+  }
+
+  fn print_string_literal(&mut self, s: &StringLiteral<'a>) {
+    let start = self.pos();
+    if s.raw.is_some() && !s.span.is_empty() {
+      self.write_source(s.span);
+    } else {
+      self.write_byte(b'\'');
+      self.write(s.value.as_str());
+      self.write_byte(b'\'');
+    }
+    self.record("Literal", s.span, start);
+  }
+
+  fn print_arrow(&mut self, a: &ArrowFunctionExpression<'a>) {
+    let start = self.pos();
+    if a.r#async {
+      self.write("async ");
+    }
+    self.write_byte(b'(');
+    self.print_formal_params(&a.params);
+    self.write(") => ");
+    if a.expression {
+      if let Some(Statement::ExpressionStatement(s)) = a.body.statements.first() {
+        self.print_expression(&s.expression);
+      }
+    } else {
+      let body_start = self.pos();
+      self.write_byte(b'{');
+      for stmt in &a.body.statements {
+        self.write_byte(b'\n');
+        self.print_statement(stmt);
+      }
+      if !a.body.statements.is_empty() {
+        self.write_byte(b'\n');
+      }
+      self.write_byte(b'}');
+      self.record("BlockStatement", a.body.span, body_start);
+    }
+    self.record("ArrowFunctionExpression", a.span, start);
+  }
+
+  // -- JSX ------------------------------------------------------------------
+
+  fn print_jsx_element(&mut self, e: &JSXElement<'a>) {
+    let start = self.pos();
+    self.print_jsx_opening(&e.opening_element);
+    for child in &e.children {
+      self.print_jsx_child(child);
+    }
+    if let Some(closing) = &e.closing_element {
+      self.print_jsx_closing(closing);
+    }
+    self.record("JSXElement", e.span, start);
+  }
+
+  fn print_jsx_fragment(&mut self, f: &JSXFragment<'a>) {
+    let start = self.pos();
+    let s = self.pos();
+    self.write("<>");
+    self.record("JSXOpeningFragment", f.opening_fragment.span, s);
+    for child in &f.children {
+      self.print_jsx_child(child);
+    }
+    let s = self.pos();
+    self.write("</>");
+    self.record("JSXClosingFragment", f.closing_fragment.span, s);
+    self.record("JSXFragment", f.span, start);
+  }
+
+  fn print_jsx_opening(&mut self, o: &JSXOpeningElement<'a>) {
+    let start = self.pos();
+    self.write_byte(b'<');
+    self.print_jsx_element_name(&o.name);
+    for attr in &o.attributes {
+      self.write_byte(b' ');
+      self.print_jsx_attribute_item(attr);
+    }
+    self.write_byte(b'>');
+    self.record("JSXOpeningElement", o.span, start);
+  }
+
+  fn print_jsx_closing(&mut self, c: &JSXClosingElement<'a>) {
+    let start = self.pos();
+    if jsx_element_name_is_empty(&c.name) {
+      self.write("</>");
+    } else {
+      self.write("</");
+      self.print_jsx_element_name(&c.name);
+      self.write_byte(b'>');
+    }
+    self.record("JSXClosingElement", c.span, start);
+  }
+
+  fn print_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
+    match name {
+      JSXElementName::Identifier(id) => self.print_jsx_identifier(id),
+      JSXElementName::IdentifierReference(r) => self.print_identifier_reference(r),
+      JSXElementName::NamespacedName(n) => self.print_jsx_namespaced(n),
+      JSXElementName::MemberExpression(m) => self.print_jsx_member(m),
+      JSXElementName::ThisExpression(t) => {
+        let start = self.pos();
+        self.write("this");
+        self.record("ThisExpression", t.span, start);
+      }
+    }
+  }
+
+  fn print_jsx_identifier(&mut self, id: &JSXIdentifier<'a>) {
+    let start = self.pos();
+    self.write(id.name.as_str());
+    self.record("JSXIdentifier", id.span, start);
+  }
+
+  fn print_jsx_namespaced(&mut self, n: &JSXNamespacedName<'a>) {
+    let start = self.pos();
+    self.print_jsx_identifier(&n.namespace);
+    self.write_byte(b':');
+    self.print_jsx_identifier(&n.name);
+    self.record("JSXNamespacedName", n.span, start);
+  }
+
+  fn print_jsx_member(&mut self, m: &JSXMemberExpression<'a>) {
+    let start = self.pos();
+    match &m.object {
+      JSXMemberExpressionObject::IdentifierReference(r) => self.print_identifier_reference(r),
+      JSXMemberExpressionObject::MemberExpression(inner) => self.print_jsx_member(inner),
+      JSXMemberExpressionObject::ThisExpression(t) => {
+        let st = self.pos();
+        self.write("this");
+        self.record("ThisExpression", t.span, st);
+      }
+    }
+    self.write_byte(b'.');
+    self.print_jsx_identifier(&m.property);
+    self.record("JSXMemberExpression", m.span, start);
+  }
+
+  fn print_jsx_attribute_item(&mut self, item: &JSXAttributeItem<'a>) {
+    match item {
+      JSXAttributeItem::Attribute(a) => {
+        let start = self.pos();
+        self.print_jsx_attribute_name(&a.name);
+        if let Some(value) = &a.value {
+          self.write_byte(b'=');
+          self.print_jsx_attribute_value(value);
+        }
+        self.record("JSXAttribute", a.span, start);
+      }
+      JSXAttributeItem::SpreadAttribute(s) => {
+        let start = self.pos();
+        self.write("{...");
+        self.print_expression(&s.argument);
+        self.write_byte(b'}');
+        self.record("JSXSpreadAttribute", s.span, start);
+      }
+    }
+  }
+
+  fn print_jsx_attribute_name(&mut self, name: &JSXAttributeName<'a>) {
+    match name {
+      JSXAttributeName::Identifier(id) => self.print_jsx_identifier(id),
+      JSXAttributeName::NamespacedName(n) => self.print_jsx_namespaced(n),
+    }
+  }
+
+  fn print_jsx_attribute_value(&mut self, value: &JSXAttributeValue<'a>) {
+    match value {
+      JSXAttributeValue::StringLiteral(s) => {
+        let start = self.pos();
+        if s.raw.is_some() && !s.span.is_empty() {
+          self.write_source(s.span);
+        } else {
+          self.write_byte(b'"');
+          self.write(s.value.as_str());
+          self.write_byte(b'"');
+        }
+        self.record("Literal", s.span, start);
+      }
+      JSXAttributeValue::ExpressionContainer(c) => self.print_jsx_expr_container(c),
+      JSXAttributeValue::Element(e) => self.print_jsx_element(e),
+      JSXAttributeValue::Fragment(f) => self.print_jsx_fragment(f),
+    }
+  }
+
+  fn print_jsx_expr_container(&mut self, c: &JSXExpressionContainer<'a>) {
+    let start = self.pos();
+    self.write_byte(b'{');
+    if !matches!(&c.expression, JSXExpression::EmptyExpression(_)) {
+      // The expression was printed by a JS-side codegen by recursing into
+      // each variant. We get equivalent fidelity (for our purposes) by
+      // pasting the source slice — the underlying span points at the
+      // original Vue interpolation expression, which is valid JS.
+      let span = c.expression.span();
+      let kind = jsx_expression_kind(&c.expression);
+      let st = self.pos();
+      self.write_source(span);
+      self.record(kind, span, st);
+    }
+    self.write_byte(b'}');
+    self.record("JSXExpressionContainer", c.span, start);
+  }
+
+  fn print_jsx_child(&mut self, child: &JSXChild<'a>) {
+    match child {
+      JSXChild::Text(t) => {
+        let start = self.pos();
+        self.write(t.value.as_str());
+        self.record("JSXText", t.span, start);
+      }
+      JSXChild::Element(e) => self.print_jsx_element(e),
+      JSXChild::Fragment(f) => self.print_jsx_fragment(f),
+      JSXChild::ExpressionContainer(c) => self.print_jsx_expr_container(c),
+      JSXChild::Spread(s) => {
+        let start = self.pos();
+        self.write("{...");
+        self.print_expression(&s.expression);
+        self.write_byte(b'}');
+        self.record("JSXSpreadChild", s.span, start);
+      }
+    }
+  }
+
+  // -- TypeScript -----------------------------------------------------------
+
+  fn print_type_annotation(&mut self, ann: &TSTypeAnnotation<'a>) {
+    let start = self.pos();
+    self.write(": ");
+    self.print_ts_type(&ann.type_annotation);
+    self.record("TSTypeAnnotation", ann.span, start);
+  }
+
+  fn print_ts_type(&mut self, ty: &TSType<'a>) {
+    self.paste(ts_type_kind(ty), ty.span());
+  }
+}
+
+// -- helpers ----------------------------------------------------------------
+
+fn jsx_element_name_is_empty(name: &JSXElementName<'_>) -> bool {
+  match name {
+    JSXElementName::Identifier(id) => id.name.is_empty(),
+    _ => false,
+  }
+}
+
+fn module_export_name_text<'a>(name: &'a ModuleExportName<'_>) -> &'a str {
+  match name {
+    ModuleExportName::IdentifierName(n) => n.name.as_str(),
+    ModuleExportName::IdentifierReference(r) => r.name.as_str(),
+    ModuleExportName::StringLiteral(s) => s.value.as_str(),
+  }
+}
+
+fn expression_kind(e: &Expression<'_>) -> &'static str {
+  match e {
+    Expression::ArrayExpression(_) => "ArrayExpression",
+    Expression::AssignmentExpression(_) => "AssignmentExpression",
+    Expression::AwaitExpression(_) => "AwaitExpression",
+    Expression::BinaryExpression(_) => "BinaryExpression",
+    Expression::CallExpression(_) => "CallExpression",
+    Expression::ChainExpression(_) => "ChainExpression",
+    Expression::ClassExpression(_) => "ClassExpression",
+    Expression::ConditionalExpression(_) => "ConditionalExpression",
+    Expression::FunctionExpression(_) => "FunctionExpression",
+    Expression::ImportExpression(_) => "ImportExpression",
+    Expression::LogicalExpression(_) => "LogicalExpression",
+    Expression::NewExpression(_) => "NewExpression",
+    Expression::ObjectExpression(_) => "ObjectExpression",
+    Expression::SequenceExpression(_) => "SequenceExpression",
+    Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
+    Expression::ThisExpression(_) => "ThisExpression",
+    Expression::UnaryExpression(_) => "UnaryExpression",
+    Expression::UpdateExpression(_) => "UpdateExpression",
+    Expression::YieldExpression(_) => "YieldExpression",
+    Expression::PrivateInExpression(_) => "PrivateInExpression",
+    Expression::TSAsExpression(_) => "TSAsExpression",
+    Expression::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
+    Expression::TSTypeAssertion(_) => "TSTypeAssertion",
+    Expression::TSNonNullExpression(_) => "TSNonNullExpression",
+    Expression::TSInstantiationExpression(_) => "TSInstantiationExpression",
+    Expression::ComputedMemberExpression(_)
+    | Expression::StaticMemberExpression(_)
+    | Expression::PrivateFieldExpression(_) => "MemberExpression",
+    _ => "Expression",
+  }
+}
+
+fn jsx_expression_kind(e: &JSXExpression<'_>) -> &'static str {
+  match e {
+    JSXExpression::EmptyExpression(_) => "JSXEmptyExpression",
+    JSXExpression::Identifier(_) => "Identifier",
+    JSXExpression::StringLiteral(_)
+    | JSXExpression::BooleanLiteral(_)
+    | JSXExpression::NullLiteral(_)
+    | JSXExpression::NumericLiteral(_)
+    | JSXExpression::BigIntLiteral(_)
+    | JSXExpression::RegExpLiteral(_) => "Literal",
+    JSXExpression::TemplateLiteral(_) => "TemplateLiteral",
+    JSXExpression::CallExpression(_) => "CallExpression",
+    JSXExpression::ConditionalExpression(_) => "ConditionalExpression",
+    JSXExpression::BinaryExpression(_) => "BinaryExpression",
+    JSXExpression::LogicalExpression(_) => "LogicalExpression",
+    JSXExpression::UnaryExpression(_) => "UnaryExpression",
+    JSXExpression::ObjectExpression(_) => "ObjectExpression",
+    JSXExpression::ArrayExpression(_) => "ArrayExpression",
+    JSXExpression::ArrowFunctionExpression(_) => "ArrowFunctionExpression",
+    JSXExpression::ComputedMemberExpression(_)
+    | JSXExpression::StaticMemberExpression(_)
+    | JSXExpression::PrivateFieldExpression(_) => "MemberExpression",
+    JSXExpression::JSXElement(_) => "JSXElement",
+    JSXExpression::JSXFragment(_) => "JSXFragment",
+    _ => "Expression",
+  }
+}
+
+fn ts_type_kind(t: &TSType<'_>) -> &'static str {
+  match t {
+    TSType::TSAnyKeyword(_) => "TSAnyKeyword",
+    TSType::TSBigIntKeyword(_) => "TSBigIntKeyword",
+    TSType::TSBooleanKeyword(_) => "TSBooleanKeyword",
+    TSType::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword",
+    TSType::TSNeverKeyword(_) => "TSNeverKeyword",
+    TSType::TSNullKeyword(_) => "TSNullKeyword",
+    TSType::TSNumberKeyword(_) => "TSNumberKeyword",
+    TSType::TSObjectKeyword(_) => "TSObjectKeyword",
+    TSType::TSStringKeyword(_) => "TSStringKeyword",
+    TSType::TSSymbolKeyword(_) => "TSSymbolKeyword",
+    TSType::TSThisType(_) => "TSThisType",
+    TSType::TSUndefinedKeyword(_) => "TSUndefinedKeyword",
+    TSType::TSUnknownKeyword(_) => "TSUnknownKeyword",
+    TSType::TSVoidKeyword(_) => "TSVoidKeyword",
+    TSType::TSTypeReference(_) => "TSTypeReference",
+    TSType::TSUnionType(_) => "TSUnionType",
+    TSType::TSIntersectionType(_) => "TSIntersectionType",
+    TSType::TSLiteralType(_) => "TSLiteralType",
+    _ => "TSType",
+  }
+}

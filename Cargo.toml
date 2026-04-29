@@ -38,6 +38,7 @@ oxc_allocator = ">=0.127.0"
 oxc_ast = ">=0.127.0"
 oxc_ast_visit = ">=0.127.0"
 oxc_codegen = ">=0.127.0"
+oxc_data_structures = { version = ">=0.127.0", features = ["code_buffer"] }
 oxc_diagnostics = ">=0.127.0"
 oxc_parser = ">=0.127.0"
 oxc_span = ">=0.127.0"

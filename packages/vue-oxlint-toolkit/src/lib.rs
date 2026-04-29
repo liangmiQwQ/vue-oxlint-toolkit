@@ -1,7 +1,11 @@
 #![deny(clippy::all)]
 
+mod codegen;
+
+use codegen::{Codegen, CodegenHook};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::CommentKind;
+use oxc_span::Span;
 use vue_oxlint_jsx::{ParseConfig, VueOxcParser};
 
 use napi_derive::napi;
@@ -29,17 +33,46 @@ pub struct NativeDiagnostic {
 }
 
 #[napi(object)]
+pub struct NativeMapping {
+  /// AST node type at this mapping point.
+  pub r#type: String,
+  /// Byte offset in the generated source where this node starts.
+  pub virtual_start: u32,
+  /// Byte offset in the generated source where this node ends.
+  pub virtual_end: u32,
+  /// Byte offset in the original source where this node starts.
+  pub original_start: u32,
+  /// Byte offset in the original source where this node ends.
+  pub original_end: u32,
+}
+
+#[napi(object)]
 pub struct NativeTransformResult {
-  /// ESTree AST serialized as JSON.
-  ///
-  /// Source text and per-node mappings are produced JS-side from this JSON
-  /// by walking the AST with a hookable codegen.
-  pub estree_json: String,
+  pub source_text: String,
   #[napi(ts_type = "'jsx' | 'tsx'")]
   pub script_kind: String,
   pub comments: Vec<NativeComment>,
   pub irregular_whitespaces: Vec<NativeRange>,
   pub errors: Vec<NativeDiagnostic>,
+  /// One entry per AST node with a non-zero span. Synthesised wrapper nodes
+  /// (`span: 0,0`) are skipped.
+  pub mappings: Vec<NativeMapping>,
+}
+
+struct MappingCollector {
+  out: Vec<NativeMapping>,
+}
+
+impl CodegenHook for MappingCollector {
+  fn record(&mut self, kind: &'static str, span: Span, virtual_start: u32, virtual_end: u32) {
+    self.out.push(NativeMapping {
+      r#type: kind.to_string(),
+      virtual_start,
+      virtual_end,
+      original_start: span.start,
+      original_end: span.end,
+    });
+  }
 }
 
 #[napi]
@@ -47,17 +80,20 @@ pub struct NativeTransformResult {
 #[allow(clippy::needless_pass_by_value, reason = "N-API owns string arguments at the boundary.")]
 pub fn transform_jsx(source: String) -> NativeTransformResult {
   let allocator = Allocator::default();
-  let mut ret =
+  let ret =
     VueOxcParser::new(&allocator, &source).with_config(ParseConfig { codegen: true }).parse();
   let script_kind = if ret.program.source_type.is_typescript() { "tsx" } else { "jsx" }.to_string();
-  // The Vue parser uses `Unambiguous` module kind, which the ESTree serializer
-  // refuses to emit. Force `Module` for serialization.
-  ret.program.source_type = ret.program.source_type.with_module(true);
-  let estree_json =
-    if ret.panicked { String::from("null") } else { ret.program.to_estree_ts_json(false) };
+
+  let (source_text, mappings) = if ret.panicked {
+    (String::new(), Vec::new())
+  } else {
+    let codegen = Codegen::new(&source, MappingCollector { out: Vec::new() });
+    let (text, hook) = codegen.build(&ret.program);
+    (text, hook.out)
+  };
 
   NativeTransformResult {
-    estree_json,
+    source_text,
     script_kind,
     comments: ret
       .program
@@ -98,6 +134,7 @@ pub fn transform_jsx(source: String) -> NativeTransformResult {
         NativeDiagnostic { message: error.message.to_string(), start, end }
       })
       .collect(),
+    mappings,
   }
 }
 

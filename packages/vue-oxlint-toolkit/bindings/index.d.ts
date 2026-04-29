@@ -13,23 +13,35 @@ export interface NativeDiagnostic {
   end: number
 }
 
+export interface NativeMapping {
+  /** AST node type at this mapping point. */
+  type: string
+  /** Byte offset in the generated source where this node starts. */
+  virtualStart: number
+  /** Byte offset in the generated source where this node ends. */
+  virtualEnd: number
+  /** Byte offset in the original source where this node starts. */
+  originalStart: number
+  /** Byte offset in the original source where this node ends. */
+  originalEnd: number
+}
+
 export interface NativeRange {
   start: number
   end: number
 }
 
 export interface NativeTransformResult {
-  /**
-   * ESTree AST serialized as JSON.
-   *
-   * Source text and per-node mappings are produced JS-side from this JSON
-   * by walking the AST with a hookable codegen.
-   */
-  estreeJson: string
+  sourceText: string
   scriptKind: 'jsx' | 'tsx'
   comments: Array<NativeComment>
   irregularWhitespaces: Array<NativeRange>
   errors: Array<NativeDiagnostic>
+  /**
+   * One entry per AST node with a non-zero span. Synthesised wrapper nodes
+   * (`span: 0,0`) are skipped.
+   */
+  mappings: Array<NativeMapping>
 }
 
 export declare function transformJsx(source: string): NativeTransformResult
