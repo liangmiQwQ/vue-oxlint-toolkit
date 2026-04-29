@@ -1,11 +1,24 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import type { NativeRange, NativeTransformResult } from '../bindings'
 import { transformJsx as nativeTransformJsx } from '../bindings'
+import { type AstNode, Codegen, type CodegenHook } from './codegen'
 
+/**
+ * AST-location-based mapping. There is one entry per AST node that has a
+ * non-zero span (`start === 0 && end === 0` are synthesised nodes such as
+ * the wrapping fragment, and are skipped). All offsets are JavaScript
+ * string indices (UTF-16 code units), matching `range`/`loc` semantics.
+ */
 export interface Mapping {
+  /** AST node type at this mapping point. */
+  type: string
+  /** Offset in the generated source text where this node starts. */
   virtualStart: number
+  /** Offset in the generated source text where this node ends. */
   virtualEnd: number
+  /** Offset in the original source where this node starts. */
   originalStart: number
+  /** Offset in the original source where this node ends. */
   originalEnd: number
 }
 
@@ -18,12 +31,18 @@ export interface ToolkitTransformResult {
   mappings: Mapping[]
 }
 
+export { Codegen } from './codegen'
+export type { AstNode, CodegenHook, CodegenOptions, CodegenResult } from './codegen'
+
 export function transformJsx(source: string): ToolkitTransformResult {
   const result: NativeTransformResult = nativeTransformJsx(source)
   const locator = createLocator(source)
 
+  const ast = parseAst(result.estreeJson)
+  const { code: sourceText, mappings } = runCodegen(ast, locator)
+
   return {
-    sourceText: result.sourceText,
+    sourceText,
     scriptKind: result.scriptKind,
     comments: result.comments.map((comment) => ({
       type: comment.type,
@@ -38,8 +57,56 @@ export function transformJsx(source: string): ToolkitTransformResult {
       message: error.message,
       loc: toLocation(error, locator),
     })),
-    mappings: undefined as any,
+    mappings,
   }
+}
+
+function parseAst(json: string): AstNode | null {
+  if (!json || json === 'null') return null
+  try {
+    return JSON.parse(json) as AstNode
+  } catch {
+    return null
+  }
+}
+
+function runCodegen(
+  ast: AstNode | null,
+  locator: ReturnType<typeof createLocator>,
+): { code: string; mappings: Mapping[] } {
+  if (!ast) return { code: '', mappings: [] }
+
+  const inflight = new Map<AstNode, number>()
+  const mappings: Mapping[] = []
+
+  const hook: CodegenHook = {
+    enter(node, virtualOffset) {
+      inflight.set(node, virtualOffset)
+    },
+    leave(node, virtualOffset) {
+      const virtualStart = inflight.get(node)
+      inflight.delete(node)
+      if (virtualStart === undefined) return
+
+      const start = node.start
+      const end = node.end
+      // Skip synthesised nodes with no source span.
+      if (typeof start !== 'number' || typeof end !== 'number') return
+      if (start === 0 && end === 0) return
+
+      mappings.push({
+        type: node.type,
+        virtualStart,
+        virtualEnd: virtualOffset,
+        originalStart: locator.toIndex(start),
+        originalEnd: locator.toIndex(end),
+      })
+    },
+  }
+
+  const codegen = new Codegen({ hooks: [hook] })
+  const { code } = codegen.build(ast)
+  return { code, mappings }
 }
 
 function toRange(range: NativeRange, locator: ReturnType<typeof createLocator>): Range {

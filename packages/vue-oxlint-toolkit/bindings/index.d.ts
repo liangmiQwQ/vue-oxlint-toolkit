@@ -19,7 +19,13 @@ export interface NativeRange {
 }
 
 export interface NativeTransformResult {
-  sourceText: string
+  /**
+   * ESTree AST serialized as JSON.
+   *
+   * Source text and per-node mappings are produced JS-side from this JSON
+   * by walking the AST with a hookable codegen.
+   */
+  estreeJson: string
   scriptKind: 'jsx' | 'tsx'
   comments: Array<NativeComment>
   irregularWhitespaces: Array<NativeRange>

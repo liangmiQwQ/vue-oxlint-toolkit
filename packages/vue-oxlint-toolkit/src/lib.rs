@@ -2,7 +2,6 @@
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::CommentKind;
-use oxc_codegen::Codegen;
 use vue_oxlint_jsx::{ParseConfig, VueOxcParser};
 
 use napi_derive::napi;
@@ -31,7 +30,11 @@ pub struct NativeDiagnostic {
 
 #[napi(object)]
 pub struct NativeTransformResult {
-  pub source_text: String,
+  /// ESTree AST serialized as JSON.
+  ///
+  /// Source text and per-node mappings are produced JS-side from this JSON
+  /// by walking the AST with a hookable codegen.
+  pub estree_json: String,
   #[napi(ts_type = "'jsx' | 'tsx'")]
   pub script_kind: String,
   pub comments: Vec<NativeComment>,
@@ -44,14 +47,17 @@ pub struct NativeTransformResult {
 #[allow(clippy::needless_pass_by_value, reason = "N-API owns string arguments at the boundary.")]
 pub fn transform_jsx(source: String) -> NativeTransformResult {
   let allocator = Allocator::default();
-  let ret =
+  let mut ret =
     VueOxcParser::new(&allocator, &source).with_config(ParseConfig { codegen: true }).parse();
   let script_kind = if ret.program.source_type.is_typescript() { "tsx" } else { "jsx" }.to_string();
-  let source_text =
-    if ret.panicked { String::new() } else { Codegen::new().build(&ret.program).code };
+  // The Vue parser uses `Unambiguous` module kind, which the ESTree serializer
+  // refuses to emit. Force `Module` for serialization.
+  ret.program.source_type = ret.program.source_type.with_module(true);
+  let estree_json =
+    if ret.panicked { String::from("null") } else { ret.program.to_estree_ts_json(false) };
 
   NativeTransformResult {
-    source_text,
+    estree_json,
     script_kind,
     comments: ret
       .program
