@@ -20,15 +20,11 @@ const msg: string = 'hello'
   for (const m of result.mappings) {
     expect(m.virtualEnd).toBeGreaterThanOrEqual(m.virtualStart)
     expect(m.originalEnd).toBeGreaterThanOrEqual(m.originalStart)
-    expect(typeof m.type).toBe('string')
   }
 
-  // The mapping for the inner `msg` identifier should round-trip back to the
-  // original `msg: string` declaration site (offset 31..34 in the source).
-  // The `{{ msg }}` interpolation refers to source offset 85..88.
-  const msgMapping = result.mappings.find(
-    (m) => m.type === 'Identifier' && m.originalStart === 85 && m.originalEnd === 88,
-  )
+  // The `{{ msg }}` interpolation refers to source offset 85..88. Its
+  // mapping should round-trip the slice through to the generated `msg`.
+  const msgMapping = result.mappings.find((m) => m.originalStart === 85 && m.originalEnd === 88)
   expect(msgMapping).toBeDefined()
   expect(result.sourceText.slice(msgMapping!.virtualStart, msgMapping!.virtualEnd)).toBe('msg')
 })

@@ -9,8 +9,6 @@ import { transformJsx as nativeTransformJsx } from '../bindings'
  * string indices (UTF-16 code units), matching `range`/`loc` semantics.
  */
 export interface Mapping {
-  /** AST node type at this mapping point. */
-  type: string
   /** Offset in the generated source text where this node starts. */
   virtualStart: number
   /** Offset in the generated source text where this node ends. */
@@ -52,7 +50,6 @@ export function transformJsx(source: string): ToolkitTransformResult {
       loc: toLocation(error, locator),
     })),
     mappings: result.mappings.map((m) => ({
-      type: m.type,
       virtualStart: generatedLocator.toIndex(m.virtualStart),
       virtualEnd: generatedLocator.toIndex(m.virtualEnd),
       originalStart: locator.toIndex(m.originalStart),

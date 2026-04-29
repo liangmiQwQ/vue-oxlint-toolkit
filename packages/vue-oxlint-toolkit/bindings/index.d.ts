@@ -14,8 +14,6 @@ export interface NativeDiagnostic {
 }
 
 export interface NativeMapping {
-  /** AST node type at this mapping point. */
-  type: string
   /** Byte offset in the generated source where this node starts. */
   virtualStart: number
   /** Byte offset in the generated source where this node ends. */

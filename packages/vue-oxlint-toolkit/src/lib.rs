@@ -34,8 +34,6 @@ pub struct NativeDiagnostic {
 
 #[napi(object)]
 pub struct NativeMapping {
-  /// AST node type at this mapping point.
-  pub r#type: String,
   /// Byte offset in the generated source where this node starts.
   pub virtual_start: u32,
   /// Byte offset in the generated source where this node ends.
@@ -64,9 +62,8 @@ struct MappingCollector {
 }
 
 impl CodegenHook for MappingCollector {
-  fn record(&mut self, kind: &'static str, span: Span, virtual_start: u32, virtual_end: u32) {
+  fn record(&mut self, span: Span, virtual_start: u32, virtual_end: u32) {
     self.out.push(NativeMapping {
-      r#type: kind.to_string(),
       virtual_start,
       virtual_end,
       original_start: span.start,
