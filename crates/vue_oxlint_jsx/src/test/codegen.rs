@@ -62,7 +62,7 @@ fn validate_all_codegen_syntax() {
     println!("Invalid codegen syntax in:");
     for file in &invalid {
       let snap_name = file.replace(['/', '.'], "_");
-      println!("  {file}  (src/parser/snapshots/codegen/{snap_name}.snap)");
+      println!("  {file}  (src/snapshots/codegen/{snap_name}.snap)");
     }
   }
 
