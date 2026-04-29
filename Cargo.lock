@@ -1740,6 +1740,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "vue_oxlint_jsx",
 ]
 
 [[package]]

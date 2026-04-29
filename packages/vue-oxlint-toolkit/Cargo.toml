@@ -15,6 +15,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
+vue_oxlint_jsx = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 

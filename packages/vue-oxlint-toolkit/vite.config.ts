@@ -5,7 +5,7 @@ export default defineConfig({
     fixedExtension: true,
     platform: 'node',
     entry: {
-      'vue-oxlint-toolkit': './js/index.ts',
+      index: './js/index.ts',
     },
     dts: true,
   },
