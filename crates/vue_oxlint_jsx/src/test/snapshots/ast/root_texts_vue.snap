@@ -236,9 +236,9 @@ Program {
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
                                                                         },
-                                                                        value: "\n\n&lt;!-- aaa --&gt;\n\n",
+                                                                        value: "\n\n<!-- aaa -->\n\n",
                                                                         raw: Some(
-                                                                            "\n\n&lt;!-- aaa --&gt;\n\n",
+                                                                            "\n\n<!-- aaa -->\n\n",
                                                                         ),
                                                                     },
                                                                 ),
@@ -313,9 +313,9 @@ Program {
                                                                         node_id: Cell {
                                                                             value: NodeId(0),
                                                                         },
-                                                                        value: "\n\n&lt;!-- &lt;script&gt; &lt;/script&gt; --&gt;\n\n",
+                                                                        value: "\n\n<!-- <script> </script> -->\n\n",
                                                                         raw: Some(
-                                                                            "\n\n&lt;!-- &lt;script&gt; &lt;/script&gt; --&gt;\n\n",
+                                                                            "\n\n<!-- <script> </script> -->\n\n",
                                                                         ),
                                                                     },
                                                                 ),
@@ -441,11 +441,11 @@ Program {
 async () => {
 	<><template></template><script></script>
 
-&lt;!-- aaa --&gt;
+<!-- aaa -->
 
 <script></script>
 
-&lt;!-- &lt;script&gt; &lt;/script&gt; --&gt;
+<!-- <script> </script> -->
 
 <style></style>
 

@@ -770,9 +770,9 @@ Program {
                                                                                                         node_id: Cell {
                                                                                                             value: NodeId(0),
                                                                                                         },
-                                                                                                        value: " I think 1 &lt; 2, isn't it? ",
+                                                                                                        value: " I think 1 < 2, isn't it? ",
                                                                                                         raw: Some(
-                                                                                                            " I think 1 &lt; 2, isn't it? ",
+                                                                                                            " I think 1 < 2, isn't it? ",
                                                                                                         ),
                                                                                                     },
                                                                                                 ),
@@ -911,7 +911,7 @@ async () => {
 
 <template>
   <div>{a.msg}</div>
-  <div> I think 1 &lt; 2, isn't it? </div>
+  <div> I think 1 < 2, isn't it? </div>
 </template>
 </>;
 };

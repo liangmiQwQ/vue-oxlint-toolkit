@@ -578,9 +578,9 @@ Program {
                                                                                         node_id: Cell {
                                                                                             value: NodeId(0),
                                                                                         },
-                                                                                        value: "\ndiv &#123;\n  color: red;\n&#125;\n",
+                                                                                        value: "\ndiv {\n  color: red;\n}\n",
                                                                                         raw: Some(
-                                                                                            "\ndiv &#123;\n  color: red;\n&#125;\n",
+                                                                                            "\ndiv {\n  color: red;\n}\n",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -679,9 +679,9 @@ async () => {
 <script lang="js" setup></script>
 
 <style>
-div &#123;
+div {
   color: red;
-&#125;
+}
 </style>
 </>;
 };
