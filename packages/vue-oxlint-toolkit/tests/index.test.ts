@@ -29,6 +29,29 @@ const msg: string = 'hello'
   expect(result.sourceText.slice(msgMapping!.virtualStart, msgMapping!.virtualEnd)).toBe('msg')
 })
 
+it('prints self-closing JSX elements as self-closing', () => {
+  const result = transformJsx(`<template>
+  <Foo />
+</template>`)
+
+  expect(result.sourceText).toContain('<Foo />')
+  expect(result.sourceText).not.toContain('<Foo>')
+})
+
+it('preserves type-only imports in generated source', () => {
+  const result = transformJsx(`<script setup lang="ts">
+import type DefaultType from 'default-type'
+import type * as Types from 'types'
+import { type Foo, Bar, type Baz as RenamedBaz } from 'pkg'
+</script>`)
+
+  expect(result.sourceText).toContain(`import type DefaultType from 'default-type';`)
+  expect(result.sourceText).toContain(`import type * as Types from 'types';`)
+  expect(result.sourceText).toContain(
+    `import { type Foo, Bar, type Baz as RenamedBaz } from 'pkg';`,
+  )
+})
+
 it('returns parser metadata', () => {
   const result = transformJsx(`<template>
   <!-- hello -->

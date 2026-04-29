@@ -11,6 +11,7 @@
 //! grow coverage incrementally.
 #![allow(clippy::too_many_lines)]
 
+#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_data_structures::code_buffer::CodeBuffer;
 use oxc_span::{GetSpan, Span};
@@ -171,6 +172,10 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
   fn print_import_decl(&mut self, d: &ImportDeclaration<'a>) {
     let start = self.pos();
     self.write("import ");
+    let import_is_type = d.import_kind == ImportOrExportKind::Type;
+    if import_is_type {
+      self.write("type ");
+    }
     if let Some(specifiers) = &d.specifiers {
       let mut default: Option<&ImportDefaultSpecifier> = None;
       let mut namespace: Option<&ImportNamespaceSpecifier> = None;
@@ -182,13 +187,12 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
           ImportDeclarationSpecifier::ImportSpecifier(s) => named.push(s),
         }
       }
-      let mut needs_comma = false;
-      if let Some(s) = default {
+      let mut needs_comma = default.is_some_and(|s| {
         let st = self.pos();
         self.print_binding_identifier(&s.local);
         self.record(s.span, st);
-        needs_comma = true;
-      }
+        true
+      });
       if let Some(s) = namespace {
         if needs_comma {
           self.write(", ");
@@ -209,6 +213,9 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
             self.write(", ");
           }
           let st = self.pos();
+          if !import_is_type && s.import_kind == ImportOrExportKind::Type {
+            self.write("type ");
+          }
           self.print_module_export_name(&s.imported);
           if module_export_name_text(&s.imported) != s.local.name.as_str() {
             self.write(" as ");
@@ -426,7 +433,7 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
 
   fn print_jsx_element(&mut self, e: &JSXElement<'a>) {
     let start = self.pos();
-    self.print_jsx_opening(&e.opening_element);
+    self.print_jsx_opening(&e.opening_element, e.closing_element.is_none());
     for child in &e.children {
       self.print_jsx_child(child);
     }
@@ -450,7 +457,7 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
     self.record(f.span, start);
   }
 
-  fn print_jsx_opening(&mut self, o: &JSXOpeningElement<'a>) {
+  fn print_jsx_opening(&mut self, o: &JSXOpeningElement<'a>, self_closing: bool) {
     let start = self.pos();
     self.write_byte(b'<');
     self.print_jsx_element_name(&o.name);
@@ -458,7 +465,11 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
       self.write_byte(b' ');
       self.print_jsx_attribute_item(attr);
     }
-    self.write_byte(b'>');
+    if self_closing {
+      self.write(" />");
+    } else {
+      self.write_byte(b'>');
+    }
     self.record(o.span, start);
   }
 
