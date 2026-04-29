@@ -1,6 +1,6 @@
 {
   "name": "vue-oxlint-toolkit",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "An experimental Oxlint plugin for Oxlint's better Vue support.",
   "license": "MIT",
   "author": "Liang Mi <hi@liangmi.dev>",
