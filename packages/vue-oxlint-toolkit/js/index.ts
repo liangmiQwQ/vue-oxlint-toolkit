@@ -2,13 +2,20 @@ import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import type { NativeRange, NativeTransformResult } from '../bindings'
 import { transformJsx as nativeTransformJsx } from '../bindings'
 
+export interface Mapping {
+  virtualStart: number
+  virtualEnd: number
+  originalStart: number
+  originalEnd: number
+}
+
 export interface ToolkitTransformResult {
   sourceText: string
   scriptKind: 'jsx' | 'tsx'
   comments: Comment[]
   irregularWhitespaces: Range[]
   errors: Diagnostic[]
-  mapping: undefined
+  mappings: Mapping[]
 }
 
 export function transformJsx(source: string): ToolkitTransformResult {
@@ -31,7 +38,7 @@ export function transformJsx(source: string): ToolkitTransformResult {
       message: error.message,
       loc: toLocation(error, locator),
     })),
-    mapping: undefined,
+    mappings: undefined as any,
   }
 }
 
