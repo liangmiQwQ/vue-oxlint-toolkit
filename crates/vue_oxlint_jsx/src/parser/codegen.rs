@@ -20,7 +20,6 @@ impl<'a> ParserImpl<'a> {
         }
       }
       let escaped = unsafe { str::from_utf8_unchecked(&vec) };
-      assert_eq!(escaped, str);
       self.ast.str(escaped)
     } else {
       self.ast.str(str)
