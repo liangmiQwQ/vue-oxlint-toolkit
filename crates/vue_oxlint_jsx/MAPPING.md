@@ -2,6 +2,10 @@
 
 This document explains how Vue template nodes are transformed into [Oxc](https://github.com/oxc-project/oxc) AST nodes. The toolkit represents Vue templates using a standard JavaScript/JSX AST, enabling use of existing JavaScript tooling.
 
+There are two kinds of generated JSX AST: `default` and `codegen`. `default` keeps original AST details as much as possible, while `codegen` fixes the transformed AST to prevent syntax errors when the code generation result is parsed again. The specific differences will be explained below.
+
+For future Oxlint integration, we should use `codegen` for now.
+
 ## SFC Structure
 
 A Vue Single File Component (SFC) is transformed into a standard `Program`. The `Program.body` follows a specific structure:
