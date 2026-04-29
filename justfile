@@ -53,7 +53,7 @@ bump TYPE:
   git pull origin main
   node -p "require('semver').valid('{{ TYPE }}') || (console.error('Invalid version'), process.exit(1))"
   vpx bumpp --no-commit -y --release -r {{ TYPE }}
-  cargo workspaces version --no-git-commit -y {{ TYPE }}
+  cargo workspaces version --no-git-commit -y custom {{ TYPE }}
   just build
   git add .
   git commit -m "chore: release v{{ TYPE }}"
