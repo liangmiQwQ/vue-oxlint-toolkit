@@ -33,6 +33,16 @@ fn validate_all_codegen_syntax() {
         }
         let js = Codegen::new().build(&ret.program);
         let codegen = js.code;
+
+        // Store codegen as snapshot
+        let snap_name = file_path.replace(['/', '.'], "_");
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path("snapshots/codegen");
+        settings.set_prepend_module_to_snapshot(false);
+        settings.bind(|| {
+          insta::assert_snapshot!(snap_name, &codegen);
+        });
+
         let new_allocator = Allocator::default();
         let source_type = ret.program.source_type;
         let reparsed = oxc_parser::Parser::new(&new_allocator, &codegen, source_type)
@@ -52,7 +62,7 @@ fn validate_all_codegen_syntax() {
     println!("Invalid codegen syntax in:");
     for file in &invalid {
       let snap_name = file.replace(['/', '.'], "_");
-      println!("  {file}  (src/parser/snapshots/ast/{snap_name}.snap)");
+      println!("  {file}  (src/parser/snapshots/codegen/{snap_name}.snap)");
     }
   }
 

@@ -1,0 +1,12 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+"use client";
+async () => {
+	"use server";
+	<><script></script>
+
+<script setup></script>
+</>;
+};

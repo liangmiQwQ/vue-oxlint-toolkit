@@ -1,0 +1,18 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  <div v-else-if:={}></>
+  <div v-else:></>
+
+  
+  {1 ? <><div v-if:={}></></> : undefined}<div v-if:={}></>
+  <div v-if:></>
+  <div v-else-if:={}></>
+  <div v-else-if:></>
+</template>
+
+</>;
+};

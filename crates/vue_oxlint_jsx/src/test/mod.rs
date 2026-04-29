@@ -92,7 +92,7 @@ where
 
   let snapshot_name = file_path.replace(['/', '.'], "_");
   let mut settings = insta::Settings::clone_current();
-  settings.set_snapshot_path(format!("parser/snapshots/{folder}"));
+  settings.set_snapshot_path(format!("snapshots/{folder}"));
   settings.set_prepend_module_to_snapshot(false);
   settings.bind(|| {
     insta::assert_snapshot!(snapshot_name, result);

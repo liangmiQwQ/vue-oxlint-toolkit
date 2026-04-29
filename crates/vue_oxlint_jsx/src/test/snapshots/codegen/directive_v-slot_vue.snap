@@ -1,0 +1,27 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  <Comp v-slot:={}>{{ default: ({ message }) => <></> }}</Comp>
+  <Comp v-slot:header={}>{{ header: ({ message }) => <>
+    {message}
+  </> }}</Comp>
+  <Comp v-slot:abc>{{ abc: () => <> abc </> }}</Comp>
+  <Comp v-slot:>{{ default: () => <></> }}</>
+  <Comp v-slot:header={}>{{ header: ({ message }) => <>
+    {message}
+  </> }}</Comp>
+  <Comp v-slot:={}>{{ default: ({ message }) => <>
+    {message}
+  </> }}</Comp>
+  <Comp v-slot:[key]={}>{{ [key]: ({ message }) => <>
+    {message}
+  </> }}</Comp>
+  <Comp v-slot:header={}>{{ header: (user) => <>
+    {user.name}
+  </> }}</Comp>
+</template>
+</>;
+};

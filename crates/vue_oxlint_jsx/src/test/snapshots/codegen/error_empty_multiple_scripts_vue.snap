@@ -1,0 +1,11 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+const a = 1;
+async () => {
+	<><script></script>
+
+<script></script>
+</>;
+};

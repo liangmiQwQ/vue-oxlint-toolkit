@@ -1,0 +1,20 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  <div v-bind:key={(() => {
+		return {
+			a,
+			b
+		};
+	})}></div>
+  <div v-bind:key={}></div>
+</template>
+
+<script lang="ts" setup></script>
+
+<style></style>
+</>;
+};
