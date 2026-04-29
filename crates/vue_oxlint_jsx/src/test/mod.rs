@@ -8,6 +8,8 @@ use oxc_parser::ParseOptions;
 use oxc_span::{GetSpan, Span};
 use std::fmt::Write;
 
+mod codegen;
+
 #[macro_export]
 macro_rules! test_ast {
   ($file_path:expr) => {
