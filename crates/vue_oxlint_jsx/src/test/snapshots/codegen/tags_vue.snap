@@ -1,0 +1,15 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  <div class="1"></div>
+  <div></div>
+  <div class="w-1" />
+  <main class="1" />
+  <img />
+  <br />
+</template>
+</>;
+};

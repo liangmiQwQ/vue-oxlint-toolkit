@@ -13,10 +13,16 @@ mod parser;
 #[cfg(test)]
 mod test;
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ParseConfig {
+  pub codegen: bool,
+}
+
 pub struct VueOxcParser<'a> {
   allocator: &'a Allocator,
   source_text: &'a str,
   options: ParseOptions,
+  config: ParseConfig,
 }
 
 /// The return value of [`VueOxcParser::parse`].
@@ -55,7 +61,12 @@ impl<'a> VueOxcParser<'a> {
   /// assert!(!ret.panicked);
   /// ```
   pub fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
-    Self { allocator, source_text, options: ParseOptions::default() }
+    Self {
+      allocator,
+      source_text,
+      options: ParseOptions::default(),
+      config: ParseConfig::default(),
+    }
   }
 
   /// Overrides the [`ParseOptions`] passed to the underlying `oxc_parser`.
@@ -77,6 +88,13 @@ impl<'a> VueOxcParser<'a> {
   #[must_use]
   pub const fn with_options(mut self, options: ParseOptions) -> Self {
     self.options = options;
+    self
+  }
+
+  /// Overrides the [`ParseConfig`]
+  #[must_use]
+  pub const fn with_config(mut self, config: ParseConfig) -> Self {
+    self.config = config;
     self
   }
 }
@@ -106,7 +124,7 @@ impl<'a> VueOxcParser<'a> {
   #[must_use]
   pub fn parse(self) -> VueParserReturn<'a> {
     let ParserImplReturn { program, errors, fatal, module_record } =
-      ParserImpl::new(self.allocator, self.source_text, self.options).parse();
+      ParserImpl::new(self.allocator, self.source_text, self.options, self.config).parse();
 
     if fatal {
       VueParserReturn {

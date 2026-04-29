@@ -65,8 +65,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       && start != first.get_location().start.offset as u32
     {
       let span = Span::new(start, first.get_location().start.offset as u32);
-      let value = span.source_text(self.source_text);
-      result.push(ast.jsx_child_text(span, value, Some(ast.str(value))));
+      result.push(self.jsx_child_text(span, span.source_text(self.source_text)));
     }
 
     let last = if let Some(last) = children.last()
@@ -74,8 +73,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       && end != last.get_location().end.offset as u32
     {
       let span = Span::new(last.get_location().end.offset as u32, end);
-      let value = span.source_text(self.source_text);
-      Some(ast.jsx_child_text(span, value, Some(ast.str(value))))
+      Some(self.jsx_child_text(span, span.source_text(self.source_text)))
     } else {
       None
     };
@@ -219,12 +217,16 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     let opening_element_name = element_name.clone_in(self.allocator);
 
     // Determine closing element based on tag type:
-    // - Self-closing tags (/>): closing element with empty name
+    // - Self-closing tags (/>): closing element with empty name (None in `codegen` mode)
     // - Void tags without />: None
     // - Normal tags with </tag>: closing element with tag name
     let closing_element = if location_span.source_text(self.source_text).ends_with("/>") {
       // Self-closing tag: create closing element with empty element name
-      Some(ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ast.str(""))))
+      if self.config.codegen {
+        None
+      } else {
+        Some(ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ast.str(""))))
+      }
     } else if is_void_tag!(tag_name) {
       // Void tag without />: no closing element
       None
@@ -336,7 +338,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
                   }
                 }
               })())
-              .unwrap_or_else(|| JSXExpression::EmptyExpression(ast.jsx_empty_expression(SPAN))),
+              .unwrap_or_else(|| self.empty_jsx_attribute_expression()),
             ),
           )
         } else if let Some(argument) = &dir.argument
@@ -412,9 +414,16 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     }
   }
 
+  fn empty_jsx_attribute_expression(&self) -> JSXExpression<'a> {
+    if self.config.codegen {
+      JSXExpression::from(self.ast.expression_identifier(SPAN, "undefined"))
+    } else {
+      JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(SPAN))
+    }
+  }
+
   fn parse_text(&self, text: &TextNode<'a>) -> JSXChild<'a> {
-    let raw = self.ast.str(&text.text.iter().map(|t| t.raw).collect::<String>());
-    self.ast.jsx_child_text(text.location.span(), raw, Some(raw))
+    self.jsx_child_text(text.location.span(), &text.text.iter().map(|t| t.raw).collect::<String>())
   }
 
   fn parse_comment(&mut self, comment: &SourceNode<'a>) -> JSXChild<'a> {

@@ -1,0 +1,21 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	const count = 1;
+	<><template>
+  <div>
+    {count}
+  </div>
+</template>
+
+<script lang="js" setup></script>
+
+<style>
+div &#123;
+  color: red;
+&#125;
+</style>
+</>;
+};

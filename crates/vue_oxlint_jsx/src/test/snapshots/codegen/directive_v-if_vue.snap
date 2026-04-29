@@ -1,0 +1,21 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  
+  
+  
+  
+  {a ? <><div v-if:__v__={undefined}>A</div></> : b ? <><div v-else-if:__v__={undefined}>B</div></> : c ? <><div v-else-if:__v__={undefined}>C</div></> : d ? <><div v-else-if:__v__={undefined}>D</div></> : <><div v-else:__v__>E</div></>}
+  
+  
+  {x ? <><div v-if:__v__={undefined}>X</div></> : <><div v-else:__v__>Y</div></>}
+  
+  
+  {z ? <><div v-if:__v__={undefined}>Z</div></> : undefined}
+  {w ? <><div v-if:__v__={undefined}>W</div></> : undefined}<div>K</div>
+</template>
+</>;
+};

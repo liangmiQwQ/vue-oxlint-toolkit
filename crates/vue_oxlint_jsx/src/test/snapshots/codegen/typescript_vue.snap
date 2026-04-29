@@ -1,0 +1,17 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	const a = someFunction<{
+		msg: 1;
+	}>();
+	const b = someFunction<SomeType>();
+	<><script lang="ts" setup></script>
+
+<template>
+  <div>{a.msg}</div>
+  <div> I think 1 &lt; 2, isn't it? </div>
+</template>
+</>;
+};

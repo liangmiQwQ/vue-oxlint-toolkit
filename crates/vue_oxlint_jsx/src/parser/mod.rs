@@ -10,6 +10,9 @@ use oxc_parser::ParseOptions;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+use crate::ParseConfig;
+
+mod codegen;
 mod elements;
 mod error;
 mod modules;
@@ -25,6 +28,7 @@ pub struct ParserImpl<'a> {
   allocator: &'a Allocator,
   origin_source_text: &'a str,
   options: ParseOptions,
+  config: ParseConfig,
 
   comments: ArenaVec<'a, Comment>,
   source_type: SourceType,
@@ -44,7 +48,12 @@ pub struct ParserImpl<'a> {
 
 impl<'a> ParserImpl<'a> {
   /// Create a [`ParserImpl`]
-  pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParseOptions) -> Self {
+  pub fn new(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    options: ParseOptions,
+    config: ParseConfig,
+  ) -> Self {
     let ast = AstBuilder::new(allocator);
     let alloced_str = allocator.alloc_slice_copy(source_text.as_bytes());
 
@@ -52,6 +61,7 @@ impl<'a> ParserImpl<'a> {
       allocator,
       origin_source_text: source_text,
       options,
+      config,
 
       comments: ast.vec(),
       source_type: SourceType::mjs().with_unambiguous(true),

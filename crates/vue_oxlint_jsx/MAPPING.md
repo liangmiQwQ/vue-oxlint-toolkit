@@ -2,6 +2,10 @@
 
 This document explains how Vue template nodes are transformed into [Oxc](https://github.com/oxc-project/oxc) AST nodes. The toolkit represents Vue templates using a standard JavaScript/JSX AST, enabling use of existing JavaScript tooling.
 
+There are two kinds of generated JSX AST: `default` and `codegen`. `default` keeps original AST details as much as possible, while `codegen` fixes the transformed AST to prevent syntax errors when the code generation result is parsed again. The specific differences will be explained below.
+
+For future Oxlint integration, we should use `codegen` for now.
+
 ## SFC Structure
 
 A Vue Single File Component (SFC) is transformed into a standard `Program`. The `Program.body` follows a specific structure:
@@ -24,16 +28,16 @@ The **Structural JSX Fragment** serves as the "return" of the component's struct
 export default {
   data() {
     return {
-      count: 0,
-    }
-  },
+      count: 0
+    };
+  }
 }
 </script>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-const count = ref(0)
+const count = ref(0);
 </script>
 
 <template>
@@ -42,25 +46,26 @@ const count = ref(0)
 ```
 
 ```jsx
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 export default {
   data() {
     return {
-      count: 0,
-    }
-  },
-}
-;async () => {
-  const count = ref(0)
-  ;<>
+      count: 0
+    };
+  } 
+};
+
+async () => {
+  const count = ref(0);
+  <>
     <script></script>
     <script setup></script>
     <template>
-      <div>{count}</div>
+      <div>{ count }</div>
     </template>
-  </>
-}
+  </>;
+};
 ```
 
 ## Elements and Components
@@ -85,7 +90,7 @@ The `closing_element` of a `JSXElement` is determined by the tag syntax:
 ```vue
 <template>
   <img />
-  <input />
+  <input>
   <div></div>
 </template>
 ```

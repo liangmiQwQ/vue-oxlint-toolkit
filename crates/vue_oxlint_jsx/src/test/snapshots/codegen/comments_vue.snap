@@ -1,0 +1,14 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+async () => {
+	<><template>
+  <div v-bind:key={1}>{}</div>
+</template>
+
+<script lang="ts"></script>
+
+<script lang="ts" setup></script>
+</>;
+};

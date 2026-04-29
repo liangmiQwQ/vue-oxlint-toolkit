@@ -1,0 +1,13 @@
+---
+source: crates/vue_oxlint_jsx/src/test/codegen.rs
+expression: "&codegen"
+---
+import { ref } from "vue";
+async () => {
+	<><template>
+  <div></div>
+</template>
+
+<script></script>
+</>;
+};
