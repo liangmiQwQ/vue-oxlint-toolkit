@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/mod.rs
+assertion_line: 98
 expression: result
 ---
 =============== Program ===============
@@ -32,8 +33,8 @@ Program {
             },
             Comment {
                 span: Span {
-                    start: 60,
-                    end: 79,
+                    start: 63,
+                    end: 77,
                 },
                 attached_to: 0,
                 kind: SingleLineBlock,

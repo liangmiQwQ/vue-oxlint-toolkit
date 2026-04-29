@@ -429,9 +429,11 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
   fn parse_comment(&mut self, comment: &SourceNode<'a>) -> JSXChild<'a> {
     let ast = self.ast;
     let span = comment.location.span();
+    let start = comment.source.as_ptr() as usize - self.source_text.as_ptr() as usize;
+    let end = start + comment.source.len();
     self.comments.push(Comment::new(
-      span.start + 1,
-      span.end - 1,
+      start as u32,
+      end as u32,
       if comment.source.contains('\n') {
         CommentKind::MultiLineBlock
       } else {
