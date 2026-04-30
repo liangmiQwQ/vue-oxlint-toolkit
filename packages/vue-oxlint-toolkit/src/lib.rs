@@ -1,7 +1,7 @@
 #![deny(clippy::all)]
 
 use oxc_ast::ast::CommentKind;
-use vue_oxlint_jsx::{CodegenMode, VueOxcCodegen};
+use vue_oxlint_jsx::VueJsxCodegen;
 
 use napi_derive::napi;
 
@@ -41,7 +41,7 @@ pub struct NativeTransformResult {
 #[must_use]
 #[allow(clippy::needless_pass_by_value, reason = "N-API owns string arguments at the boundary.")]
 pub fn transform_jsx(source: String) -> NativeTransformResult {
-  let ret = VueOxcCodegen::new(&source).build(CodegenMode::new());
+  let ret = VueJsxCodegen::new(&source).build();
   let script_kind = if ret.source_type.is_typescript() { "tsx" } else { "jsx" }.to_string();
 
   NativeTransformResult {

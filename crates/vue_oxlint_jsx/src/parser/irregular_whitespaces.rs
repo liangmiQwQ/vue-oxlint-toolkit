@@ -15,7 +15,7 @@ pub fn collect_irregular_whitespaces(source_text: &str) -> Box<[Span]> {
 
 #[cfg(test)]
 mod tests {
-  use crate::VueOxcParser;
+  use crate::VueJsxParser;
   use oxc_allocator::Allocator;
 
   #[test]
@@ -23,7 +23,7 @@ mod tests {
     let allocator = Allocator::default();
     // \u{000B} is vertical tab, an irregular whitespace
     let source_text = "<div>\u{000B}</div>";
-    let parser = VueOxcParser::new(&allocator, source_text);
+    let parser = VueJsxParser::new(&allocator, source_text);
     let ret = parser.parse();
     assert_eq!(ret.irregular_whitespaces.len(), 1);
     assert_eq!(ret.irregular_whitespaces[0].start, 5);

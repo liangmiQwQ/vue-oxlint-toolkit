@@ -7,19 +7,19 @@ use oxc_syntax::module_record::ModuleRecord;
 
 use crate::parser::{ParseConfig, ParserImpl, ParserImplReturn};
 
-pub struct VueOxcParser<'a> {
+pub struct VueJsxParser<'a> {
   allocator: &'a Allocator,
   source_text: &'a str,
   options: ParseOptions,
 }
 
-/// The return value of [`VueOxcParser::parse`].
+/// The return value of [`VueJsxParser::parse`].
 ///
 /// Mirrors [`oxc_parser::ParserReturn`] as a workaround for its
 /// `#[non_exhaustive]` attribute. The `is_flow_language` field is intentionally
 /// omitted because Vue does not support Flow.
 #[non_exhaustive]
-pub struct VueParserReturn<'a> {
+pub struct VueJsxParserReturn<'a> {
   pub program: Program<'a>,
   pub module_record: ModuleRecord<'a>,
   pub errors: Vec<OxcDiagnostic>,
@@ -27,17 +27,17 @@ pub struct VueParserReturn<'a> {
   pub panicked: bool,
 }
 
-impl<'a> VueOxcParser<'a> {
-  /// Creates a new [`VueOxcParser`] for the given Vue SFC `source_text`.
+impl<'a> VueJsxParser<'a> {
+  /// Creates a new [`VueJsxParser`] for the given Vue SFC `source_text`.
   ///
   /// The `allocator` must outlive the returned parser and the resulting
-  /// [`VueParserReturn`], because the produced AST nodes are arena-allocated.
+  /// [`VueJsxParserReturn`], because the produced AST nodes are arena-allocated.
   ///
   /// # Examples
   ///
   /// ```
   /// use oxc_allocator::Allocator;
-  /// use vue_oxlint_jsx::VueOxcParser;
+  /// use vue_oxlint_jsx::VueJsxParser;
   ///
   /// let allocator = Allocator::default();
   /// let source = r#"<template><div>{{ msg }}</div></template>
@@ -45,7 +45,7 @@ impl<'a> VueOxcParser<'a> {
   /// const msg = 'hello';
   /// </script>"#;
   ///
-  /// let ret = VueOxcParser::new(&allocator, source).parse();
+  /// let ret = VueJsxParser::new(&allocator, source).parse();
   /// assert!(!ret.panicked);
   /// ```
   pub fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
@@ -59,13 +59,13 @@ impl<'a> VueOxcParser<'a> {
   /// ```
   /// use oxc_allocator::Allocator;
   /// use oxc_parser::ParseOptions;
-  /// use vue_oxlint_jsx::VueOxcParser;
+  /// use vue_oxlint_jsx::VueJsxParser;
   ///
   /// let allocator = Allocator::default();
   /// let source = "<script setup lang=\"ts\">const n: number = 1;</script>";
   ///
   /// let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
-  /// let ret = VueOxcParser::new(&allocator, source).with_options(options).parse();
+  /// let ret = VueJsxParser::new(&allocator, source).with_options(options).parse();
   /// assert!(!ret.panicked);
   /// ```
   #[must_use]
@@ -75,36 +75,36 @@ impl<'a> VueOxcParser<'a> {
   }
 }
 
-impl<'a> VueOxcParser<'a> {
-  /// Parses the Vue SFC and returns a [`VueParserReturn`] containing the
+impl<'a> VueJsxParser<'a> {
+  /// Parses the Vue SFC and returns a [`VueJsxParserReturn`] containing the
   /// JS/TS [`Program`], the [`ModuleRecord`], collected diagnostics, and any
   /// irregular whitespace spans found in the source.
   ///
-  /// On a fatal parse failure, [`VueParserReturn::panicked`] is `true` and
-  /// [`VueParserReturn::program`] is a dummy program; callers should inspect
-  /// [`VueParserReturn::errors`] in that case.
+  /// On a fatal parse failure, [`VueJsxParserReturn::panicked`] is `true` and
+  /// [`VueJsxParserReturn::program`] is a dummy program; callers should inspect
+  /// [`VueJsxParserReturn::errors`] in that case.
   ///
   /// # Examples
   ///
   /// ```
   /// use oxc_allocator::Allocator;
-  /// use vue_oxlint_jsx::VueOxcParser;
+  /// use vue_oxlint_jsx::VueJsxParser;
   ///
   /// let allocator = Allocator::default();
   /// let source = r#"<script setup>const count = 1;</script>"#;
   ///
-  /// let ret = VueOxcParser::new(&allocator, source).parse();
+  /// let ret = VueJsxParser::new(&allocator, source).parse();
   /// assert!(!ret.panicked);
   /// assert!(ret.errors.is_empty());
   /// ```
   #[must_use]
-  pub fn parse(self) -> VueParserReturn<'a> {
+  pub fn parse(self) -> VueJsxParserReturn<'a> {
     let ParserImplReturn { program, errors, fatal, module_record, irregular_whitespaces } =
       ParserImpl::new(self.allocator, self.source_text, self.options, ParseConfig::default())
         .parse();
 
     if fatal {
-      VueParserReturn {
+      VueJsxParserReturn {
         program: Program::dummy(self.allocator),
         module_record, // Dummy one if fatal, can be directly passed there without recreate a new one
         errors,
@@ -112,7 +112,7 @@ impl<'a> VueOxcParser<'a> {
         panicked: true,
       }
     } else {
-      VueParserReturn { program, errors, panicked: false, irregular_whitespaces, module_record }
+      VueJsxParserReturn { program, errors, panicked: false, irregular_whitespaces, module_record }
     }
   }
 }

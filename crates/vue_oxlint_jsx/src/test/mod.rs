@@ -102,10 +102,10 @@ pub fn read_file(file_path: &str) -> String {
 }
 
 pub fn run_codegen_test(file_path: &str) {
-  use crate::{CodegenMode, VueOxcCodegen};
+  use crate::VueJsxCodegen;
 
   let source_text = read_file(file_path);
-  let ret = VueOxcCodegen::new(&source_text).build(CodegenMode::new());
+  let ret = VueJsxCodegen::new(&source_text).build();
   assert!(!ret.panicked, "Codegen unexpectedly panicked for {file_path}");
   let codegen = ret.source_text;
 

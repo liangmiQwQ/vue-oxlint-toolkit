@@ -19,7 +19,7 @@ mod modules;
 mod parse;
 mod script;
 
-pub use interface::{VueOxcParser, VueParserReturn};
+pub use interface::{VueJsxParser, VueJsxParserReturn};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ParseConfig {
