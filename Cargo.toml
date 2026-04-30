@@ -34,19 +34,19 @@ insta = "1.47.2"
 vue_oxlint_jsx = { path = "crates/vue_oxlint_jsx" }
 vue_oxlint_parser = { path = "crates/vue_oxlint_parser" }
 
-oxc_allocator = ">=0.127.0"
-oxc_ast = ">=0.127.0"
-oxc_ast_visit = ">=0.127.0"
-oxc_codegen = ">=0.127.0"
-oxc_diagnostics = ">=0.127.0"
-oxc_parser = ">=0.127.0"
-oxc_span = ">=0.127.0"
-oxc_syntax = ">=0.127.0"
+oxc_allocator = ">=0.128.0"
+oxc_ast = ">=0.128.0"
+oxc_ast_visit = ">=0.128.0"
+oxc_codegen = ">=0.128.0"
+oxc_diagnostics = ">=0.128.0"
+oxc_parser = ">=0.128.0"
+oxc_span = ">=0.128.0"
+oxc_syntax = ">=0.128.0"
 
 memchr = "2.8.0"
 regex = "1.12.3"
 vue-compiler-core = "0.1.0"
 
-napi = { version = "3", features = ["napi9"] }
-napi-build = "2"
-napi-derive = "3"
+napi = { version = "3.8.6", features = ["napi9"] }
+napi-build = "2.3.1"
+napi-derive = "3.5.5"

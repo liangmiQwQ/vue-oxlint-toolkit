@@ -418,7 +418,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     if self.config.codegen {
       JSXExpression::from(self.ast.expression_identifier(SPAN, "undefined"))
     } else {
-      JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(SPAN))
+      self.ast.jsx_expression_empty_expression(SPAN)
     }
   }
 
