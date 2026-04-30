@@ -8,13 +8,12 @@ use oxc_parser::ParseOptions;
 use oxc_span::{GetSpan, Span};
 use std::fmt::Write;
 
-mod codegen;
-
 #[macro_export]
 macro_rules! test_ast {
-  ($file_path:expr) => {
+  ($file_path:expr) => {{
     test_ast!($file_path, false, false);
-  };
+    $crate::test::run_codegen_test($file_path);
+  }};
   ($file_path:expr, $should_errors:expr, $should_panic:expr) => {{
     $crate::test::run_test($file_path, "ast", |ret| {
       use oxc_codegen::Codegen;
@@ -100,6 +99,33 @@ where
 
 pub fn read_file(file_path: &str) -> String {
   std::fs::read_to_string(format!("fixtures/{file_path}")).expect("Failed to read test file")
+}
+
+pub fn run_codegen_test(file_path: &str) {
+  use crate::{CodegenMode, VueOxcCodegen};
+
+  let source_text = read_file(file_path);
+  let ret = VueOxcCodegen::new(&source_text).build(CodegenMode::new());
+  assert!(!ret.panicked, "Codegen unexpectedly panicked for {file_path}");
+  let codegen = ret.source_text;
+
+  let snap_name = snapshot_name(file_path);
+  let mut settings = insta::Settings::clone_current();
+  settings.set_snapshot_path("snapshots/codegen");
+  settings.set_prepend_module_to_snapshot(false);
+  settings.bind(|| {
+    insta::assert_snapshot!(snap_name, &codegen);
+  });
+
+  let allocator = Allocator::default();
+  let reparsed = oxc_parser::Parser::new(&allocator, &codegen, ret.source_type)
+    .with_options(ParseOptions::default())
+    .parse();
+  assert!(
+    reparsed.errors.is_empty(),
+    "Invalid codegen syntax in {file_path}: {:#?}",
+    reparsed.errors,
+  );
 }
 
 fn snapshot_name(file_path: &str) -> String {
