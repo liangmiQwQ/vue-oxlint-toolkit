@@ -1,5 +1,5 @@
 ---
-source: crates/vue_oxlint_jsx/src/test/codegen.rs
+source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
 import { ref } from "vue";
@@ -9,12 +9,5 @@ export default { data() {
 } };
 async () => {
 	const number = ref(-1);
-	<><template>
-  <div></div>
-</template>
-
-<script setup></script>
-
-<script></script>
-</>;
+	<><template><div></div></template><script setup></script><script></script></>;
 };

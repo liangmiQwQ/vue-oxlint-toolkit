@@ -184,7 +184,7 @@ impl<'a> ParserImpl<'a> {
                 last.get_location().end.offset as u32,
               );
 
-              self.ast.vec1(self.jsx_child_text(span, span.source_text(self.source_text)))
+              self.parse_text_span(span).map_or_else(|| self.ast.vec(), |text| self.ast.vec1(text))
             } else {
               self.ast.vec()
             };
@@ -224,9 +224,8 @@ impl<'a> ParserImpl<'a> {
   }
 
   fn push_text_child(&self, children: &mut Vec<ParsingChild<'a>>, span: Span) {
-    if !span.is_empty() {
-      children
-        .push(ParsingChild::Finish(self.jsx_child_text(span, span.source_text(self.source_text))));
+    if let Some(text) = (!span.is_empty()).then(|| self.parse_text_span(span)).flatten() {
+      children.push(ParsingChild::Finish(text));
     }
   }
 }

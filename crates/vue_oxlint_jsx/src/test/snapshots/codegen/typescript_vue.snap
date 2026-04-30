@@ -1,5 +1,5 @@
 ---
-source: crates/vue_oxlint_jsx/src/test/codegen.rs
+source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
 async () => {
@@ -7,11 +7,5 @@ async () => {
 		msg: 1;
 	}>();
 	const b = someFunction<SomeType>();
-	<><script lang="ts" setup></script>
-
-<template>
-  <div>{a.msg}</div>
-  <div> I think 1 &lt; 2, isn't it? </div>
-</template>
-</>;
+	<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>;
 };

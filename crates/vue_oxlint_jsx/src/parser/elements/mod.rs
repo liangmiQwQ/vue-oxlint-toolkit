@@ -65,7 +65,9 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       && start != first.get_location().start.offset as u32
     {
       let span = Span::new(start, first.get_location().start.offset as u32);
-      result.push(self.jsx_child_text(span, span.source_text(self.source_text)));
+      if let Some(text) = self.parse_text_span(span) {
+        result.push(text);
+      }
     }
 
     let last = if let Some(last) = children.last()
@@ -73,7 +75,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       && end != last.get_location().end.offset as u32
     {
       let span = Span::new(last.get_location().end.offset as u32, end);
-      Some(self.jsx_child_text(span, span.source_text(self.source_text)))
+      self.parse_text_span(span)
     } else {
       None
     };
@@ -99,7 +101,11 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
             result.push(child);
           }
         }
-        AstNode::Text(text) => result.push(self.parse_text(&text)),
+        AstNode::Text(text) => {
+          if let Some(text) = self.parse_text(&text) {
+            result.push(text);
+          }
+        }
         AstNode::Comment(comment) => result.push(self.parse_comment(&comment)),
         AstNode::Interpolation(interp) => result.push(self.parse_interpolation(&interp)),
       }
@@ -422,8 +428,24 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     }
   }
 
-  fn parse_text(&self, text: &TextNode<'a>) -> JSXChild<'a> {
-    self.jsx_child_text(text.location.span(), &text.text.iter().map(|t| t.raw).collect::<String>())
+  fn parse_text(&self, text: &TextNode<'a>) -> Option<JSXChild<'a>> {
+    if self.config.codegen {
+      None
+    } else {
+      let content = text.text.iter().map(|t| t.raw).collect::<String>();
+      let ast_str = self.ast.str(&content);
+      Some(self.ast.jsx_child_text(text.location.span(), ast_str, Some(ast_str)))
+    }
+  }
+
+  pub(super) fn parse_text_span(&self, span: Span) -> Option<JSXChild<'a>> {
+    if self.config.codegen {
+      None
+    } else {
+      let text = span.source_text(self.source_text);
+      let ast_str = self.ast.str(text);
+      Some(self.ast.jsx_child_text(span, ast_str, Some(ast_str)))
+    }
   }
 
   fn parse_comment(&mut self, comment: &SourceNode<'a>) -> JSXChild<'a> {
