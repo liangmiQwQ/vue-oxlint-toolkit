@@ -166,3 +166,52 @@ fn comment_data(source: &str, kind: CommentKind, start: u32, end: u32) -> Commen
 fn line_comment_end(source: &str, value_start: usize) -> usize {
   source[value_start..].find('\n').map_or(source.len(), |newline| value_start + newline)
 }
+
+#[cfg(test)]
+mod tests {
+  use super::transform_jsx;
+
+  #[test]
+  fn prints_synthesized_vue_directive_expressions() {
+    let result = transform_jsx(
+      r#"<template>
+  <div v-if="ok"></div>
+  <ul><li v-for="item in items">{{ item }}</li></ul>
+</template>"#
+        .to_string(),
+    );
+
+    assert!(result.source_text.contains("ok"), "{}", result.source_text);
+    assert!(result.source_text.contains("items"), "{}", result.source_text);
+    assert!(result.source_text.contains("item"), "{}", result.source_text);
+    assert!(!result.source_text.contains("{}"), "{}", result.source_text);
+  }
+
+  #[test]
+  fn preserves_module_declaration_attributes() {
+    let result = transform_jsx(
+      r#"<script lang="ts">
+import data from './x.json' with { type: 'json' }
+export { data } from './x.json' with { type: 'json' }
+export * from './all.json' with { type: 'json' }
+</script>"#
+        .to_string(),
+    );
+
+    assert!(
+      result.source_text.contains("import data from './x.json' with { type: 'json' };"),
+      "{}",
+      result.source_text
+    );
+    assert!(
+      result.source_text.contains("export { data } from './x.json' with { type: 'json' };"),
+      "{}",
+      result.source_text
+    );
+    assert!(
+      result.source_text.contains("export * from './all.json' with { type: 'json' };"),
+      "{}",
+      result.source_text
+    );
+  }
+}

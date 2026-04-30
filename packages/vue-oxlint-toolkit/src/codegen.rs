@@ -13,6 +13,7 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_codegen::Codegen as OxcCodegen;
 use oxc_data_structures::code_buffer::CodeBuffer;
 use oxc_span::{GetSpan, Span};
 
@@ -230,8 +231,43 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
       }
     }
     self.print_string_literal(&d.source);
+    self.print_with_clause(d.with_clause.as_deref());
     self.write_byte(b';');
     self.record(d.span, start);
+  }
+
+  fn print_with_clause(&mut self, clause: Option<&WithClause<'a>>) {
+    if let Some(clause) = clause {
+      self.write_byte(b' ');
+      match clause.keyword {
+        WithClauseKeyword::With => self.write("with"),
+        WithClauseKeyword::Assert => self.write("assert"),
+      }
+      if !clause.span.is_empty() {
+        self.write_byte(b' ');
+        self.paste(clause.span);
+        return;
+      }
+      self.write(" { ");
+      for (i, attr) in clause.with_entries.iter().enumerate() {
+        if i > 0 {
+          self.write(", ");
+        }
+        self.print_import_attribute(attr);
+      }
+      self.write(" }");
+    }
+  }
+
+  fn print_import_attribute(&mut self, attr: &ImportAttribute<'a>) {
+    let start = self.pos();
+    match &attr.key {
+      ImportAttributeKey::Identifier(id) => self.print_identifier_name(id),
+      ImportAttributeKey::StringLiteral(s) => self.print_string_literal(s),
+    }
+    self.write(": ");
+    self.print_string_literal(&attr.value);
+    self.record(attr.span, start);
   }
 
   fn print_module_export_name(&mut self, name: &ModuleExportName<'a>) {
@@ -272,6 +308,7 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
         self.write(" from ");
         self.print_string_literal(src);
       }
+      self.print_with_clause(d.with_clause.as_deref());
       self.write_byte(b';');
     }
     self.record(d.span, start);
@@ -304,6 +341,7 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
     }
     self.write(" from ");
     self.print_string_literal(&d.source);
+    self.print_with_clause(d.with_clause.as_deref());
     self.write_byte(b';');
     self.record(d.span, start);
   }
@@ -579,13 +617,23 @@ impl<'a, H: CodegenHook> Codegen<'a, H> {
   fn print_jsx_expr_container(&mut self, c: &JSXExpressionContainer<'a>) {
     let start = self.pos();
     self.write_byte(b'{');
-    if !matches!(&c.expression, JSXExpression::EmptyExpression(_)) {
-      // The underlying span points at the original Vue interpolation
-      // expression, which is valid JS — paste it verbatim.
-      self.paste(c.expression.span());
-    }
+    self.print_jsx_expression(&c.expression);
     self.write_byte(b'}');
     self.record(c.span, start);
+  }
+
+  fn print_jsx_expression(&mut self, expr: &JSXExpression<'a>) {
+    if matches!(expr, JSXExpression::EmptyExpression(_)) {
+      return;
+    }
+    let expression = expr.to_expression();
+    if expression.span().is_empty() {
+      let mut codegen = OxcCodegen::new();
+      codegen.print_expression(expression);
+      self.write(&codegen.into_source_text());
+    } else {
+      self.paste(expression.span());
+    }
   }
 
   fn print_jsx_child(&mut self, child: &JSXChild<'a>) {

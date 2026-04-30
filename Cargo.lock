@@ -1742,6 +1742,7 @@ dependencies = [
  "napi-derive",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_codegen",
  "oxc_data_structures",
  "oxc_span",
  "vue_oxlint_jsx",

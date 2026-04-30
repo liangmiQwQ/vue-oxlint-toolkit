@@ -20,6 +20,7 @@ napi = { workspace = true }
 napi-derive = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_codegen = { workspace = true }
 oxc_data_structures = { workspace = true }
 oxc_span = { workspace = true }
 
