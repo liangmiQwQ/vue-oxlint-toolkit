@@ -73,8 +73,5 @@ impl<'a> ParserImpl<'a> {
 mod tests {
   use crate::test_ast;
 
-  #[test]
-  fn test_parse_directive_name() {
-    test_ast!("directive/basic.vue");
-  }
+  test_ast!(directive_basic_vue, "directive/basic.vue");
 }

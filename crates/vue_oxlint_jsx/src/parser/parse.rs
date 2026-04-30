@@ -221,40 +221,23 @@ impl SourceLocatonSpan for SourceLocation {
 mod tests {
   use crate::test_ast;
 
-  #[test]
-  fn basic_vue() {
-    test_ast!("basic.vue");
-    test_ast!("typescript.vue");
-    test_ast!("void.vue", true, false);
-    test_ast!("tags.vue");
-    test_ast!("root_texts.vue");
-    test_ast!("components.vue");
-  }
-
-  #[test]
-  fn comments() {
-    test_ast!("comments.vue");
-  }
-
-  #[test]
-  fn errors() {
-    test_ast!("error/template.vue", true, true);
-    test_ast!("error/interpolation.vue", true, true);
-    test_ast!("error/script.vue", true, false);
-    test_ast!("error/directive.vue", true, false);
-    test_ast!("error/script.vue", true, false);
-    test_ast!("error/directive.vue", true, false);
-    test_ast!("error/multiple_langs.vue", true, true);
-    test_ast!("error/multiple_scripts.vue", true, true);
-    test_ast!("error/empty_multiple_scripts.vue");
-  }
-
-  #[test]
-  fn scripts() {
-    test_ast!("scripts/basic.vue");
-    test_ast!("scripts/setup.vue");
-    test_ast!("scripts/both.vue");
-    test_ast!("scripts/empty.vue");
-    test_ast!("scripts/directives.vue");
-  }
+  test_ast!(basic_vue, "basic.vue");
+  test_ast!(typescript_vue, "typescript.vue");
+  test_ast!(void_vue, "void.vue", true, false);
+  test_ast!(tags_vue, "tags.vue");
+  test_ast!(root_texts_vue, "root_texts.vue");
+  test_ast!(components_vue, "components.vue");
+  test_ast!(comments_vue, "comments.vue");
+  test_ast!(error_template_vue, "error/template.vue", true, true);
+  test_ast!(error_interpolation_vue, "error/interpolation.vue", true, true);
+  test_ast!(error_script_vue, "error/script.vue", true, false);
+  test_ast!(error_directive_vue, "error/directive.vue", true, false);
+  test_ast!(error_multiple_langs_vue, "error/multiple_langs.vue", true, true);
+  test_ast!(error_multiple_scripts_vue, "error/multiple_scripts.vue", true, true);
+  test_ast!(error_empty_multiple_scripts_vue, "error/empty_multiple_scripts.vue");
+  test_ast!(scripts_basic_vue, "scripts/basic.vue");
+  test_ast!(scripts_setup_vue, "scripts/setup.vue");
+  test_ast!(scripts_both_vue, "scripts/both.vue");
+  test_ast!(scripts_empty_vue, "scripts/empty.vue");
+  test_ast!(scripts_directives_vue, "scripts/directives.vue");
 }

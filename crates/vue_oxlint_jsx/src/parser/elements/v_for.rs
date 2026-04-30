@@ -141,13 +141,6 @@ impl<'b> VForWrapper<'_, 'b> {
 mod tests {
   use crate::test_ast;
 
-  #[test]
-  fn v_for() {
-    test_ast!("directive/v-for.vue");
-  }
-
-  #[test]
-  fn v_for_error() {
-    test_ast!("directive/v-for-error.vue", true, false);
-  }
+  test_ast!(v_for_vue, "directive/v-for.vue");
+  test_ast!(v_for_error_vue, "directive/v-for-error.vue", true, false);
 }

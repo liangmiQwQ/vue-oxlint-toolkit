@@ -170,8 +170,5 @@ impl<'b> VSlotWrapper<'_, 'b> {
 mod tests {
   use crate::test_ast;
 
-  #[test]
-  fn v_slot() {
-    test_ast!("directive/v-slot.vue");
-  }
+  test_ast!(v_slot_vue, "directive/v-slot.vue");
 }

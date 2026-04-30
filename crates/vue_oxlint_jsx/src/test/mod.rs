@@ -15,38 +15,28 @@ pub use codegen::run_codegen_test;
 
 #[macro_export]
 macro_rules! test_ast {
-  ($file_path:expr) => {{
-    test_ast!($file_path, false, false);
-    $crate::test::run_codegen_test($file_path);
-  }};
-  ($file_path:expr, $should_errors:expr, $should_panic:expr) => {{
-    $crate::test::run_test($file_path, "ast", |ret| {
-      let codegen = $crate::test::format_program_codegen(&ret.program);
-      let source_text = $crate::test::read_file($file_path);
-      let node_locations = $crate::test::format_node_locations(&ret.program, &source_text);
-      assert_eq!(
-        !ret.errors.is_empty(),
-        $should_errors,
-        "Error expectation mismatch for {}. Expected has_errors: {}, but got {}",
-        $file_path,
-        $should_errors,
-        ret.errors.len()
-      );
-      assert_eq!(
-        ret.fatal, $should_panic,
-        "Fatal error expectation mismatch for {}. Expected fatal: {}, but got fatal: {}",
-        $file_path, $should_panic, ret.fatal
-      );
+  ($test_name:ident, $file_path:expr) => {
+    mod $test_name {
+      #[test]
+      fn ast() {
+        $crate::test::run_ast_test($file_path, false, false);
+      }
 
-      let result = $crate::test::TestResult {
-        program: &ret.program,
-        errors: &ret.errors,
-        codegen,
-        spans: node_locations,
-      };
-      format!("{result:#?}")
-    });
-  }};
+      #[test]
+      #[should_panic(expected = "Reparsed codegen AST differs from original codegen AST")]
+      fn codegen() {
+        $crate::test::run_codegen_test($file_path);
+      }
+    }
+  };
+  ($test_name:ident, $file_path:expr, $should_errors:expr, $allow_panic:expr) => {
+    mod $test_name {
+      #[test]
+      fn ast() {
+        $crate::test::run_ast_test($file_path, $should_errors, $allow_panic);
+      }
+    }
+  };
 }
 
 #[macro_export]
@@ -63,6 +53,29 @@ pub struct TestResult<'a> {
   pub errors: &'a Vec<OxcDiagnostic>,
   pub codegen: String,
   pub spans: String,
+}
+
+pub fn run_ast_test(file_path: &str, should_errors: bool, allow_panic: bool) {
+  run_test(file_path, "ast", |ret| {
+    let codegen = format_program_codegen(&ret.program);
+    let source_text = read_file(file_path);
+    let node_locations = format_node_locations(&ret.program, &source_text);
+    assert_eq!(
+      !ret.errors.is_empty(),
+      should_errors,
+      "Error expectation mismatch for {file_path}. Expected has_errors: {should_errors}, but got {}",
+      ret.errors.len()
+    );
+    assert_eq!(
+      ret.fatal, allow_panic,
+      "Fatal error expectation mismatch for {file_path}. Expected fatal: {allow_panic}, but got fatal: {}",
+      ret.fatal
+    );
+
+    let result =
+      TestResult { program: &ret.program, errors: &ret.errors, codegen, spans: node_locations };
+    format!("{result:#?}")
+  });
 }
 
 impl std::fmt::Debug for TestResult<'_> {
