@@ -240,4 +240,5 @@ mod tests {
   test_ast!(scripts_both_vue, "scripts/both.vue");
   test_ast!(scripts_empty_vue, "scripts/empty.vue");
   test_ast!(scripts_directives_vue, "scripts/directives.vue");
+  test_ast!(scripts_codegen_fidelity_vue, "scripts/codegen_fidelity.vue");
 }

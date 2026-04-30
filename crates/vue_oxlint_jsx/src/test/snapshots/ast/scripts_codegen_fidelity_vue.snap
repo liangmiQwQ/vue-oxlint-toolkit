@@ -1,0 +1,2087 @@
+---
+source: crates/vue_oxlint_jsx/src/test/mod.rs
+expression: result
+---
+=============== Program ===============
+Program {
+    span: Span {
+        start: 0,
+        end: 443,
+    },
+    node_id: Cell {
+        value: NodeId(0),
+    },
+    scope_id: Cell {
+        value: None,
+    },
+    source_text: "<script lang=\"tsx\">\nimport { foo as foo, bar as baz } from './dep'\nexport { foo as foo }\n\nconst decimal = 1.0\nconst separated = 1_000_000\nconst hex = 0x10\nconst binary = 0b1010\nconst bigint = 0x10n\nconst escaped = '\\x41'\nconst attrs = <div label={'\\x42'} raw=\"\\x43\" />\nconst grouped = (a + b) + c\nconst object = { foo: foo, wrapped: (foo) }\nconst { foo: foo, bar: bar = 1 } = source\nconst arrow = (x) => x\nconst instance = new Foo()\n</script>\n",
+    comments: Vec(
+        [],
+    ),
+    hashbang: None,
+    directives: Vec(
+        [],
+    ),
+    body: Vec(
+        [
+            ImportDeclaration(
+                ImportDeclaration {
+                    span: Span {
+                        start: 20,
+                        end: 66,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    phase: None,
+                    import_kind: Value,
+                    specifiers: Some(
+                        Vec(
+                            [
+                                ImportSpecifier(
+                                    ImportSpecifier {
+                                        span: Span {
+                                            start: 29,
+                                            end: 39,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        import_kind: Value,
+                                        imported: IdentifierName(
+                                            IdentifierName {
+                                                span: Span {
+                                                    start: 29,
+                                                    end: 32,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                name: "foo",
+                                            },
+                                        ),
+                                        local: BindingIdentifier {
+                                            span: Span {
+                                                start: 36,
+                                                end: 39,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            symbol_id: Cell {
+                                                value: None,
+                                            },
+                                            name: "foo",
+                                        },
+                                    },
+                                ),
+                                ImportSpecifier(
+                                    ImportSpecifier {
+                                        span: Span {
+                                            start: 41,
+                                            end: 51,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        import_kind: Value,
+                                        imported: IdentifierName(
+                                            IdentifierName {
+                                                span: Span {
+                                                    start: 41,
+                                                    end: 44,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                name: "bar",
+                                            },
+                                        ),
+                                        local: BindingIdentifier {
+                                            span: Span {
+                                                start: 48,
+                                                end: 51,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            symbol_id: Cell {
+                                                value: None,
+                                            },
+                                            name: "baz",
+                                        },
+                                    },
+                                ),
+                            ],
+                        ),
+                    ),
+                    source: StringLiteral {
+                        span: Span {
+                            start: 59,
+                            end: 66,
+                        },
+                        node_id: Cell {
+                            value: NodeId(0),
+                        },
+                        lone_surrogates: false,
+                        value: "./dep",
+                        raw: Some(
+                            "'./dep'",
+                        ),
+                    },
+                    with_clause: None,
+                },
+            ),
+            ExportNamedDeclaration(
+                ExportNamedDeclaration {
+                    span: Span {
+                        start: 67,
+                        end: 88,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    export_kind: Value,
+                    declaration: None,
+                    specifiers: Vec(
+                        [
+                            ExportSpecifier {
+                                span: Span {
+                                    start: 76,
+                                    end: 86,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                export_kind: Value,
+                                local: IdentifierReference(
+                                    IdentifierReference {
+                                        span: Span {
+                                            start: 76,
+                                            end: 79,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        reference_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "foo",
+                                    },
+                                ),
+                                exported: IdentifierName(
+                                    IdentifierName {
+                                        span: Span {
+                                            start: 83,
+                                            end: 86,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        name: "foo",
+                                    },
+                                ),
+                            },
+                        ],
+                    ),
+                    source: None,
+                    with_clause: None,
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 90,
+                        end: 109,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 96,
+                                    end: 109,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 96,
+                                            end: 103,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "decimal",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    NumericLiteral(
+                                        NumericLiteral {
+                                            span: Span {
+                                                start: 106,
+                                                end: 109,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            base: Float,
+                                            raw: Some(
+                                                "1.0",
+                                            ),
+                                            value: 1.0,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 110,
+                        end: 137,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 116,
+                                    end: 137,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 116,
+                                            end: 125,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "separated",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    NumericLiteral(
+                                        NumericLiteral {
+                                            span: Span {
+                                                start: 128,
+                                                end: 137,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            base: Decimal,
+                                            raw: Some(
+                                                "1_000_000",
+                                            ),
+                                            value: 1000000.0,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 138,
+                        end: 154,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 144,
+                                    end: 154,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 144,
+                                            end: 147,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "hex",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    NumericLiteral(
+                                        NumericLiteral {
+                                            span: Span {
+                                                start: 150,
+                                                end: 154,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            base: Hex,
+                                            raw: Some(
+                                                "0x10",
+                                            ),
+                                            value: 16.0,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 155,
+                        end: 176,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 161,
+                                    end: 176,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 161,
+                                            end: 167,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "binary",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    NumericLiteral(
+                                        NumericLiteral {
+                                            span: Span {
+                                                start: 170,
+                                                end: 176,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            base: Binary,
+                                            raw: Some(
+                                                "0b1010",
+                                            ),
+                                            value: 10.0,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 177,
+                        end: 197,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 183,
+                                    end: 197,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 183,
+                                            end: 189,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "bigint",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    BigIntLiteral(
+                                        BigIntLiteral {
+                                            span: Span {
+                                                start: 192,
+                                                end: 197,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            base: Hex,
+                                            value: "16",
+                                            raw: Some(
+                                                "0x10n",
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 198,
+                        end: 220,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 204,
+                                    end: 220,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 204,
+                                            end: 211,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "escaped",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    StringLiteral(
+                                        StringLiteral {
+                                            span: Span {
+                                                start: 214,
+                                                end: 220,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            lone_surrogates: false,
+                                            value: "A",
+                                            raw: Some(
+                                                "'\\x41'",
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 221,
+                        end: 268,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 227,
+                                    end: 268,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 227,
+                                            end: 232,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "attrs",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    JSXElement(
+                                        JSXElement {
+                                            span: Span {
+                                                start: 235,
+                                                end: 268,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            opening_element: JSXOpeningElement {
+                                                span: Span {
+                                                    start: 235,
+                                                    end: 268,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                name: Identifier(
+                                                    JSXIdentifier {
+                                                        span: Span {
+                                                            start: 236,
+                                                            end: 239,
+                                                        },
+                                                        node_id: Cell {
+                                                            value: NodeId(0),
+                                                        },
+                                                        name: "div",
+                                                    },
+                                                ),
+                                                type_arguments: None,
+                                                attributes: Vec(
+                                                    [
+                                                        Attribute(
+                                                            JSXAttribute {
+                                                                span: Span {
+                                                                    start: 240,
+                                                                    end: 254,
+                                                                },
+                                                                node_id: Cell {
+                                                                    value: NodeId(0),
+                                                                },
+                                                                name: Identifier(
+                                                                    JSXIdentifier {
+                                                                        span: Span {
+                                                                            start: 240,
+                                                                            end: 245,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        name: "label",
+                                                                    },
+                                                                ),
+                                                                value: Some(
+                                                                    ExpressionContainer(
+                                                                        JSXExpressionContainer {
+                                                                            span: Span {
+                                                                                start: 246,
+                                                                                end: 254,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
+                                                                            },
+                                                                            expression: StringLiteral(
+                                                                                StringLiteral {
+                                                                                    span: Span {
+                                                                                        start: 247,
+                                                                                        end: 253,
+                                                                                    },
+                                                                                    node_id: Cell {
+                                                                                        value: NodeId(0),
+                                                                                    },
+                                                                                    lone_surrogates: false,
+                                                                                    value: "B",
+                                                                                    raw: Some(
+                                                                                        "'\\x42'",
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        },
+                                                                    ),
+                                                                ),
+                                                            },
+                                                        ),
+                                                        Attribute(
+                                                            JSXAttribute {
+                                                                span: Span {
+                                                                    start: 255,
+                                                                    end: 265,
+                                                                },
+                                                                node_id: Cell {
+                                                                    value: NodeId(0),
+                                                                },
+                                                                name: Identifier(
+                                                                    JSXIdentifier {
+                                                                        span: Span {
+                                                                            start: 255,
+                                                                            end: 258,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        name: "raw",
+                                                                    },
+                                                                ),
+                                                                value: Some(
+                                                                    StringLiteral(
+                                                                        StringLiteral {
+                                                                            span: Span {
+                                                                                start: 259,
+                                                                                end: 265,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
+                                                                            },
+                                                                            lone_surrogates: false,
+                                                                            value: "\\x43",
+                                                                            raw: Some(
+                                                                                "\"\\x43\"",
+                                                                            ),
+                                                                        },
+                                                                    ),
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
+                                            },
+                                            children: Vec(
+                                                [],
+                                            ),
+                                            closing_element: None,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 269,
+                        end: 296,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 275,
+                                    end: 296,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 275,
+                                            end: 282,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "grouped",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    BinaryExpression(
+                                        BinaryExpression {
+                                            span: Span {
+                                                start: 285,
+                                                end: 296,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            operator: Addition,
+                                            left: ParenthesizedExpression(
+                                                ParenthesizedExpression {
+                                                    span: Span {
+                                                        start: 285,
+                                                        end: 292,
+                                                    },
+                                                    node_id: Cell {
+                                                        value: NodeId(0),
+                                                    },
+                                                    expression: BinaryExpression(
+                                                        BinaryExpression {
+                                                            span: Span {
+                                                                start: 286,
+                                                                end: 291,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            operator: Addition,
+                                                            left: Identifier(
+                                                                IdentifierReference {
+                                                                    span: Span {
+                                                                        start: 286,
+                                                                        end: 287,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    reference_id: Cell {
+                                                                        value: None,
+                                                                    },
+                                                                    name: "a",
+                                                                },
+                                                            ),
+                                                            right: Identifier(
+                                                                IdentifierReference {
+                                                                    span: Span {
+                                                                        start: 290,
+                                                                        end: 291,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    reference_id: Cell {
+                                                                        value: None,
+                                                                    },
+                                                                    name: "b",
+                                                                },
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                            right: Identifier(
+                                                IdentifierReference {
+                                                    span: Span {
+                                                        start: 295,
+                                                        end: 296,
+                                                    },
+                                                    node_id: Cell {
+                                                        value: NodeId(0),
+                                                    },
+                                                    reference_id: Cell {
+                                                        value: None,
+                                                    },
+                                                    name: "c",
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 297,
+                        end: 340,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 303,
+                                    end: 340,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 303,
+                                            end: 309,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "object",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    ObjectExpression(
+                                        ObjectExpression {
+                                            span: Span {
+                                                start: 312,
+                                                end: 340,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            properties: Vec(
+                                                [
+                                                    ObjectProperty(
+                                                        ObjectProperty {
+                                                            span: Span {
+                                                                start: 314,
+                                                                end: 322,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            kind: Init,
+                                                            method: false,
+                                                            shorthand: false,
+                                                            computed: false,
+                                                            key: StaticIdentifier(
+                                                                IdentifierName {
+                                                                    span: Span {
+                                                                        start: 314,
+                                                                        end: 317,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    name: "foo",
+                                                                },
+                                                            ),
+                                                            value: Identifier(
+                                                                IdentifierReference {
+                                                                    span: Span {
+                                                                        start: 319,
+                                                                        end: 322,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    reference_id: Cell {
+                                                                        value: None,
+                                                                    },
+                                                                    name: "foo",
+                                                                },
+                                                            ),
+                                                        },
+                                                    ),
+                                                    ObjectProperty(
+                                                        ObjectProperty {
+                                                            span: Span {
+                                                                start: 324,
+                                                                end: 338,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            kind: Init,
+                                                            method: false,
+                                                            shorthand: false,
+                                                            computed: false,
+                                                            key: StaticIdentifier(
+                                                                IdentifierName {
+                                                                    span: Span {
+                                                                        start: 324,
+                                                                        end: 331,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    name: "wrapped",
+                                                                },
+                                                            ),
+                                                            value: ParenthesizedExpression(
+                                                                ParenthesizedExpression {
+                                                                    span: Span {
+                                                                        start: 333,
+                                                                        end: 338,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    expression: Identifier(
+                                                                        IdentifierReference {
+                                                                            span: Span {
+                                                                                start: 334,
+                                                                                end: 337,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
+                                                                            },
+                                                                            reference_id: Cell {
+                                                                                value: None,
+                                                                            },
+                                                                            name: "foo",
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        },
+                                                    ),
+                                                ],
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 341,
+                        end: 382,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 347,
+                                    end: 382,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: ObjectPattern(
+                                    ObjectPattern {
+                                        span: Span {
+                                            start: 347,
+                                            end: 373,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        properties: Vec(
+                                            [
+                                                BindingProperty {
+                                                    span: Span {
+                                                        start: 349,
+                                                        end: 357,
+                                                    },
+                                                    node_id: Cell {
+                                                        value: NodeId(0),
+                                                    },
+                                                    shorthand: false,
+                                                    computed: false,
+                                                    key: StaticIdentifier(
+                                                        IdentifierName {
+                                                            span: Span {
+                                                                start: 349,
+                                                                end: 352,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            name: "foo",
+                                                        },
+                                                    ),
+                                                    value: BindingIdentifier(
+                                                        BindingIdentifier {
+                                                            span: Span {
+                                                                start: 354,
+                                                                end: 357,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            symbol_id: Cell {
+                                                                value: None,
+                                                            },
+                                                            name: "foo",
+                                                        },
+                                                    ),
+                                                },
+                                                BindingProperty {
+                                                    span: Span {
+                                                        start: 359,
+                                                        end: 371,
+                                                    },
+                                                    node_id: Cell {
+                                                        value: NodeId(0),
+                                                    },
+                                                    shorthand: false,
+                                                    computed: false,
+                                                    key: StaticIdentifier(
+                                                        IdentifierName {
+                                                            span: Span {
+                                                                start: 359,
+                                                                end: 362,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            name: "bar",
+                                                        },
+                                                    ),
+                                                    value: AssignmentPattern(
+                                                        AssignmentPattern {
+                                                            span: Span {
+                                                                start: 364,
+                                                                end: 371,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            left: BindingIdentifier(
+                                                                BindingIdentifier {
+                                                                    span: Span {
+                                                                        start: 364,
+                                                                        end: 367,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    symbol_id: Cell {
+                                                                        value: None,
+                                                                    },
+                                                                    name: "bar",
+                                                                },
+                                                            ),
+                                                            right: NumericLiteral(
+                                                                NumericLiteral {
+                                                                    span: Span {
+                                                                        start: 370,
+                                                                        end: 371,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    base: Decimal,
+                                                                    raw: Some(
+                                                                        "1",
+                                                                    ),
+                                                                    value: 1.0,
+                                                                },
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
+                                            ],
+                                        ),
+                                        rest: None,
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    Identifier(
+                                        IdentifierReference {
+                                            span: Span {
+                                                start: 376,
+                                                end: 382,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            reference_id: Cell {
+                                                value: None,
+                                            },
+                                            name: "source",
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 383,
+                        end: 405,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 389,
+                                    end: 405,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 389,
+                                            end: 394,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "arrow",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    ArrowFunctionExpression(
+                                        ArrowFunctionExpression {
+                                            span: Span {
+                                                start: 397,
+                                                end: 405,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            scope_id: Cell {
+                                                value: None,
+                                            },
+                                            type_parameters: None,
+                                            params: FormalParameters {
+                                                span: Span {
+                                                    start: 397,
+                                                    end: 400,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                kind: ArrowFormalParameters,
+                                                items: Vec(
+                                                    [
+                                                        FormalParameter {
+                                                            span: Span {
+                                                                start: 398,
+                                                                end: 399,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                            optional: false,
+                                                            accessibility: None,
+                                                            readonly: false,
+                                                            override: false,
+                                                            decorators: Vec(
+                                                                [],
+                                                            ),
+                                                            pattern: BindingIdentifier(
+                                                                BindingIdentifier {
+                                                                    span: Span {
+                                                                        start: 398,
+                                                                        end: 399,
+                                                                    },
+                                                                    node_id: Cell {
+                                                                        value: NodeId(0),
+                                                                    },
+                                                                    symbol_id: Cell {
+                                                                        value: None,
+                                                                    },
+                                                                    name: "x",
+                                                                },
+                                                            ),
+                                                            type_annotation: None,
+                                                            initializer: None,
+                                                        },
+                                                    ],
+                                                ),
+                                                rest: None,
+                                            },
+                                            return_type: None,
+                                            body: FunctionBody {
+                                                span: Span {
+                                                    start: 404,
+                                                    end: 405,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                directives: Vec(
+                                                    [],
+                                                ),
+                                                statements: Vec(
+                                                    [
+                                                        ExpressionStatement(
+                                                            ExpressionStatement {
+                                                                span: Span {
+                                                                    start: 404,
+                                                                    end: 405,
+                                                                },
+                                                                node_id: Cell {
+                                                                    value: NodeId(0),
+                                                                },
+                                                                expression: Identifier(
+                                                                    IdentifierReference {
+                                                                        span: Span {
+                                                                            start: 404,
+                                                                            end: 405,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        reference_id: Cell {
+                                                                            value: None,
+                                                                        },
+                                                                        name: "x",
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
+                                            },
+                                            expression: true,
+                                            async: false,
+                                            pure: false,
+                                            pife: false,
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            VariableDeclaration(
+                VariableDeclaration {
+                    span: Span {
+                        start: 406,
+                        end: 432,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    kind: Const,
+                    declare: false,
+                    declarations: Vec(
+                        [
+                            VariableDeclarator {
+                                span: Span {
+                                    start: 412,
+                                    end: 432,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: Const,
+                                definite: false,
+                                id: BindingIdentifier(
+                                    BindingIdentifier {
+                                        span: Span {
+                                            start: 412,
+                                            end: 420,
+                                        },
+                                        node_id: Cell {
+                                            value: NodeId(0),
+                                        },
+                                        symbol_id: Cell {
+                                            value: None,
+                                        },
+                                        name: "instance",
+                                    },
+                                ),
+                                type_annotation: None,
+                                init: Some(
+                                    NewExpression(
+                                        NewExpression {
+                                            span: Span {
+                                                start: 423,
+                                                end: 432,
+                                            },
+                                            node_id: Cell {
+                                                value: NodeId(0),
+                                            },
+                                            pure: false,
+                                            callee: Identifier(
+                                                IdentifierReference {
+                                                    span: Span {
+                                                        start: 427,
+                                                        end: 430,
+                                                    },
+                                                    node_id: Cell {
+                                                        value: NodeId(0),
+                                                    },
+                                                    reference_id: Cell {
+                                                        value: None,
+                                                    },
+                                                    name: "Foo",
+                                                },
+                                            ),
+                                            type_arguments: None,
+                                            arguments: Vec(
+                                                [],
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                },
+            ),
+            ExpressionStatement(
+                ExpressionStatement {
+                    span: Span {
+                        start: 0,
+                        end: 0,
+                    },
+                    node_id: Cell {
+                        value: NodeId(0),
+                    },
+                    expression: ArrowFunctionExpression(
+                        ArrowFunctionExpression {
+                            span: Span {
+                                start: 0,
+                                end: 0,
+                            },
+                            node_id: Cell {
+                                value: NodeId(0),
+                            },
+                            scope_id: Cell {
+                                value: None,
+                            },
+                            type_parameters: None,
+                            params: FormalParameters {
+                                span: Span {
+                                    start: 0,
+                                    end: 0,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                kind: ArrowFormalParameters,
+                                items: Vec(
+                                    [],
+                                ),
+                                rest: None,
+                            },
+                            return_type: None,
+                            body: FunctionBody {
+                                span: Span {
+                                    start: 0,
+                                    end: 0,
+                                },
+                                node_id: Cell {
+                                    value: NodeId(0),
+                                },
+                                directives: Vec(
+                                    [],
+                                ),
+                                statements: Vec(
+                                    [
+                                        ExpressionStatement(
+                                            ExpressionStatement {
+                                                span: Span {
+                                                    start: 0,
+                                                    end: 0,
+                                                },
+                                                node_id: Cell {
+                                                    value: NodeId(0),
+                                                },
+                                                expression: JSXFragment(
+                                                    JSXFragment {
+                                                        span: Span {
+                                                            start: 0,
+                                                            end: 0,
+                                                        },
+                                                        node_id: Cell {
+                                                            value: NodeId(0),
+                                                        },
+                                                        opening_fragment: JSXOpeningFragment {
+                                                            span: Span {
+                                                                start: 0,
+                                                                end: 0,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                        },
+                                                        children: Vec(
+                                                            [
+                                                                Element(
+                                                                    JSXElement {
+                                                                        span: Span {
+                                                                            start: 0,
+                                                                            end: 442,
+                                                                        },
+                                                                        node_id: Cell {
+                                                                            value: NodeId(0),
+                                                                        },
+                                                                        opening_element: JSXOpeningElement {
+                                                                            span: Span {
+                                                                                start: 0,
+                                                                                end: 19,
+                                                                            },
+                                                                            node_id: Cell {
+                                                                                value: NodeId(0),
+                                                                            },
+                                                                            name: Identifier(
+                                                                                JSXIdentifier {
+                                                                                    span: Span {
+                                                                                        start: 1,
+                                                                                        end: 7,
+                                                                                    },
+                                                                                    node_id: Cell {
+                                                                                        value: NodeId(0),
+                                                                                    },
+                                                                                    name: "script",
+                                                                                },
+                                                                            ),
+                                                                            type_arguments: None,
+                                                                            attributes: Vec(
+                                                                                [
+                                                                                    Attribute(
+                                                                                        JSXAttribute {
+                                                                                            span: Span {
+                                                                                                start: 8,
+                                                                                                end: 18,
+                                                                                            },
+                                                                                            node_id: Cell {
+                                                                                                value: NodeId(0),
+                                                                                            },
+                                                                                            name: Identifier(
+                                                                                                JSXIdentifier {
+                                                                                                    span: Span {
+                                                                                                        start: 8,
+                                                                                                        end: 12,
+                                                                                                    },
+                                                                                                    node_id: Cell {
+                                                                                                        value: NodeId(0),
+                                                                                                    },
+                                                                                                    name: "lang",
+                                                                                                },
+                                                                                            ),
+                                                                                            value: Some(
+                                                                                                StringLiteral(
+                                                                                                    StringLiteral {
+                                                                                                        span: Span {
+                                                                                                            start: 14,
+                                                                                                            end: 17,
+                                                                                                        },
+                                                                                                        node_id: Cell {
+                                                                                                            value: NodeId(0),
+                                                                                                        },
+                                                                                                        lone_surrogates: false,
+                                                                                                        value: "tsx",
+                                                                                                        raw: None,
+                                                                                                    },
+                                                                                                ),
+                                                                                            ),
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                        },
+                                                                        children: Vec(
+                                                                            [],
+                                                                        ),
+                                                                        closing_element: Some(
+                                                                            JSXClosingElement {
+                                                                                span: Span {
+                                                                                    start: 433,
+                                                                                    end: 442,
+                                                                                },
+                                                                                node_id: Cell {
+                                                                                    value: NodeId(0),
+                                                                                },
+                                                                                name: Identifier(
+                                                                                    JSXIdentifier {
+                                                                                        span: Span {
+                                                                                            start: 435,
+                                                                                            end: 441,
+                                                                                        },
+                                                                                        node_id: Cell {
+                                                                                            value: NodeId(0),
+                                                                                        },
+                                                                                        name: "script",
+                                                                                    },
+                                                                                ),
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        ),
+                                                        closing_fragment: JSXClosingFragment {
+                                                            span: Span {
+                                                                start: 0,
+                                                                end: 0,
+                                                            },
+                                                            node_id: Cell {
+                                                                value: NodeId(0),
+                                                            },
+                                                        },
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            },
+                            expression: false,
+                            async: true,
+                            pure: false,
+                            pife: false,
+                        },
+                    ),
+                },
+            ),
+        ],
+    ),
+    source_type: SourceType {
+        language: TypeScript,
+        module_kind: Unambiguous,
+        variant: Jsx,
+        extension: Some(
+            Tsx,
+        ),
+    },
+}
+
+===============  Error  ===============
+[]
+
+=============== Codegen ===============
+import { foo, bar as baz } from "./dep";
+export { foo };
+const decimal = 1;
+const separated = 1e6;
+const hex = 16;
+const binary = 10;
+const bigint = 16n;
+const escaped = "A";
+const attrs = <div label={"B"} raw="\x43" />;
+const grouped = a + b + c;
+const object = {
+	foo,
+	wrapped: foo
+};
+const { foo, bar = 1 } = source;
+const arrow = (x) => x;
+const instance = new Foo();
+async () => {
+	<><script lang="tsx"></script></>;
+};
+
+
+===============  Spans  ===============
+Slice: "<script lang=\"tsx\">\nimport { foo as foo,..[OMIT].. x\nconst instance = new Foo()\n</script>\n"; 
+Span: (0, 443); 
+Type: Program; 
+
+Slice: "import { foo as foo, bar as baz } from './dep'"; 
+Span: (20, 66); 
+Type: ImportDeclaration; 
+
+Slice: "foo as foo"; 
+Span: (29, 39); 
+Type: ImportSpecifier; 
+
+Slice: "foo"; 
+Span: (29, 32); 
+Type: IdentifierName; 
+
+Slice: "foo"; 
+Span: (36, 39); 
+Type: BindingIdentifier; 
+
+Slice: "bar as baz"; 
+Span: (41, 51); 
+Type: ImportSpecifier; 
+
+Slice: "bar"; 
+Span: (41, 44); 
+Type: IdentifierName; 
+
+Slice: "baz"; 
+Span: (48, 51); 
+Type: BindingIdentifier; 
+
+Slice: "'./dep'"; 
+Span: (59, 66); 
+Type: StringLiteral; 
+
+Slice: "export { foo as foo }"; 
+Span: (67, 88); 
+Type: ExportNamedDeclaration; 
+
+Slice: "foo as foo"; 
+Span: (76, 86); 
+Type: ExportSpecifier; 
+
+Slice: "foo"; 
+Span: (76, 79); 
+Type: IdentifierReference; 
+
+Slice: "foo"; 
+Span: (83, 86); 
+Type: IdentifierName; 
+
+Slice: "const decimal = 1.0"; 
+Span: (90, 109); 
+Type: VariableDeclaration; 
+
+Slice: "decimal = 1.0"; 
+Span: (96, 109); 
+Type: VariableDeclarator; 
+
+Slice: "decimal"; 
+Span: (96, 103); 
+Type: BindingIdentifier; 
+
+Slice: "1.0"; 
+Span: (106, 109); 
+Type: NumericLiteral; 
+
+Slice: "const separated = 1_000_000"; 
+Span: (110, 137); 
+Type: VariableDeclaration; 
+
+Slice: "separated = 1_000_000"; 
+Span: (116, 137); 
+Type: VariableDeclarator; 
+
+Slice: "separated"; 
+Span: (116, 125); 
+Type: BindingIdentifier; 
+
+Slice: "1_000_000"; 
+Span: (128, 137); 
+Type: NumericLiteral; 
+
+Slice: "const hex = 0x10"; 
+Span: (138, 154); 
+Type: VariableDeclaration; 
+
+Slice: "hex = 0x10"; 
+Span: (144, 154); 
+Type: VariableDeclarator; 
+
+Slice: "hex"; 
+Span: (144, 147); 
+Type: BindingIdentifier; 
+
+Slice: "0x10"; 
+Span: (150, 154); 
+Type: NumericLiteral; 
+
+Slice: "const binary = 0b1010"; 
+Span: (155, 176); 
+Type: VariableDeclaration; 
+
+Slice: "binary = 0b1010"; 
+Span: (161, 176); 
+Type: VariableDeclarator; 
+
+Slice: "binary"; 
+Span: (161, 167); 
+Type: BindingIdentifier; 
+
+Slice: "0b1010"; 
+Span: (170, 176); 
+Type: NumericLiteral; 
+
+Slice: "const bigint = 0x10n"; 
+Span: (177, 197); 
+Type: VariableDeclaration; 
+
+Slice: "bigint = 0x10n"; 
+Span: (183, 197); 
+Type: VariableDeclarator; 
+
+Slice: "bigint"; 
+Span: (183, 189); 
+Type: BindingIdentifier; 
+
+Slice: "0x10n"; 
+Span: (192, 197); 
+Type: BigIntLiteral; 
+
+Slice: "const escaped = '\\x41'"; 
+Span: (198, 220); 
+Type: VariableDeclaration; 
+
+Slice: "escaped = '\\x41'"; 
+Span: (204, 220); 
+Type: VariableDeclarator; 
+
+Slice: "escaped"; 
+Span: (204, 211); 
+Type: BindingIdentifier; 
+
+Slice: "'\\x41'"; 
+Span: (214, 220); 
+Type: StringLiteral; 
+
+Slice: "const attrs = <div label={'\\x42'} raw=\"\\x43\" />"; 
+Span: (221, 268); 
+Type: VariableDeclaration; 
+
+Slice: "attrs = <div label={'\\x42'} raw=\"\\x43\" />"; 
+Span: (227, 268); 
+Type: VariableDeclarator; 
+
+Slice: "attrs"; 
+Span: (227, 232); 
+Type: BindingIdentifier; 
+
+Slice: "<div label={'\\x42'} raw=\"\\x43\" />"; 
+Span: (235, 268); 
+Type: JSXElement; 
+
+Slice: "<div label={'\\x42'} raw=\"\\x43\" />"; 
+Span: (235, 268); 
+Type: JSXOpeningElement; 
+
+Slice: "div"; 
+Span: (236, 239); 
+Type: JSXIdentifier; 
+
+Slice: "label={'\\x42'}"; 
+Span: (240, 254); 
+Type: JSXAttribute; 
+
+Slice: "label"; 
+Span: (240, 245); 
+Type: JSXIdentifier; 
+
+Slice: "{'\\x42'}"; 
+Span: (246, 254); 
+Type: JSXExpressionContainer; 
+
+Slice: "'\\x42'"; 
+Span: (247, 253); 
+Type: StringLiteral; 
+
+Slice: "raw=\"\\x43\""; 
+Span: (255, 265); 
+Type: JSXAttribute; 
+
+Slice: "raw"; 
+Span: (255, 258); 
+Type: JSXIdentifier; 
+
+Slice: "\"\\x43\""; 
+Span: (259, 265); 
+Type: StringLiteral; 
+
+Slice: "const grouped = (a + b) + c"; 
+Span: (269, 296); 
+Type: VariableDeclaration; 
+
+Slice: "grouped = (a + b) + c"; 
+Span: (275, 296); 
+Type: VariableDeclarator; 
+
+Slice: "grouped"; 
+Span: (275, 282); 
+Type: BindingIdentifier; 
+
+Slice: "(a + b) + c"; 
+Span: (285, 296); 
+Type: BinaryExpression; 
+
+Slice: "(a + b)"; 
+Span: (285, 292); 
+Type: ParenthesizedExpression; 
+
+Slice: "a + b"; 
+Span: (286, 291); 
+Type: BinaryExpression; 
+
+Slice: "a"; 
+Span: (286, 287); 
+Type: IdentifierReference; 
+
+Slice: "b"; 
+Span: (290, 291); 
+Type: IdentifierReference; 
+
+Slice: "c"; 
+Span: (295, 296); 
+Type: IdentifierReference; 
+
+Slice: "const object = { foo: foo, wrapped: (foo) }"; 
+Span: (297, 340); 
+Type: VariableDeclaration; 
+
+Slice: "object = { foo: foo, wrapped: (foo) }"; 
+Span: (303, 340); 
+Type: VariableDeclarator; 
+
+Slice: "object"; 
+Span: (303, 309); 
+Type: BindingIdentifier; 
+
+Slice: "{ foo: foo, wrapped: (foo) }"; 
+Span: (312, 340); 
+Type: ObjectExpression; 
+
+Slice: "foo: foo"; 
+Span: (314, 322); 
+Type: ObjectProperty; 
+
+Slice: "foo"; 
+Span: (314, 317); 
+Type: IdentifierName; 
+
+Slice: "foo"; 
+Span: (319, 322); 
+Type: IdentifierReference; 
+
+Slice: "wrapped: (foo)"; 
+Span: (324, 338); 
+Type: ObjectProperty; 
+
+Slice: "wrapped"; 
+Span: (324, 331); 
+Type: IdentifierName; 
+
+Slice: "(foo)"; 
+Span: (333, 338); 
+Type: ParenthesizedExpression; 
+
+Slice: "foo"; 
+Span: (334, 337); 
+Type: IdentifierReference; 
+
+Slice: "const { foo: foo, bar: bar = 1 } = source"; 
+Span: (341, 382); 
+Type: VariableDeclaration; 
+
+Slice: "{ foo: foo, bar: bar = 1 } = source"; 
+Span: (347, 382); 
+Type: VariableDeclarator; 
+
+Slice: "{ foo: foo, bar: bar = 1 }"; 
+Span: (347, 373); 
+Type: ObjectPattern; 
+
+Slice: "foo: foo"; 
+Span: (349, 357); 
+Type: BindingProperty; 
+
+Slice: "foo"; 
+Span: (349, 352); 
+Type: IdentifierName; 
+
+Slice: "foo"; 
+Span: (354, 357); 
+Type: BindingIdentifier; 
+
+Slice: "bar: bar = 1"; 
+Span: (359, 371); 
+Type: BindingProperty; 
+
+Slice: "bar"; 
+Span: (359, 362); 
+Type: IdentifierName; 
+
+Slice: "bar = 1"; 
+Span: (364, 371); 
+Type: AssignmentPattern; 
+
+Slice: "bar"; 
+Span: (364, 367); 
+Type: BindingIdentifier; 
+
+Slice: "1"; 
+Span: (370, 371); 
+Type: NumericLiteral; 
+
+Slice: "source"; 
+Span: (376, 382); 
+Type: IdentifierReference; 
+
+Slice: "const arrow = (x) => x"; 
+Span: (383, 405); 
+Type: VariableDeclaration; 
+
+Slice: "arrow = (x) => x"; 
+Span: (389, 405); 
+Type: VariableDeclarator; 
+
+Slice: "arrow"; 
+Span: (389, 394); 
+Type: BindingIdentifier; 
+
+Slice: "(x) => x"; 
+Span: (397, 405); 
+Type: ArrowFunctionExpression; 
+
+Slice: "(x)"; 
+Span: (397, 400); 
+Type: FormalParameters; 
+
+Slice: "x"; 
+Span: (398, 399); 
+Type: FormalParameter; 
+
+Slice: "x"; 
+Span: (398, 399); 
+Type: BindingIdentifier; 
+
+Slice: "x"; 
+Span: (404, 405); 
+Type: FunctionBody; 
+
+Slice: "x"; 
+Span: (404, 405); 
+Type: ExpressionStatement; 
+
+Slice: "x"; 
+Span: (404, 405); 
+Type: IdentifierReference; 
+
+Slice: "const instance = new Foo()"; 
+Span: (406, 432); 
+Type: VariableDeclaration; 
+
+Slice: "instance = new Foo()"; 
+Span: (412, 432); 
+Type: VariableDeclarator; 
+
+Slice: "instance"; 
+Span: (412, 420); 
+Type: BindingIdentifier; 
+
+Slice: "new Foo()"; 
+Span: (423, 432); 
+Type: NewExpression; 
+
+Slice: "Foo"; 
+Span: (427, 430); 
+Type: IdentifierReference; 
+
+Slice: "<script lang=\"tsx\">\nimport { foo as foo,..[OMIT]..> x\nconst instance = new Foo()\n</script>"; 
+Span: (0, 442); 
+Type: JSXElement; 
+
+Slice: "<script lang=\"tsx\">"; 
+Span: (0, 19); 
+Type: JSXOpeningElement; 
+
+Slice: "script"; 
+Span: (1, 7); 
+Type: JSXIdentifier; 
+
+Slice: "lang=\"tsx\""; 
+Span: (8, 18); 
+Type: JSXAttribute; 
+
+Slice: "lang"; 
+Span: (8, 12); 
+Type: JSXIdentifier; 
+
+Slice: "tsx"; 
+Span: (14, 17); 
+Type: StringLiteral; 
+
+Slice: "</script>"; 
+Span: (433, 442); 
+Type: JSXClosingElement; 
+
+Slice: "script"; 
+Span: (435, 441); 
+Type: JSXIdentifier;

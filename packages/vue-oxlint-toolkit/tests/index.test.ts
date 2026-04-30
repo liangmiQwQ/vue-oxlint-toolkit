@@ -11,7 +11,7 @@ const msg: string = 'hello'
 </template>`)
 
   expect(result.scriptKind).toBe('tsx')
-  expect(result.sourceText).toContain('const msg:string=`hello`;')
+  expect(result.sourceText).toContain("const msg:string='hello';")
   expect(result.sourceText).toContain('<div>{msg}</div>')
   expect(result.mappings).toBeUndefined()
 })
