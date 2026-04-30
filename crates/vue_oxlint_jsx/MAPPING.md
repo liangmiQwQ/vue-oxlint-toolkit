@@ -202,10 +202,8 @@ The `Comp` element's children contain a `JSXExpressionContainer` holding an `Obj
 
 ## Text and Interpolation
 
-- **Plain Text**: Dropped. The parser does not emit JSX nodes for template text.
+- **Plain Text**: Dropped. The parser does not emit JSX nodes for template text. Learn more in [PR #44](https://github.com/liangmiQwQ/vue-oxlint-toolkit/pull/44).
 - **Interpolation** (`{{ msg }}`): Mapped to `JSXExpressionContainer` containing the JavaScript expression.
-
-This behavior changed in [PR #44](https://github.com/liangmiQwQ/vue-oxlint-toolkit/pull/44), which removed `JSXText` support from both parser and codegen outputs.
 
 ## Comments
 
