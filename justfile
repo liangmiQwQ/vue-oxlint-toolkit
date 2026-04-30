@@ -50,8 +50,7 @@ bench:
   cargo bench -p benchmark
 
 bump TYPE:
-  git checkout main
-  git pull origin main
+  j main
   node -p "require('semver').valid('{{ TYPE }}') || (console.error('Invalid version'), process.exit(1))"
   vpx bumpp --no-commit -y --release -r {{ TYPE }}
   cargo workspaces version --no-git-commit -y custom {{ TYPE }}
@@ -60,3 +59,7 @@ bump TYPE:
   git commit -m "chore: release v{{ TYPE }}"
   git tag v{{ TYPE }}
   git push origin main v{{ TYPE }}
+
+main:
+  git checkout main
+  git pull origin main
