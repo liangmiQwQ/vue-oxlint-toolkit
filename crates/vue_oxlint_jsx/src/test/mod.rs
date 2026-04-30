@@ -8,6 +8,11 @@ use oxc_parser::ParseOptions;
 use oxc_span::{GetSpan, Span};
 use std::fmt::Write;
 
+mod codegen;
+
+pub use codegen::format_program_codegen;
+pub use codegen::run_codegen_test;
+
 #[macro_export]
 macro_rules! test_ast {
   ($file_path:expr) => {{
@@ -16,8 +21,7 @@ macro_rules! test_ast {
   }};
   ($file_path:expr, $should_errors:expr, $should_panic:expr) => {{
     $crate::test::run_test($file_path, "ast", |ret| {
-      use oxc_codegen::Codegen;
-      let js = Codegen::new().build(&ret.program);
+      let codegen = $crate::test::format_program_codegen(&ret.program);
       let source_text = $crate::test::read_file($file_path);
       let node_locations = $crate::test::format_node_locations(&ret.program, &source_text);
       assert_eq!(
@@ -37,7 +41,7 @@ macro_rules! test_ast {
       let result = $crate::test::TestResult {
         program: &ret.program,
         errors: &ret.errors,
-        codegen: js.code,
+        codegen,
         spans: node_locations,
       };
       format!("{result:#?}")
@@ -101,34 +105,7 @@ pub fn read_file(file_path: &str) -> String {
   std::fs::read_to_string(format!("fixtures/{file_path}")).expect("Failed to read test file")
 }
 
-pub fn run_codegen_test(file_path: &str) {
-  use crate::VueJsxCodegen;
-
-  let source_text = read_file(file_path);
-  let ret = VueJsxCodegen::new(&source_text).build();
-  assert!(!ret.panicked, "Codegen unexpectedly panicked for {file_path}");
-  let codegen = ret.source_text;
-
-  let snap_name = snapshot_name(file_path);
-  let mut settings = insta::Settings::clone_current();
-  settings.set_snapshot_path("snapshots/codegen");
-  settings.set_prepend_module_to_snapshot(false);
-  settings.bind(|| {
-    insta::assert_snapshot!(snap_name, &codegen);
-  });
-
-  let allocator = Allocator::default();
-  let reparsed = oxc_parser::Parser::new(&allocator, &codegen, ret.source_type)
-    .with_options(ParseOptions::default())
-    .parse();
-  assert!(
-    reparsed.errors.is_empty(),
-    "Invalid codegen syntax in {file_path}: {:#?}",
-    reparsed.errors,
-  );
-}
-
-fn snapshot_name(file_path: &str) -> String {
+pub fn snapshot_name(file_path: &str) -> String {
   file_path.replace(['/', '\\', '.'], "_")
 }
 
