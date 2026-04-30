@@ -1,0 +1,59 @@
+# Vue Oxlint Toolkit Agent Guidance
+
+## Project
+
+This is an experimental toolkit providing high-performance Vue linting support for [Oxlint](https://oxc.rs). Oxlint will provide language plugin features in the future and this is an early exploration of this approach.
+
+The core idea: parse a Vue SFC and emit an equivalent JS/TS program that the standard `oxc_parser` AST/codegen tools can consume, so existing Oxlint rules can lint any related scripts in Vue.
+
+## Tooling
+
+Tasks are managed through `just` (see `justfile`). JS tooling is [Vite+](https://viteplus.dev/) (`vp`/`vpr`/`vpx`), Rust is a Cargo workspace. I highly recommend using `just` to run any command in this project. Do not use `npm` or `pnpm` directly as we use Vite+.
+
+Common commands:
+
+- `just build` — `cargo build` plus `vpr build` (builds the napi binding + JS bundle).
+- `just test` — runs `just build` first, then `cargo test --all-features --workspace` and `vp test`.
+- `just lint` — `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo fmt --check`, `vp check`.
+- `just fix` — `cargo fmt`, `cargo fix`, `vp check --fix`.
+- `just ready` — full pre-PR check (clean tree → lint → build → test → clean tree). Run before submitting PRs; CI runs the equivalent.
+- `just bench` — Criterion benchmarks in `benchmark/`.
+
+## Workspace layout
+
+Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
+
+- **`crates/vue_oxlint_jsx`** — the active crate. Parses a Vue SFC and produces either a JS/TS AST (`VueJsxParser`) or generated source text (`VueJsxCodegen`).
+  - `parser/` — One of the most core part, including SFC tokenization, script/template handling, module-record building, irregular-whitespace tracking, and Vue-specific element handlers (`elements/v_for.rs`, `v_if.rs`, `v_slot.rs`, `directive.rs`).
+  - `codegen/` — wraps `parser` and transform the ast into source_text, producing `VueJsxCodegenReturn { source_text, source_type, comments, irregular_whitespaces, errors, panicked }`.
+  - `test/` — `test_ast!` and `test_module_record!` macros driving snapshot tests in `test/snapshots/`. `test_ast!` runs both AST and codegen checks on each fixture.
+  - Public API is intentionally narrow: `VueJsxParser`/`VueJsxParserReturn` + `VueJsxCodegen`/`VueJsxCodegenReturn` (re-exported from `lib.rs`).
+
+- **`crates/vue_oxlint_parser`** — placeholder crate intended as a Rust port of `vue-eslint-parser`. Currently only contains a `parse_vue()` stub (`todo!()`). Plan to implement it to replace the internal parser of `vue_oxlint_jsx` and provide custom AST apis for napi bindings so that other existing Vue js plugins will be compatible with it.
+
+- **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
+  - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` which calls `VueJsxCodegen::build` and converts results to N-API types (`NativeTransformResult`).
+  - `js/index.ts` — JS wrapper that converts native UTF-8 byte offsets into JS UTF-16 indices and `{ line, column }` locations via a per-source `createLocator`. Returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects.
+  - Built with `napi build` (`build:debug` also runs `vp pack` to produce the JS bundle).
+
+- **`benchmark/`** — Criterion benches over `small.vue`, `medium.vue`, `large.vue`.
+
+## Architectural notes for changes in `vue_oxlint_jsx`
+
+- `ParserImpl` (in `parser/mod.rs`) owns an arena allocator, the original SFC source, and a mutable copy of the source bytes (`mut_ptr_source_text`) which Vue-specific transformations rewrite in place before passing the result to `oxc_parser`. Spans on the resulting AST refer to *original SFC* offsets, not the rewritten buffer.
+- A `ScriptBlock` is collected for the global `<script>` and the `<script setup>` block independently (`global` and `setup`); they're stitched into a single `Program` during parse.
+- Comments and irregular whitespaces are tracked separately because they're stripped/relocated during the SFC→JS rewrite but must be reported back with original-source spans.
+- The codegen entry point (`VueJsxCodegen`) drops the parser allocator before returning — only owned data is exposed. Use `VueJsxParser` instead if you need the AST itself.
+
+## Vue/SFC parsing context
+
+The current parsing still happens in `vue_oxlint_jsx`, powered by `vue-compiler-core`. But we plan to move it to the standalone crate `crates/vue_oxlint_parser` for the united parsing logic in the future.
+
+## Conventions
+
+- Comments / PR titles follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). The repo squash-merges PRs.
+- Workspace clippy lints: `all`/`pedantic`/`nursery` at warn, with `cast_possible_truncation` and `too_many_lines` allowed.
+- Rust formatting via `.rustfmt.toml` (run `just fmt`). JS formatting/linting via `vp check`.
+- Run `just ready` after your do changes and commits.
+- Consder to update (ATTENTION: it's `update` not `add`) AGENTS.md to sync after you made change.
+
