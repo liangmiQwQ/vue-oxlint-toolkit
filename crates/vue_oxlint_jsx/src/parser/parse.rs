@@ -147,11 +147,7 @@ impl<'a> ParserImpl<'a> {
     let mut source_types: HashSet<&str> = HashSet::new();
     for child in result.children {
       if let AstNode::Element(node) = child {
-        // Process the texts between last element and current element
-        self.push_text_child(
-          &mut raw_children,
-          Span::new(text_start, node.location.start.offset as u32),
-        );
+        // Template text nodes are intentionally ignored.
         text_start = node.location.end.offset as u32;
 
         raw_children.push(if node.tag_name == "script" {
@@ -163,8 +159,7 @@ impl<'a> ParserImpl<'a> {
         });
       }
     }
-    // Process the texts after last element
-    self.push_text_child(&mut raw_children, Span::new(text_start, self.source_text.len() as u32));
+    let _ = text_start;
 
     // Parse the skip ones
     let mut children: ArenaVec<'a, JSXChild<'a>> = self.ast.vec();
@@ -176,20 +171,7 @@ impl<'a> ParserImpl<'a> {
           if node.tag_name == "template" {
             self.parse_element(node, None).0
           } else {
-            // Process other tags like <style>
-            let text = if let Some(first) = node.children.first() {
-              let last = node.children.last().unwrap(); // SAFETY: if first exists, last must exist
-              let span = Span::new(
-                first.get_location().start.offset as u32,
-                last.get_location().end.offset as u32,
-              );
-
-              self.ast.vec1(self.jsx_child_text(span, span.source_text(self.source_text)))
-            } else {
-              self.ast.vec()
-            };
-
-            self.parse_element(node, Some(text)).0
+            self.parse_element(node, Some(self.ast.vec())).0
           }
         }
       });
@@ -221,13 +203,6 @@ impl<'a> ParserImpl<'a> {
 
       a_first.offset().cmp(&b_first.offset())
     });
-  }
-
-  fn push_text_child(&self, children: &mut Vec<ParsingChild<'a>>, span: Span) {
-    if !span.is_empty() {
-      children
-        .push(ParsingChild::Finish(self.jsx_child_text(span, span.source_text(self.source_text))));
-    }
   }
 }
 

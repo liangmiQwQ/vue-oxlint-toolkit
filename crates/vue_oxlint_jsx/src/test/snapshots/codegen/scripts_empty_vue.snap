@@ -1,14 +1,7 @@
 ---
-source: crates/vue_oxlint_jsx/src/test/codegen.rs
+source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
 async () => {
-	<><template>
-  <div></div>
-</template>
-
-<script setup></script>
-
-<script></script>
-</>;
+	<><template><div></div></template><script setup></script><script></script></>;
 };

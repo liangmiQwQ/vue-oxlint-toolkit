@@ -1,18 +1,9 @@
 ---
-source: crates/vue_oxlint_jsx/src/test/codegen.rs
+source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
 import SomeComponent from "./SomeComponent.vue";
 import { motion } from "motion-v";
 async () => {
-	<><template>
-  <SomeComponent />
-  <SomeComponent />
-  <Transition></Transition>
-  <component></component>
-  <motion.div></motion.div>
-</template>
-
-<script lang="ts" setup></script>
-</>;
+	<><template><SomeComponent /><SomeComponent /><Transition></Transition><component></component><motion.div></motion.div></template><script lang="ts" setup></script></>;
 };

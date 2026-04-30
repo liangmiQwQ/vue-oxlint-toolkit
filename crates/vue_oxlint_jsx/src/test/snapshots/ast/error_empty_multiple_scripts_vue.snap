@@ -227,21 +227,6 @@ Program {
                                                                         ),
                                                                     },
                                                                 ),
-                                                                Text(
-                                                                    JSXText {
-                                                                        span: Span {
-                                                                            start: 31,
-                                                                            end: 33,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        value: "\n\n",
-                                                                        raw: Some(
-                                                                            "\n\n",
-                                                                        ),
-                                                                    },
-                                                                ),
                                                                 Element(
                                                                     JSXElement {
                                                                         span: Span {
@@ -304,21 +289,6 @@ Program {
                                                                         ),
                                                                     },
                                                                 ),
-                                                                Text(
-                                                                    JSXText {
-                                                                        span: Span {
-                                                                            start: 52,
-                                                                            end: 53,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        value: "\n",
-                                                                        raw: Some(
-                                                                            "\n",
-                                                                        ),
-                                                                    },
-                                                                ),
                                                             ],
                                                         ),
                                                         closing_fragment: JSXClosingFragment {
@@ -363,10 +333,7 @@ Program {
 =============== Codegen ===============
 const a = 1;
 async () => {
-	<><script></script>
-
-<script></script>
-</>;
+	<><script></script><script></script></>;
 };
 
 
@@ -411,10 +378,6 @@ Slice: "script";
 Span: (24, 30); 
 Type: JSXIdentifier; 
 
-Slice: "\n\n"; 
-Span: (31, 33); 
-Type: JSXText; 
-
 Slice: "<script>\n\n</script>"; 
 Span: (33, 52); 
 Type: JSXElement; 
@@ -433,8 +396,4 @@ Type: JSXClosingElement;
 
 Slice: "script"; 
 Span: (45, 51); 
-Type: JSXIdentifier; 
-
-Slice: "\n"; 
-Span: (52, 53); 
-Type: JSXText;
+Type: JSXIdentifier;

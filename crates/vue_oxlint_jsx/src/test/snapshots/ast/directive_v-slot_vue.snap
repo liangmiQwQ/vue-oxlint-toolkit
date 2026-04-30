@@ -139,21 +139,6 @@ Program {
                                                                         },
                                                                         children: Vec(
                                                                             [
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 10,
-                                                                                            end: 13,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
-                                                                                        ),
-                                                                                    },
-                                                                                ),
                                                                                 Element(
                                                                                     JSXElement {
                                                                                         span: Span {
@@ -509,21 +494,6 @@ Program {
                                                                                         ),
                                                                                     },
                                                                                 ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 42,
-                                                                                            end: 45,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
-                                                                                        ),
-                                                                                    },
-                                                                                ),
                                                                                 Element(
                                                                                     JSXElement {
                                                                                         span: Span {
@@ -818,21 +788,6 @@ Program {
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
                                                                                                                                                                         [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 73,
-                                                                                                                                                                                        end: 78,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n    ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n    ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
                                                                                                                                                                             ExpressionContainer(
                                                                                                                                                                                 JSXExpressionContainer {
                                                                                                                                                                                     span: Span {
@@ -856,21 +811,6 @@ Program {
                                                                                                                                                                                             },
                                                                                                                                                                                             name: "message",
                                                                                                                                                                                         },
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 91,
-                                                                                                                                                                                        end: 94,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n  ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n  ",
                                                                                                                                                                                     ),
                                                                                                                                                                                 },
                                                                                                                                                                             ),
@@ -933,21 +873,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 101,
-                                                                                            end: 104,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -1148,23 +1073,7 @@ Program {
                                                                                                                                                                         },
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
-                                                                                                                                                                        [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 121,
-                                                                                                                                                                                        end: 126,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: " abc ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        " abc ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                        ],
+                                                                                                                                                                        [],
                                                                                                                                                                     ),
                                                                                                                                                                     closing_fragment: JSXClosingFragment {
                                                                                                                                                                         span: Span {
@@ -1223,21 +1132,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 133,
-                                                                                            end: 136,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -1494,21 +1388,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 151,
-                                                                                            end: 154,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -1806,21 +1685,6 @@ Program {
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
                                                                                                                                                                         [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 188,
-                                                                                                                                                                                        end: 193,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n    ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n    ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
                                                                                                                                                                             ExpressionContainer(
                                                                                                                                                                                 JSXExpressionContainer {
                                                                                                                                                                                     span: Span {
@@ -1844,21 +1708,6 @@ Program {
                                                                                                                                                                                             },
                                                                                                                                                                                             name: "message",
                                                                                                                                                                                         },
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 206,
-                                                                                                                                                                                        end: 209,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n  ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n  ",
                                                                                                                                                                                     ),
                                                                                                                                                                                 },
                                                                                                                                                                             ),
@@ -1921,21 +1770,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 216,
-                                                                                            end: 219,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -2233,21 +2067,6 @@ Program {
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
                                                                                                                                                                         [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 247,
-                                                                                                                                                                                        end: 252,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n    ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n    ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
                                                                                                                                                                             ExpressionContainer(
                                                                                                                                                                                 JSXExpressionContainer {
                                                                                                                                                                                     span: Span {
@@ -2271,21 +2090,6 @@ Program {
                                                                                                                                                                                             },
                                                                                                                                                                                             name: "message",
                                                                                                                                                                                         },
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 265,
-                                                                                                                                                                                        end: 268,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n  ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n  ",
                                                                                                                                                                                     ),
                                                                                                                                                                                 },
                                                                                                                                                                             ),
@@ -2348,21 +2152,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 275,
-                                                                                            end: 278,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -2663,21 +2452,6 @@ Program {
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
                                                                                                                                                                         [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 311,
-                                                                                                                                                                                        end: 316,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n    ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n    ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
                                                                                                                                                                             ExpressionContainer(
                                                                                                                                                                                 JSXExpressionContainer {
                                                                                                                                                                                     span: Span {
@@ -2701,21 +2475,6 @@ Program {
                                                                                                                                                                                             },
                                                                                                                                                                                             name: "message",
                                                                                                                                                                                         },
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 329,
-                                                                                                                                                                                        end: 332,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n  ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n  ",
                                                                                                                                                                                     ),
                                                                                                                                                                                 },
                                                                                                                                                                             ),
@@ -2778,21 +2537,6 @@ Program {
                                                                                                     },
                                                                                                 ),
                                                                                             },
-                                                                                        ),
-                                                                                    },
-                                                                                ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 339,
-                                                                                            end: 342,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n  ",
-                                                                                        raw: Some(
-                                                                                            "\n  ",
                                                                                         ),
                                                                                     },
                                                                                 ),
@@ -3051,21 +2795,6 @@ Program {
                                                                                                                                                                     },
                                                                                                                                                                     children: Vec(
                                                                                                                                                                         [
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 369,
-                                                                                                                                                                                        end: 374,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n    ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n    ",
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
                                                                                                                                                                             ExpressionContainer(
                                                                                                                                                                                 JSXExpressionContainer {
                                                                                                                                                                                     span: Span {
@@ -3111,21 +2840,6 @@ Program {
                                                                                                                                                                                                 name: "name",
                                                                                                                                                                                             },
                                                                                                                                                                                         },
-                                                                                                                                                                                    ),
-                                                                                                                                                                                },
-                                                                                                                                                                            ),
-                                                                                                                                                                            Text(
-                                                                                                                                                                                JSXText {
-                                                                                                                                                                                    span: Span {
-                                                                                                                                                                                        start: 389,
-                                                                                                                                                                                        end: 392,
-                                                                                                                                                                                    },
-                                                                                                                                                                                    node_id: Cell {
-                                                                                                                                                                                        value: NodeId(0),
-                                                                                                                                                                                    },
-                                                                                                                                                                                    value: "\n  ",
-                                                                                                                                                                                    raw: Some(
-                                                                                                                                                                                        "\n  ",
                                                                                                                                                                                     ),
                                                                                                                                                                                 },
                                                                                                                                                                             ),
@@ -3191,21 +2905,6 @@ Program {
                                                                                         ),
                                                                                     },
                                                                                 ),
-                                                                                Text(
-                                                                                    JSXText {
-                                                                                        span: Span {
-                                                                                            start: 399,
-                                                                                            end: 400,
-                                                                                        },
-                                                                                        node_id: Cell {
-                                                                                            value: NodeId(0),
-                                                                                        },
-                                                                                        value: "\n",
-                                                                                        raw: Some(
-                                                                                            "\n",
-                                                                                        ),
-                                                                                    },
-                                                                                ),
                                                                             ],
                                                                         ),
                                                                         closing_element: Some(
@@ -3230,21 +2929,6 @@ Program {
                                                                                     },
                                                                                 ),
                                                                             },
-                                                                        ),
-                                                                    },
-                                                                ),
-                                                                Text(
-                                                                    JSXText {
-                                                                        span: Span {
-                                                                            start: 411,
-                                                                            end: 412,
-                                                                        },
-                                                                        node_id: Cell {
-                                                                            value: NodeId(0),
-                                                                        },
-                                                                        value: "\n",
-                                                                        raw: Some(
-                                                                            "\n",
                                                                         ),
                                                                     },
                                                                 ),
@@ -3289,27 +2973,7 @@ Program {
 
 =============== Codegen ===============
 async () => {
-	<><template>
-  <Comp v-slot:={}>{{ default: ({ message }) => <></> }}</Comp>
-  <Comp v-slot:header={}>{{ header: ({ message }) => <>
-    {message}
-  </> }}</Comp>
-  <Comp v-slot:abc>{{ abc: () => <> abc </> }}</Comp>
-  <Comp v-slot:>{{ default: () => <></> }}</>
-  <Comp v-slot:header={}>{{ header: ({ message }) => <>
-    {message}
-  </> }}</Comp>
-  <Comp v-slot:={}>{{ default: ({ message }) => <>
-    {message}
-  </> }}</Comp>
-  <Comp v-slot:[key]={}>{{ [key]: ({ message }) => <>
-    {message}
-  </> }}</Comp>
-  <Comp v-slot:header={}>{{ header: (user) => <>
-    {user.name}
-  </> }}</Comp>
-</template>
-</>;
+	<><template><Comp v-slot:={}>{{ default: ({ message }) => <></> }}</Comp><Comp v-slot:header={}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:abc>{{ abc: () => <></> }}</Comp><Comp v-slot:>{{ default: () => <></> }}</><Comp v-slot:header={}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:={}>{{ default: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:[key]={}>{{ [key]: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:header={}>{{ header: (user) => <>{user.name}</> }}</Comp></template></>;
 };
 
 
@@ -3329,10 +2993,6 @@ Type: JSXOpeningElement;
 Slice: "template"; 
 Span: (1, 9); 
 Type: JSXIdentifier; 
-
-Slice: "\n  "; 
-Span: (10, 13); 
-Type: JSXText; 
 
 Slice: "<Comp #=\"{ message }\"></Comp>"; 
 Span: (13, 42); 
@@ -3394,10 +3054,6 @@ Slice: "Comp";
 Span: (37, 41); 
 Type: IdentifierReference; 
 
-Slice: "\n  "; 
-Span: (42, 45); 
-Type: JSXText; 
-
 Slice: "<Comp #header=\"{ message }\">\n    {{ message }}\n  </Comp>"; 
 Span: (45, 101); 
 Type: JSXElement; 
@@ -3458,10 +3114,6 @@ Slice: "message";
 Span: (62, 69); 
 Type: BindingIdentifier; 
 
-Slice: "\n    "; 
-Span: (73, 78); 
-Type: JSXText; 
-
 Slice: "{{ message }}"; 
 Span: (78, 91); 
 Type: JSXExpressionContainer; 
@@ -3470,10 +3122,6 @@ Slice: "message";
 Span: (81, 88); 
 Type: IdentifierReference; 
 
-Slice: "\n  "; 
-Span: (91, 94); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (94, 101); 
 Type: JSXClosingElement; 
@@ -3481,10 +3129,6 @@ Type: JSXClosingElement;
 Slice: "Comp"; 
 Span: (96, 100); 
 Type: IdentifierReference; 
-
-Slice: "\n  "; 
-Span: (101, 104); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot:abc> abc </Comp>"; 
 Span: (104, 133); 
@@ -3518,10 +3162,6 @@ Slice: "abc";
 Span: (117, 120); 
 Type: IdentifierName; 
 
-Slice: " abc "; 
-Span: (121, 126); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (126, 133); 
 Type: JSXClosingElement; 
@@ -3529,10 +3169,6 @@ Type: JSXClosingElement;
 Slice: "Comp"; 
 Span: (128, 132); 
 Type: IdentifierReference; 
-
-Slice: "\n  "; 
-Span: (133, 136); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot />"; 
 Span: (136, 151); 
@@ -3557,10 +3193,6 @@ Type: JSXNamespacedName;
 Slice: "v-slot"; 
 Span: (142, 148); 
 Type: JSXIdentifier; 
-
-Slice: "\n  "; 
-Span: (151, 154); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot:header=\"{ message }\">\n    {{ message }}\n  </Comp>"; 
 Span: (154, 216); 
@@ -3622,10 +3254,6 @@ Slice: "message";
 Span: (177, 184); 
 Type: BindingIdentifier; 
 
-Slice: "\n    "; 
-Span: (188, 193); 
-Type: JSXText; 
-
 Slice: "{{ message }}"; 
 Span: (193, 206); 
 Type: JSXExpressionContainer; 
@@ -3634,10 +3262,6 @@ Slice: "message";
 Span: (196, 203); 
 Type: IdentifierReference; 
 
-Slice: "\n  "; 
-Span: (206, 209); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (209, 216); 
 Type: JSXClosingElement; 
@@ -3645,10 +3269,6 @@ Type: JSXClosingElement;
 Slice: "Comp"; 
 Span: (211, 215); 
 Type: IdentifierReference; 
-
-Slice: "\n  "; 
-Span: (216, 219); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot:=\"{ message }\">\n    {{ message }}\n  </Comp>"; 
 Span: (219, 275); 
@@ -3702,10 +3322,6 @@ Slice: "message";
 Span: (236, 243); 
 Type: BindingIdentifier; 
 
-Slice: "\n    "; 
-Span: (247, 252); 
-Type: JSXText; 
-
 Slice: "{{ message }}"; 
 Span: (252, 265); 
 Type: JSXExpressionContainer; 
@@ -3714,10 +3330,6 @@ Slice: "message";
 Span: (255, 262); 
 Type: IdentifierReference; 
 
-Slice: "\n  "; 
-Span: (265, 268); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (268, 275); 
 Type: JSXClosingElement; 
@@ -3725,10 +3337,6 @@ Type: JSXClosingElement;
 Slice: "Comp"; 
 Span: (270, 274); 
 Type: IdentifierReference; 
-
-Slice: "\n  "; 
-Span: (275, 278); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot:[key]=\"{ message }\">\n    {{ message }}\n  </Comp>"; 
 Span: (278, 339); 
@@ -3790,10 +3398,6 @@ Slice: "message";
 Span: (300, 307); 
 Type: BindingIdentifier; 
 
-Slice: "\n    "; 
-Span: (311, 316); 
-Type: JSXText; 
-
 Slice: "{{ message }}"; 
 Span: (316, 329); 
 Type: JSXExpressionContainer; 
@@ -3802,10 +3406,6 @@ Slice: "message";
 Span: (319, 326); 
 Type: IdentifierReference; 
 
-Slice: "\n  "; 
-Span: (329, 332); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (332, 339); 
 Type: JSXClosingElement; 
@@ -3813,10 +3413,6 @@ Type: JSXClosingElement;
 Slice: "Comp"; 
 Span: (334, 338); 
 Type: IdentifierReference; 
-
-Slice: "\n  "; 
-Span: (339, 342); 
-Type: JSXText; 
 
 Slice: "<Comp v-slot:header=\"user\">\n    {{ user.name }}\n  </Comp>"; 
 Span: (342, 399); 
@@ -3866,10 +3462,6 @@ Slice: "user";
 Span: (363, 367); 
 Type: BindingIdentifier; 
 
-Slice: "\n    "; 
-Span: (369, 374); 
-Type: JSXText; 
-
 Slice: "{{ user.name }}"; 
 Span: (374, 389); 
 Type: JSXExpressionContainer; 
@@ -3886,10 +3478,6 @@ Slice: "name";
 Span: (382, 386); 
 Type: IdentifierName; 
 
-Slice: "\n  "; 
-Span: (389, 392); 
-Type: JSXText; 
-
 Slice: "</Comp>"; 
 Span: (392, 399); 
 Type: JSXClosingElement; 
@@ -3898,18 +3486,10 @@ Slice: "Comp";
 Span: (394, 398); 
 Type: IdentifierReference; 
 
-Slice: "\n"; 
-Span: (399, 400); 
-Type: JSXText; 
-
 Slice: "</template>"; 
 Span: (400, 411); 
 Type: JSXClosingElement; 
 
 Slice: "template"; 
 Span: (402, 410); 
-Type: JSXIdentifier; 
-
-Slice: "\n"; 
-Span: (411, 412); 
-Type: JSXText;
+Type: JSXIdentifier;
