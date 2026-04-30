@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_str::CompactStr;
 use oxc_syntax::{
   class::ClassId,
@@ -22,7 +22,6 @@ use oxc_syntax::{
 use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
-mod comment;
 mod context;
 mod r#gen;
 mod operator;
@@ -507,48 +506,30 @@ impl<'a> Codegen<'a> {
   }
 
   fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-    let single_line = stmt.body.is_empty() && !self.has_legal_orphans_before(stmt.span.end);
+    let single_line = stmt.body.is_empty();
     self.print_curly_braces(stmt.span, single_line, |p| {
-      p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
+      p.print_stmts(&stmt.body, ctx);
     });
     self.needs_semicolon = false;
   }
 
-  /// Print `stmts`, flushing legal-comment orphans before each and at `scope_end`.
-  fn print_stmts_with_orphan_flush(
-    &mut self,
-    stmts: &[Statement<'_>],
-    scope_end: u32,
-    ctx: Context,
-  ) {
+  fn print_stmts(&mut self, stmts: &[Statement<'_>], ctx: Context) {
     for stmt in stmts {
-      self.print_legal_orphans_before(stmt.span().start);
       self.print_semicolon_if_needed();
       stmt.print(self, ctx);
     }
-    self.print_legal_orphans_before(scope_end);
   }
 
   fn print_directives_and_statements(
     &mut self,
     directives: &[Directive<'_>],
     stmts: &[Statement<'_>],
-    scope_end: u32,
     ctx: Context,
   ) {
     for directive in directives {
       directive.print(self, ctx);
     }
-    let Some((first, rest)) = stmts.split_first() else {
-      self.print_legal_orphans_before(scope_end);
-      return;
-    };
-
-    self.print_legal_orphans_before(first.span().start);
-
-    first.print(self, ctx);
-
-    self.print_stmts_with_orphan_flush(rest, scope_end, ctx);
+    self.print_stmts(stmts, ctx);
   }
 
   #[inline]
@@ -579,51 +560,9 @@ impl<'a> Codegen<'a> {
 
   fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
     self.print_ascii_byte(b'(');
-
-    let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
-
-    let has_comment = has_comment_before_right_paren
-      || arguments.iter().any(|item| self.has_comment(item.span().start));
-
-    if has_comment {
-      self.indent();
-      self.print_list_with_comments(arguments, ctx);
-      // Handle `/* comment */);`
-      if !has_comment_before_right_paren
-        || (span.end > 0 && !self.print_expr_comments(span.end - 1))
-      {
-        self.print_soft_newline();
-      }
-      self.dedent();
-      self.print_indent();
-    } else {
-      self.print_list(arguments, ctx);
-    }
+    self.print_list(arguments, ctx);
     self.print_ascii_byte(b')');
     self.add_source_mapping_end(span);
-  }
-
-  fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
-    let Some((first, rest)) = items.split_first() else {
-      return;
-    };
-    if self.print_expr_comments(first.span().start) {
-      self.print_indent();
-    } else {
-      self.print_soft_newline();
-      self.print_indent();
-    }
-    first.print(self, ctx);
-    for item in rest {
-      self.print_comma();
-      if self.print_expr_comments(item.span().start) {
-        self.print_indent();
-      } else {
-        self.print_soft_newline();
-        self.print_indent();
-      }
-      item.print(self, ctx);
-    }
   }
 
   fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
