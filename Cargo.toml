@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["benchmark", "crates/*", "packages/*"]
+exclude = ["packages/vue-oxlint-toolkit/oxc_codegen"]
 
 [workspace.package]
 version = "0.12.0"
@@ -37,7 +38,7 @@ vue_oxlint_parser = { path = "crates/vue_oxlint_parser" }
 oxc_allocator = ">=0.127.0"
 oxc_ast = ">=0.127.0"
 oxc_ast_visit = ">=0.127.0"
-oxc_codegen = { path = "crates/oxc_codegen" }
+oxc_codegen = ">=0.127.0"
 oxc_data_structures = { version = ">=0.127.0", features = ["code_buffer"] }
 oxc_diagnostics = ">=0.127.0"
 oxc_parser = ">=0.127.0"
