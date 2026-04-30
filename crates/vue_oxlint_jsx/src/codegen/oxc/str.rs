@@ -31,6 +31,11 @@ impl Codegen<'_> {
   pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
     self.add_source_mapping(s.span);
 
+    if let Some(raw) = &s.raw {
+      self.print_str(raw.as_str());
+      return;
+    }
+
     // Quote is chosen depending on what produces the shortest output.
     // What is the best quote to use will be determined when first character needing escape is found.
     // This avoids iterating through the string twice if it contains no quotes (common case).

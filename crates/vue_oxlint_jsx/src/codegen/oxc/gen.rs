@@ -860,7 +860,8 @@ impl Gen for ImportDeclaration<'_> {
             spec.imported.print(p, ctx);
             let local_name = p.get_binding_identifier_name(&spec.local);
             let imported_name = get_module_export_name(&spec.imported, p);
-            if imported_name != local_name {
+            let has_explicit_alias = spec.imported.span() != spec.local.span;
+            if imported_name != local_name || has_explicit_alias {
               p.print_str(" as ");
               spec.local.print(p, ctx);
             }
@@ -1013,7 +1014,8 @@ impl Gen for ExportSpecifier<'_> {
     self.local.print(p, ctx);
     let local_name = get_module_export_name(&self.local, p);
     let exported_name = get_module_export_name(&self.exported, p);
-    if local_name != exported_name {
+    let has_explicit_alias = self.local.span() != self.exported.span();
+    if local_name != exported_name || has_explicit_alias {
       p.print_str(" as ");
       self.exported.print(p, ctx);
     }
@@ -1228,7 +1230,10 @@ impl GenExpr for NumericLiteral<'_> {
   fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
     p.add_source_mapping(self.span);
     let value = self.value;
-    if ctx.contains(Context::TYPESCRIPT) {
+    if let Some(raw) = &self.raw {
+      p.print_space_before_identifier();
+      p.print_str(raw.as_str());
+    } else if ctx.contains(Context::TYPESCRIPT) {
       p.print_str(&self.raw_str());
     } else if value.is_nan() {
       p.print_space_before_identifier();
@@ -1264,6 +1269,11 @@ impl GenExpr for BigIntLiteral<'_> {
   fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
     p.print_space_before_identifier();
     p.add_source_mapping(self.span);
+    if let Some(raw) = &self.raw {
+      p.print_str(raw.as_str());
+      return;
+    }
+
     let value = self.value.as_str();
     if value.starts_with('-') && precedence >= Precedence::Prefix {
       p.print_ascii_byte(b'(');
@@ -1554,17 +1564,6 @@ impl Gen for ObjectProperty<'_> {
       }
     }
 
-    let mut shorthand = false;
-    if let PropertyKey::StaticIdentifier(key) = &self.key {
-      if key.name == "__proto__" {
-        shorthand = self.shorthand;
-      } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-        && key.name == p.get_identifier_reference_name(ident)
-      {
-        shorthand = true;
-      }
-    }
-
     let mut computed = self.computed;
 
     // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
@@ -1576,7 +1575,7 @@ impl Gen for ObjectProperty<'_> {
       computed = true;
     }
 
-    if !shorthand {
+    if !self.shorthand {
       if computed {
         p.print_ascii_byte(b'[');
       }
@@ -1615,20 +1614,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
       if let Some(type_parameters) = &self.type_parameters {
         type_parameters.print(p, ctx);
       }
-      let remove_params_wrap = self.params.items.len() == 1
-        && self.params.rest.is_none()
-        && self.type_parameters.is_none()
-        && self.return_type.is_none()
-        && {
-          let param = &self.params.items[0];
-          param.decorators.is_empty()
-            && !param.has_modifier()
-            && param.pattern.is_binding_identifier()
-            && param.type_annotation.is_none()
-            && param.initializer.is_none()
-            && !param.optional
-        };
-      p.wrap(!remove_params_wrap, |p| {
+      p.wrap(true, |p| {
         self.params.print(p, ctx);
       });
       if let Some(return_type) = &self.return_type {
@@ -2087,10 +2073,7 @@ impl GenExpr for NewExpression<'_> {
         type_parameters.print(p, ctx);
       }
 
-      // Omit the "()" when safe to do so
-      if !self.arguments.is_empty() || precedence >= Precedence::Postfix {
-        p.print_arguments(self.span, &self.arguments, ctx);
-      }
+      p.print_arguments(self.span, &self.arguments, ctx);
     });
   }
 }
@@ -2335,10 +2318,7 @@ impl Gen for JSXAttributeValue<'_> {
       Self::Fragment(fragment) => fragment.print(p, ctx),
       Self::Element(el) => el.print(p, ctx),
       Self::StringLiteral(lit) => {
-        let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-        p.print_ascii_byte(quote);
-        p.print_str(&lit.value);
-        p.print_ascii_byte(quote);
+        p.print_string_literal(lit, false);
       }
       Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
     }
@@ -2718,26 +2698,7 @@ impl Gen for ObjectPattern<'_> {
 
 impl Gen for BindingProperty<'_> {
   fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-    let mut shorthand = false;
-    if let PropertyKey::StaticIdentifier(key) = &self.key {
-      match &self.value {
-        BindingPattern::BindingIdentifier(ident)
-          if key.name == p.get_binding_identifier_name(ident) =>
-        {
-          shorthand = true;
-        }
-        BindingPattern::AssignmentPattern(assignment_pattern) => {
-          if let BindingPattern::BindingIdentifier(ident) = &assignment_pattern.left
-            && key.name == p.get_binding_identifier_name(ident)
-          {
-            shorthand = true;
-          }
-        }
-        _ => {}
-      }
-    }
-
-    if !shorthand {
+    if !self.shorthand {
       if self.computed {
         p.print_ascii_byte(b'[');
       }
