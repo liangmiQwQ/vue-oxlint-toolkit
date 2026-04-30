@@ -344,7 +344,12 @@ Program {
 []
 
 =============== Codegen ===============
-'use client';async()=>{'use server';<><script></script><script setup></script></>};
+"use client";
+async () => {
+	"use server";
+	<><script></script><script setup></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<script>\n\"use client\";\n</script>\n\n<script setup>\n\"use server\";\n</script>\n"; 

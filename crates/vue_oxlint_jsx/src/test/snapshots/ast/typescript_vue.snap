@@ -811,7 +811,14 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>};
+async () => {
+	const a = someFunction<{
+		msg: 1;
+	}>();
+	const b = someFunction<SomeType>();
+	<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<script lang=\"ts\" setup>\nconst a = someF..[OMIT]..ink 1 < 2, isn't it? </div>\n</template>\n"; 

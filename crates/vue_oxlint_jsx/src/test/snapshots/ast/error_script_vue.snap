@@ -712,7 +712,14 @@ Program {
 ]
 
 =============== Codegen ===============
-async()=>{const a={b,c};<><template><div></div></template><script setup></script><script></script><style></style></>};
+async () => {
+	const a = {
+		b,
+		c
+	};
+	<><template><div></div></template><script setup></script><script></script><style></style></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div></div>\n</template>\n\n<s..[OMIT]..const w p =)\n</script>\n\n<style></style>\n"; 

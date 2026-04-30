@@ -376,7 +376,10 @@ Program {
 ]
 
 =============== Codegen ===============
-async()=>{<><template><br/><input></><img/></template></>};
+async () => {
+	<><template><br /><input></><img /></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <br>\n  <input />\n  <img></img>\n</template>\n"; 

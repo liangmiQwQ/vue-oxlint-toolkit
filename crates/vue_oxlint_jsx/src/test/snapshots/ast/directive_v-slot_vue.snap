@@ -2972,7 +2972,10 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template><Comp v-slot:={}>{{default:({message})=><></>}}</Comp><Comp v-slot:header={}>{{header:({message})=><>{message}</>}}</Comp><Comp v-slot:abc>{{abc:()=><></>}}</Comp><Comp v-slot:>{{default:()=><></>}}</><Comp v-slot:header={}>{{header:({message})=><>{message}</>}}</Comp><Comp v-slot:={}>{{default:({message})=><>{message}</>}}</Comp><Comp v-slot:[key]={}>{{[key]:({message})=><>{message}</>}}</Comp><Comp v-slot:header={}>{{header:user=><>{user.name}</>}}</Comp></template></>};
+async () => {
+	<><template><Comp v-slot:={}>{{ default: ({ message }) => <></> }}</Comp><Comp v-slot:header={}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:abc>{{ abc: () => <></> }}</Comp><Comp v-slot:>{{ default: () => <></> }}</><Comp v-slot:header={}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:={}>{{ default: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:[key]={}>{{ [key]: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:header={}>{{ header: (user) => <>{user.name}</> }}</Comp></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <Comp #=\"{ message }\"></Com..[OMIT]..  {{ user.name }}\n  </Comp>\n</template>\n"; 

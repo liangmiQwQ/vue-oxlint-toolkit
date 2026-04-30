@@ -1343,7 +1343,10 @@ Program {
 ]
 
 =============== Codegen ===============
-async()=>{<><template><div v-else-if:={}></><div v-else:></>{1?<><div v-if:={}></></>:undefined}<div v-if:={}></><div v-if:></><div v-else-if:={}></><div v-else-if:></></template></>};
+async () => {
+	<><template><div v-else-if:={}></><div v-else:></>{1 ? <><div v-if:={}></></> : undefined}<div v-if:={}></><div v-if:></><div v-else-if:={}></><div v-else-if:></></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div v-else-if=\"1\" />\n  <di..[OMIT]..=\"\" />\n  <div v-else-if />\n</template>\n\n"; 

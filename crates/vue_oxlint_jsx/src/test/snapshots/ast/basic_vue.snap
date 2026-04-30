@@ -547,7 +547,11 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{const count=1;<><template><div>{count}</div></template><script lang="js" setup></script><style></style></>};
+async () => {
+	const count = 1;
+	<><template><div>{count}</div></template><script lang="js" setup></script><style></style></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div>\n    {{ count }}\n  </d..[OMIT]..\n<style>\ndiv {\n  color: red;\n}\n</style>\n"; 

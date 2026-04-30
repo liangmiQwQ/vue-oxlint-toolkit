@@ -3720,7 +3720,10 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template>{source(item=><div v-for:={}></>)}{source1(item1=><div v-for:={}></>)}{source2((item2,index2)=><div v-for:={}></>)}{source3((item3=`1`,index3=99)=><div v-for:={}></>)}{users4(({id4,name4})=><div v-for:={}></>)}{users5(({id5,name5},index)=><div v-for:={}></>)}{users6(({id6=1,name6=`Liang`},index)=><div v-for:={}></>)}{someObj7((key7,value7,index7)=><div v-for:={}></>)}{someIter8(([item8,index8])=><div v-for:={}></>)}{someIter9(([item9=`hi`,index9])=><div v-for:={}></>)}</template></>};
+async () => {
+	<><template>{source((item) => <div v-for:={}></>)}{source1((item1) => <div v-for:={}></>)}{source2((item2, index2) => <div v-for:={}></>)}{source3((item3 = "1", index3 = 99) => <div v-for:={}></>)}{users4(({ id4, name4 }) => <div v-for:={}></>)}{users5(({ id5, name5 }, index) => <div v-for:={}></>)}{users6(({ id6 = 1, name6 = "Liang" }, index) => <div v-for:={}></>)}{someObj7((key7, value7, index7) => <div v-for:={}></>)}{someIter8(([item8, index8]) => <div v-for:={}></>)}{someIter9(([item9 = "hi", index9]) => <div v-for:={}></>)}</template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div v-for=\"item in source\"..[OMIT]..', index9] in someIter9\" />\n</template>\n"; 

@@ -838,7 +838,16 @@ Program {
 []
 
 =============== Codegen ===============
-import{ref}from"vue";const count=0;export default {data(){return{count}}};async()=>{const number=ref(-1);<><template><div></div></template><script setup></script><script></script></>};
+import { ref } from "vue";
+const count = 0;
+export default { data() {
+	return { count };
+} };
+async () => {
+	const number = ref(-1);
+	<><template><div></div></template><script setup></script><script></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div>\n    \n  </div>\n</templ..[OMIT]..rn {\n      count,\n    }\n  }\n}\n</script>\n"; 

@@ -987,7 +987,10 @@ Program {
 ]
 
 =============== Codegen ===============
-async()=>{<><template><div v-for:={}></><div v-for:={}></><div v-for:={}></><div v-for:={}></><div v-for:={}></></template></>};
+async () => {
+	<><template><div v-for:={}></><div v-for:={}></><div v-for:={}></><div v-for:={}></><div v-for:={}></></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div v-for=\"\" />\n  <div v-f..[OMIT]..dex) /* in */ in source\" />\n</template>\n"; 

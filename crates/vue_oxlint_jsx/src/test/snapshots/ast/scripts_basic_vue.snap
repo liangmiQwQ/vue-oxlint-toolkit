@@ -573,7 +573,14 @@ Program {
 []
 
 =============== Codegen ===============
-const count=0;export default {data(){return{count}}};async()=>{<><template><div></div></template><script></script></>};
+const count = 0;
+export default { data() {
+	return { count };
+} };
+async () => {
+	<><template><div></div></template><script></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div>\n    \n  </div>\n</templ..[OMIT]..rn {\n      count\n    }\n  }\n}\n</script>\n\n"; 

@@ -1936,7 +1936,10 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template>{a?<><div v-if:={}></div></>:b?<><div v-else-if:={}></div></>:c?<><div v-else-if:={}></div></>:d?<><div v-else-if:={}></div></>:<><div v-else:></div></>}{x?<><div v-if:={}></div></>:<><div v-else:></div></>}{z?<><div v-if:={}></div></>:undefined}{w?<><div v-if:={}></div></>:undefined}<div></div></template></>};
+async () => {
+	<><template>{a ? <><div v-if:={}></div></> : b ? <><div v-else-if:={}></div></> : c ? <><div v-else-if:={}></div></> : d ? <><div v-else-if:={}></div></> : <><div v-else:></div></>}{x ? <><div v-if:={}></div></> : <><div v-else:></div></>}{z ? <><div v-if:={}></div></> : undefined}{w ? <><div v-if:={}></div></> : undefined}<div></div></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div v-if=\"a\">A</div>\n  <di..[OMIT]..=\"w\">W</div>\n  <div>K</div>\n</template>\n"; 

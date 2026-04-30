@@ -419,7 +419,10 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template><div></div></template><script setup></script><script></script></>};
+async () => {
+	<><template><div></div></template><script setup></script><script></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div>\n    \n  </div>\n</templ..[OMIT]..ript setup></script>\n\n<script></script>\n"; 

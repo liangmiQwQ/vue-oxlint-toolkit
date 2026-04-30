@@ -331,7 +331,11 @@ Program {
 []
 
 =============== Codegen ===============
-const a=1;async()=>{<><script></script><script></script></>};
+const a = 1;
+async () => {
+	<><script></script><script></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<script>\nconst a = 1;\n</script>\n\n<script>\n\n</script>\n"; 

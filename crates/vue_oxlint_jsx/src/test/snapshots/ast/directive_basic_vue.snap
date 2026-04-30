@@ -1847,7 +1847,13 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template><div v-bind:class={`w-100`}></><div v-bind:[some]={{[some]:2}}></><Some v-slot:default={}>{{default:({a})=><></>}}</><input v-model:={text}></><Some v-bind:some.none={1}></><div v-bind:id={id}></><div v-bind:msg-id={msgId}></><div{...{id:`app`,class:`w-100`}}></><div{...{id:`app`}}></><div v-bind:1foo={bar}></></template></>};
+async () => {
+	<><template><div v-bind:class={"w-100"}></><div v-bind:[some]={{ [some]: 2 }}></><Some v-slot:default={}>{{ default: ({ a }) => <></> }}</><input v-model:={text}></><Some v-bind:some.none={1}></><div v-bind:id={id}></><div v-bind:msg-id={msgId}></><div {...{
+		id: "app",
+		class: "w-100"
+	}}></><div {...{ id: "app" }}></><div v-bind:1foo={bar}></></template></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <div :class=\"'w-100'\" />\n  ..[OMIT]..}\" />\n  <div :1foo=\"bar\" />\n</template>\n"; 

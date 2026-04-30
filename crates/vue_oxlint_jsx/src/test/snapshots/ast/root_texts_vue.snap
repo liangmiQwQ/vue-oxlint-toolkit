@@ -393,7 +393,10 @@ Program {
 []
 
 =============== Codegen ===============
-async()=>{<><template></template><script></script><script></script><style></style></>};
+async () => {
+	<><template></template><script></script><script></script><style></style></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template></template><script></script>\n\n..[OMIT].. </script> -->\n\n<style></style>\n\n123123\n"; 

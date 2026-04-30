@@ -839,7 +839,12 @@ Program {
 []
 
 =============== Codegen ===============
-import SomeComponent from"./SomeComponent.vue";import{motion}from"motion-v";async()=>{<><template><SomeComponent></><SomeComponent></><Transition></Transition><component></component><motion.div></motion.div></template><script lang="ts" setup></script></>};
+import SomeComponent from "./SomeComponent.vue";
+import { motion } from "motion-v";
+async () => {
+	<><template><SomeComponent></><SomeComponent></><Transition></Transition><component></component><motion.div></motion.div></template><script lang="ts" setup></script></>;
+};
+
 
 ===============  Spans  ===============
 Slice: "<template>\n  <SomeComponent />\n  <some-c..[OMIT]..rt { motion } from 'motion-v'\n</script>\n"; 
