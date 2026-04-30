@@ -52,7 +52,7 @@ The current parsing still happens in `vue_oxlint_jsx`, powered by `vue-compiler-
 
 ## Conventions
 
-- Comments / PR titles follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). The repo squash-merges PRs.
+- Comments / PR titles follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). The repo squash-merges PRs. You should always use Conventional Commits format as PR title even if you are using codex-app connector.
 - Workspace clippy lints: `all`/`pedantic`/`nursery` at warn, with `cast_possible_truncation` and `too_many_lines` allowed.
 - Rust formatting via `.rustfmt.toml` (run `just fmt`). JS formatting/linting via `vp check`.
 - Run `just ready` after your do changes and commits.
