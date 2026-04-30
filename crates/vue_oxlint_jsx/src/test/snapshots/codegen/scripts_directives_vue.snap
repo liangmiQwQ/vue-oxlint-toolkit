@@ -2,8 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-"use client";
-async () => {
-	"use server";
-	<><script></script><script setup></script></>;
-};
+'use client';async()=>{'use server';<><script></script><script setup></script></>};

@@ -2,6 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-async () => {
-	<><template><Comp v-slot:__v___={undefined}>{{ default: ({ message }) => <></> }}</Comp><Comp v-slot:header={undefined}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:abc>{{ abc: () => <></> }}</Comp><Comp v-slot:__v___ />{{ default: () => <></> }}<Comp v-slot:header={undefined}>{{ header: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:__v___={undefined}>{{ default: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:__v_key___={undefined}>{{ [key]: ({ message }) => <>{message}</> }}</Comp><Comp v-slot:header={undefined}>{{ header: (user) => <>{user.name}</> }}</Comp></template></>;
-};
+async()=>{<><template><Comp v-slot:__v___={undefined}>{{default:({message})=><></>}}</Comp><Comp v-slot:header={undefined}>{{header:({message})=><>{message}</>}}</Comp><Comp v-slot:abc>{{abc:()=><></>}}</Comp><Comp v-slot:__v___/>{{default:()=><></>}}<Comp v-slot:header={undefined}>{{header:({message})=><>{message}</>}}</Comp><Comp v-slot:__v___={undefined}>{{default:({message})=><>{message}</>}}</Comp><Comp v-slot:__v_key___={undefined}>{{[key]:({message})=><>{message}</>}}</Comp><Comp v-slot:header={undefined}>{{header:user=><>{user.name}</>}}</Comp></template></>};

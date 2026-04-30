@@ -16,7 +16,7 @@ macro_rules! test_ast {
   }};
   ($file_path:expr, $should_errors:expr, $should_panic:expr) => {{
     $crate::test::run_test($file_path, "ast", |ret| {
-      use $crate::codegen::Codegen;
+      use oxc_codegen::Codegen;
       let js = Codegen::new().build(&ret.program);
       let source_text = $crate::test::read_file($file_path);
       let node_locations = $crate::test::format_node_locations(&ret.program, &source_text);

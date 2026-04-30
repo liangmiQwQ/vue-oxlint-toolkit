@@ -2,6 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-async () => {
-	<><template>{a ? <><div v-if:__v___={undefined}></div></> : b ? <><div v-else-if:__v___={undefined}></div></> : c ? <><div v-else-if:__v___={undefined}></div></> : d ? <><div v-else-if:__v___={undefined}></div></> : <><div v-else:__v___></div></>}{x ? <><div v-if:__v___={undefined}></div></> : <><div v-else:__v___></div></>}{z ? <><div v-if:__v___={undefined}></div></> : undefined}{w ? <><div v-if:__v___={undefined}></div></> : undefined}<div></div></template></>;
-};
+async()=>{<><template>{a?<><div v-if:__v___={undefined}></div></>:b?<><div v-else-if:__v___={undefined}></div></>:c?<><div v-else-if:__v___={undefined}></div></>:d?<><div v-else-if:__v___={undefined}></div></>:<><div v-else:__v___></div></>}{x?<><div v-if:__v___={undefined}></div></>:<><div v-else:__v___></div></>}{z?<><div v-if:__v___={undefined}></div></>:undefined}{w?<><div v-if:__v___={undefined}></div></>:undefined}<div></div></template></>};

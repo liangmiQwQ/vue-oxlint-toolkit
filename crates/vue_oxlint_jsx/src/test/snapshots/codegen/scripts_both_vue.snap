@@ -2,12 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-import { ref } from "vue";
-const count = 0;
-export default { data() {
-	return { count };
-} };
-async () => {
-	const number = ref(-1);
-	<><template><div></div></template><script setup></script><script></script></>;
-};
+import{ref}from"vue";const count=0;export default {data(){return{count}}};async()=>{const number=ref(-1);<><template><div></div></template><script setup></script><script></script></>};

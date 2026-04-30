@@ -2,10 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-const count = 0;
-export default { data() {
-	return { count };
-} };
-async () => {
-	<><template><div></div></template><script></script></>;
-};
+const count=0;export default {data(){return{count}}};async()=>{<><template><div></div></template><script></script></>};

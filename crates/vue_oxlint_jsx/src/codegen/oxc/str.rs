@@ -31,19 +31,11 @@ impl Codegen<'_> {
   pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
     self.add_source_mapping(s.span);
 
-    // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
+    // Quote is chosen depending on what produces the shortest output.
     // What is the best quote to use will be determined when first character needing escape is found.
     // This avoids iterating through the string twice if it contains no quotes (common case).
     // Don't print opening quote now, because we don't know what it is yet.
-    //
-    // If not in `minify` mode, print the quote requested in options.
-    let quote = if self.options.minify {
-      None
-    } else {
-      let quote = self.quote;
-      quote.print(self);
-      Some(quote)
-    };
+    let quote = None;
 
     // Loop through bytes, looking for any which need to be escaped.
     // String is written to buffer in chunks.

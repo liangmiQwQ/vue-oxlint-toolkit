@@ -2,10 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
-async () => {
-	const a = someFunction<{
-		msg: 1;
-	}>();
-	const b = someFunction<SomeType>();
-	<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>;
-};
+async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>};
