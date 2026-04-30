@@ -14,6 +14,7 @@ use vue_compiler_core::scanner::{ScanOption, Scanner, TextMode};
 
 use crate::is_void_tag;
 use crate::parser::error::OxcErrorHandler;
+use crate::parser::irregular_whitespaces::collect_irregular_whitespaces;
 use crate::parser::{ResParse, ResParseExt};
 
 use super::ParserImpl;
@@ -67,6 +68,7 @@ impl<'a> ParserImpl<'a> {
               ast,
             ),
           ),
+          irregular_whitespaces: collect_irregular_whitespaces(source_text),
           fatal: false,
           errors,
           module_record,
@@ -77,6 +79,7 @@ impl<'a> ParserImpl<'a> {
         fatal: true,
         errors: self.errors,
         module_record: ModuleRecord::new(self.allocator),
+        irregular_whitespaces: Box::new([]),
       },
     }
   }

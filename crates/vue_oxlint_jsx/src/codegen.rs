@@ -5,7 +5,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::ParseOptions;
 use oxc_span::{SourceType, Span};
 
-use crate::irregular_whitespaces::collect_irregular_whitespaces;
 use crate::parser::{ParseConfig, ParserImpl};
 
 /// Configuration for [`VueOxcCodegen`].
@@ -99,15 +98,15 @@ impl<'a> VueOxcCodegen<'a> {
       };
     }
 
+    let source_text = Codegen::new().build(&ret.program).code;
     let source_type = ret.program.source_type;
     let comments = ret.program.comments.iter().copied().collect();
-    let source_text = Codegen::new().build(&ret.program).code;
 
     VueOxcCodegenReturn {
       source_text,
       source_type,
       comments,
-      irregular_whitespaces: collect_irregular_whitespaces(self.source_text),
+      irregular_whitespaces: ret.irregular_whitespaces,
       errors: ret.errors,
       panicked: false,
     }

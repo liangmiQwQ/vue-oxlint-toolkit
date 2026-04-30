@@ -13,9 +13,13 @@ use oxc_syntax::module_record::ModuleRecord;
 mod codegen;
 mod elements;
 mod error;
+mod interface;
+mod irregular_whitespaces;
 mod modules;
 mod parse;
 mod script;
+
+pub use interface::{VueOxcParser, VueParserReturn};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ParseConfig {
@@ -88,6 +92,7 @@ impl<'a> ParserImpl<'a> {
 pub struct ParserImplReturn<'a> {
   pub program: Program<'a>,
   pub module_record: ModuleRecord<'a>,
+  pub irregular_whitespaces: Box<[Span]>,
 
   pub fatal: bool,
   pub errors: Vec<OxcDiagnostic>,
