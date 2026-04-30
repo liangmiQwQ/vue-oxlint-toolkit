@@ -8,4 +8,5 @@
   <div :msg-id />
   <div v-bind="{ id: 'app', class: 'w-100' }" />
   <div :="{ id: 'app' }" />
+  <div :1foo="bar" />
 </template>

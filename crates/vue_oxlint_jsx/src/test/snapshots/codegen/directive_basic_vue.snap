@@ -1,5 +1,5 @@
 ---
-source: crates/vue_oxlint_jsx/src/test/codegen.rs
+source: crates/vue_oxlint_jsx/src/test/mod.rs
 expression: "&codegen"
 ---
 async () => {
@@ -16,6 +16,7 @@ async () => {
 		class: "w-100"
 	}} />
   <div {...{ id: "app" }} />
+  <div v-bind:__v_1foo__={bar} />
 </template>
 </>;
 };
