@@ -78,15 +78,15 @@ fn assert_reparsed_codegen_ast(
   program_codegen_eq(&ret.program, reparsed_program, file_path);
 }
 
-fn program_codegen_eq(left: &Program, right: &Program, file_path: &str) {
-  assert!(left.hashbang.content_eq(&right.hashbang), "Hashbang differs for {file_path}");
-  assert!(left.directives.content_eq(&right.directives), "Directives differs for {file_path}");
-  assert!(left.body.content_eq(&right.body), "Body differs for {file_path}");
+fn program_codegen_eq(origin: &Program, reparsed: &Program, file_path: &str) {
+  assert!(origin.hashbang.content_eq(&reparsed.hashbang), "Hashbang differs for {file_path}");
+  assert!(origin.directives.content_eq(&reparsed.directives), "Directives differs for {file_path}");
+  assert!(origin.body.content_eq(&reparsed.body), "Body differs for {file_path}");
 
-  let left_spans = collect_spans(left);
-  let right_spans = collect_spans(right);
-  left_spans.into_iter().enumerate().for_each(|(index, span)| {
-    assert_eq!(span, right_spans[index], "[MAPPING] Index {index} differ for {file_path}");
+  let origin_spans = collect_spans(origin);
+  let reparsed_spans = collect_spans(reparsed);
+  origin_spans.into_iter().zip(reparsed_spans).for_each(|(origin_span, reparsed_span)| {
+    assert_eq!(origin_span, reparsed_span, "[MAPPING] Span differ for {file_path}");
   });
 }
 
