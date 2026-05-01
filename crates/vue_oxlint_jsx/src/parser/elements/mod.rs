@@ -149,13 +149,13 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       {
         // For namespace tag name, e.g. <motion.div />
         jsx_element.opening_element.name.take_in(self.allocator)
-      } else if tag_name.contains('-') {
+      } else if tag_name.contains('-') || tag_name == "component" {
         // For <keep-alive />
         let name = kebab_to_case(tag_name, true);
         ast.jsx_element_name_identifier_reference(name_span, ast.str(&name))
       } else {
         let name = ast.str(node.tag_name);
-        if node.is_component() && !(self.config.codegen && tag_name == "component") {
+        if node.is_component() {
           // For <KeepAlive />
           ast.jsx_element_name_identifier_reference(name_span, name)
         } else {
