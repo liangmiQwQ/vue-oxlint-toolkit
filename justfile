@@ -50,7 +50,7 @@ bench:
   cargo bench -p benchmark
 
 bump TYPE:
-  j main
+  just main
   node -p "require('semver').valid('{{ TYPE }}') || (console.error('Invalid version'), process.exit(1))"
   vpx bumpp --no-commit -y --release -r {{ TYPE }}
   cargo workspaces version --no-git-commit -y custom {{ TYPE }}
