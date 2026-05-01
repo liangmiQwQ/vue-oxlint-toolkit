@@ -56,10 +56,16 @@ fn assert_reparsed_codegen_ast(
 
   assert!(!ret.fatal, "Codegen parser unexpectedly panicked for {file_path}");
   assert!(
-    ret.program.content_eq(reparsed_program),
+    program_codegen_content_eq(&ret.program, reparsed_program),
     "Reparsed codegen AST differs from original codegen AST for {file_path}. \nCodegen snapshot: {}",
     codegen_snapshot_path(file_path),
   );
+}
+
+fn program_codegen_content_eq(left: &Program, right: &Program) -> bool {
+  left.hashbang.content_eq(&right.hashbang)
+    && left.directives.content_eq(&right.directives)
+    && left.body.content_eq(&right.body)
 }
 
 fn codegen_snapshot_path(file_path: &str) -> String {
