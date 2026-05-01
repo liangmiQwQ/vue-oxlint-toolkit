@@ -124,20 +124,7 @@ impl<'a> Visit<'a> for SpanCollector {
     // These nodes are generated with wrapper punctuation, deferred semicolons, or
     // synthetic Vue JSX scaffolding that does not have a stable one-to-one source
     // range. Token nodes inside them are still collected and checked.
-    if matches!(
-      kind,
-      AstKind::ExpressionStatement(_)
-        | AstKind::JSXOpeningFragment(_)
-        | AstKind::JSXClosingFragment(_)
-        | AstKind::JSXIdentifier(_)
-        | AstKind::FormalParameters(_)
-        | AstKind::FormalParameter(_)
-        | AstKind::ObjectPattern(_)
-        | AstKind::Function(_)
-        | AstKind::ImportSpecifier(_)
-        | AstKind::TSTypeAnnotation(_)
-        | AstKind::TSLiteralType(_)
-    ) {
+    if matches!(kind, AstKind::ExpressionStatement(_)) {
       return;
     }
 
