@@ -1,26 +1,21 @@
-# RFC 0001: Dirty Codegen Mapping
+# RFC: Dirty Codegen Mapping
 
 ## Summary
 
 Replace the current recursive codegen mapping model with a dirty-subtree printer.
 
-The current codegen maps every printed AST node by entering and leaving `Gen` /
-`GenExpr`. That produces many overlapping mappings and makes reparsed AST span
-comparison unstable. This RFC proposes a simpler output contract:
+The current codegen maps every printed AST node by entering and leaving `Gen` /`GenExpr`. That produces many overlapping mappings and makes reparsed AST span comparison unstable. This RFC proposes a simpler output contract:
 
 - Clean subtrees are copied from the original Vue SFC source by span.
 - Dirty subtrees are printed by the custom codegen.
 - Only the outermost emitted segment gets a mapping.
 - Synthetic nodes with `SPAN` are printed without mapping.
 
-This keeps source fidelity for original JS/TS and makes mappings coarse, stable,
-and useful for diagnostic remapping.
+This keeps source fidelity for original JS/TS and makes mappings coarse, stable, and useful for diagnostic remapping.
 
 ## Motivation
 
-The toolkit needs to feed generated JS/TSX to downstream JavaScript tooling while
-mapping diagnostics back to the original Vue SFC. The current implementation uses
-vendored `oxc_codegen` and records mappings around every generated node. This has
+The toolkit needs to feed generated JS/TSX to downstream JavaScript tooling while mapping diagnostics back to the original Vue SFC. The current implementation uses vendored `oxc_codegen` and records mappings around every generated node. This has
 several problems:
 
 - Parent and child nodes often produce identical or overlapping generated ranges.
@@ -36,8 +31,7 @@ easier to map.
 
 ### Clean Node
 
-A clean node is a node whose generated output is exactly the node's original
-source text from the Vue SFC.
+A clean node is a node whose generated output is exactly the node's original source text from the Vue SFC.
 
 Clean nodes can be emitted with:
 
@@ -47,8 +41,7 @@ span.source_text(original_source)
 
 ### Dirty Node
 
-A dirty node is a node whose generated output cannot be obtained by slicing the
-original Vue SFC source at its span.
+A dirty node is a node whose generated output cannot be obtained by slicing the original Vue SFC source at its span.
 
 Dirty nodes include:
 
@@ -57,15 +50,13 @@ Dirty nodes include:
 - Nodes created by Vue directive transforms.
 - Nodes whose child was rewritten, inserted, removed, or wrapped.
 
-Dirty means output strategy, not origin. A node created by an AST builder is
-dirty by default, but dirty should be the set consumed by codegen.
+We can know whether it is a dirty or clean node by checking its origin. Nodes from the AST builder are always dirty node, the others are clean nodes (As they are from oxc_parser).
 
 ### Dirty Invariant
 
 The parser/codegen preparation phase must maintain this invariant:
 
-> A clean parent contains only clean descendants. A dirty parent may contain
-> clean or dirty descendants.
+> A clean parent contains only clean descendants. A dirty parent may contain clean or dirty descendants.
 
 With this invariant, codegen only needs to check the current node. It does not
 need to ask whether the subtree contains dirty descendants.
@@ -77,28 +68,14 @@ need to ask whether the subtree contains dirty descendants.
 Do not modify Oxc AST structs. Maintain a side set keyed by node identity:
 
 ```rust
-struct DirtySet {
-  nodes: FxHashSet<NodeKey>,
-}
+nodes: FxHashSet<NodeKey>,
 ```
 
-`NodeKey` should identify a concrete AST node for one parse/codegen lifetime.
-It must not be persisted or compared across ASTs.
-
-Preferred options:
-
-1. Use Oxc node IDs if they are initialized for all nodes we need.
-2. Use `AstKind::unstable_address()` or an equivalent concrete node pointer.
-3. In codegen, derive the key from the concrete `self` reference for each `Gen`
-   implementation.
-
-The implementation should verify which nodes have stable `node_id()` values in
-this parser path. If node IDs are not assigned before codegen, use addresses.
+As `node_id` is only initialized after semantic, we have to use memory addresses as `NodeKey`. As the memory addresses will never change after it is added to allocator.
 
 ### Use Final AST Addresses
 
-If addresses are used, record addresses after nodes are in their final AST
-storage. Do not record temporary builder-local addresses.
+Record addresses after nodes are in their final AST storage. Do not record temporary builder-local addresses.
 
 A safe pattern is:
 
@@ -111,22 +88,19 @@ address identity is acceptable as non-persistent side metadata.
 
 ### Hide Builder Access Behind a Dirty-Aware API
 
-The parser should not freely call the raw AST builder when it creates generated
-nodes for codegen mode. Instead, route generated-node construction through a
-helper that can mark the final subtree dirty.
+The parser should not freely call the raw AST builder when it creates generated nodes for codegen mode. Instead, route generated-node construction through a helper that can mark the final subtree dirty.
 
 Conceptually:
 
 ```rust
-parser.build_dirty(|builder| {
+self.build_dirty(|builder| {
   // create generated AST subtree
 })
 ```
 
 The helper is responsible for marking the final nodes dirty, not the caller.
 
-This does not need to wrap every Oxc builder method immediately. Start with the
-Vue transform entry points that create or rewrite JSX/script nodes.
+We also need to hide `self.ast` in the internal parser to force using `build_dirty` fn.
 
 ### Codegen Output Strategy
 
@@ -146,27 +120,10 @@ else if node.span == SPAN:
 else:
   print generated syntax for the whole node
   push one mapping: generated range -> node.span
-  skip nested boundary mappings
+  skip nested boundary mappings and children walk
 ```
 
-This makes dirty real-span nodes own their generated segment mapping. Inner
-nodes do not create additional mappings.
-
-### Nested Mapping Guard
-
-The custom codegen should track whether it is already printing a dirty boundary:
-
-```rust
-boundary_depth: usize
-```
-
-When `boundary_depth > 0`, child printers only emit syntax. They do not raw-copy
-clean nodes and do not push mappings. This enforces "one mapping for the
-outermost dirty node".
-
-The first implementation should use this conservative behavior. A later RFC can
-consider raw-copying clean children inside dirty nodes if the added fidelity is
-worth the extra mapping complexity.
+This makes dirty real-span nodes own their generated segment mapping. Inner nodes do not create additional mappings.
 
 ## Oxc AST Visit Notes
 
@@ -237,17 +194,6 @@ the full mapping list for every fixture.
 5. Add the nested mapping guard.
 6. Replace recursive mapping snapshots with focused mapping assertions.
 7. Remove the current per-node `enter_mapping` / `leave_mapping` behavior.
-
-## Open Questions
-
-- Are Oxc `node_id()` values assigned before this codegen pass in all relevant
-  parse paths?
-- Should `Program` ever be raw-copied, or should it always be treated as dirty
-  because Vue output stitches multiple regions together?
-- What is the smallest printable boundary that should support raw-copying in the
-  first implementation?
-- Should dirty nodes with real spans always skip child raw-copying, or should a
-  later mode preserve clean children inside dirty structures?
 
 ## Decision
 
