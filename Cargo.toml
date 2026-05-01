@@ -30,6 +30,7 @@ too_many_lines = { level = "allow" }
 [workspace.dependencies]
 criterion = "0.8.2"
 insta = "1.47.2"
+pretty_assertions = "1.4.1"
 
 vue_oxlint_jsx = { path = "crates/vue_oxlint_jsx" }
 vue_oxlint_parser = { path = "crates/vue_oxlint_parser" }

@@ -55,19 +55,25 @@ fn assert_reparsed_codegen_ast(
   .parse();
 
   assert!(!ret.fatal, "Codegen parser unexpectedly panicked for {file_path}");
-  assert!(
-    program_codegen_content_eq(&ret.program, reparsed_program),
-    "Reparsed codegen AST differs from original codegen AST for {file_path}. \nCodegen snapshot: {}",
-    codegen_snapshot_path(file_path),
+  program_codegen_eq(&ret.program, reparsed_program, file_path);
+}
+
+fn program_codegen_eq(left: &Program, right: &Program, file_path: &str) {
+  use pretty_assertions::assert_eq;
+
+  assert_eq!(
+    format!("{:#?}", left.hashbang),
+    format!("{:#?}", right.hashbang),
+    "Hashbang differs for {file_path}",
   );
-}
-
-fn program_codegen_content_eq(left: &Program, right: &Program) -> bool {
-  left.hashbang.content_eq(&right.hashbang)
-    && left.directives.content_eq(&right.directives)
-    && left.body.content_eq(&right.body)
-}
-
-fn codegen_snapshot_path(file_path: &str) -> String {
-  format!("crates/vue_oxlint_jsx/src/test/snapshots/codegen/{}.snap", snapshot_name(file_path))
+  assert_eq!(
+    format!("{:#?}", left.directives),
+    format!("{:#?}", right.directives),
+    "Directives differs for {file_path}",
+  );
+  assert_eq!(
+    format!("{:#?}", left.body),
+    format!("{:#?}", right.body),
+    "Body differs for {file_path}",
+  );
 }
