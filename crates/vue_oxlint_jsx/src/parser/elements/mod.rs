@@ -149,7 +149,7 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
       {
         // For namespace tag name, e.g. <motion.div />
         jsx_element.opening_element.name.take_in(self.allocator)
-      } else if tag_name.contains('-') {
+      } else if tag_name.contains('-') || (tag_name == "component" && self.config.codegen) {
         // For <keep-alive />
         let name = kebab_to_case(tag_name, true);
         ast.jsx_element_name_identifier_reference(name_span, ast.str(&name))
@@ -192,19 +192,22 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     let opening_element_name = element_name.clone_in(self.allocator);
 
     // Determine closing element based on tag type:
-    // - Self-closing tags (/>): closing element with empty name (None in `codegen` mode)
+    // - Self-closing tags (/>): closing element with empty name
     // - Void tags without />: None
     // - Normal tags with </tag>: closing element with tag name
+    // Always use </tag> in codegen mode (prevent tag-hoist in v-slot children)
     let closing_element = if location_span.source_text(self.source_text).ends_with("/>") {
-      // Self-closing tag: create closing element with empty element name
       if self.config.codegen {
-        None
+        Some(ast.jsx_closing_element(SPAN, element_name.clone_in(self.allocator)))
       } else {
         Some(ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ast.str(""))))
       }
     } else if is_void_tag!(tag_name) {
-      // Void tag without />: no closing element
-      None
+      if self.config.codegen {
+        Some(ast.jsx_closing_element(SPAN, element_name.clone_in(self.allocator)))
+      } else {
+        None
+      }
     } else {
       // Normal tag with explicit closing tag
       Some(ast.jsx_closing_element(end_element_span, {

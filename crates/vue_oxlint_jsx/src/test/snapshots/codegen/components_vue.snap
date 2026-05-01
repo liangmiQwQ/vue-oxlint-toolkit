@@ -2,4 +2,4 @@
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
 expression: "&codegen"
 ---
-import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';async()=>{<><template><SomeComponent/><SomeComponent/><Transition></Transition><component></component><motion.div></motion.div></template><script lang="ts" setup></script></>};
+import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';async()=>{<><template><SomeComponent></SomeComponent><SomeComponent></SomeComponent><Transition></Transition><Component></Component><motion.div></motion.div></template><script lang="ts" setup></script></>};
