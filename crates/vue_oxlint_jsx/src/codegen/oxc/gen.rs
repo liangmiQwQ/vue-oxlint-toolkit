@@ -2070,6 +2070,7 @@ impl Gen for JSXElement<'_> {
     // Opening element.
     // Cannot `impl Gen for JSXOpeningElement` because it needs to know value of `self.closing_element`
     // to determine whether to print a trailing `/`.
+    p.enter_mapping(self.opening_element.span());
     p.print_ascii_byte(b'<');
     self.opening_element.name.print(p, ctx);
     if let Some(type_arguments) = &self.opening_element.type_arguments {
@@ -2088,6 +2089,7 @@ impl Gen for JSXElement<'_> {
       p.print_ascii_byte(b'/');
     }
     p.print_ascii_byte(b'>');
+    p.leave_mapping();
 
     // Children
     for child in &self.children {
@@ -2096,9 +2098,11 @@ impl Gen for JSXElement<'_> {
 
     // Closing element
     if let Some(closing_element) = &self.closing_element {
+      p.enter_mapping(closing_element.span());
       p.print_str("</");
       closing_element.name.print(p, ctx);
       p.print_ascii_byte(b'>');
+      p.leave_mapping();
     }
   }
 }

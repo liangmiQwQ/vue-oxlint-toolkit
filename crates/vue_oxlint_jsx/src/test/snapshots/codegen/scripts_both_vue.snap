@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -31,42 +32,12 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 0,
-            end: 20,
-        },
-        original_span: Span {
-            start: 61,
-            end: 87,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 7,
             end: 10,
         },
         original_span: Span {
             start: 70,
             end: 73,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 7,
-            end: 10,
-        },
-        original_span: Span {
-            start: 70,
-            end: 73,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 21,
-            end: 34,
-        },
-        original_span: Span {
-            start: 133,
-            end: 149,
         },
     },
     Mapping {
@@ -101,26 +72,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 26,
-            end: 32,
-        },
-        original_span: Span {
-            start: 139,
-            end: 144,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 33,
-            end: 34,
-        },
-        original_span: Span {
-            start: 147,
-            end: 148,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 33,
             end: 34,
         },
@@ -136,36 +87,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
         },
         original_span: Span {
             start: 151,
-            end: 216,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 35,
-            end: 73,
-        },
-        original_span: Span {
-            start: 151,
-            end: 216,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 50,
-            end: 73,
-        },
-        original_span: Span {
-            start: 166,
-            end: 216,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 50,
-            end: 73,
-        },
-        original_span: Span {
-            start: 166,
             end: 216,
         },
     },
@@ -187,26 +108,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
         original_span: Span {
             start: 170,
             end: 214,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 72,
-        },
-        original_span: Span {
-            start: 170,
-            end: 214,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 55,
-        },
-        original_span: Span {
-            start: 170,
-            end: 174,
         },
     },
     Mapping {
@@ -251,26 +152,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 58,
-            end: 71,
-        },
-        original_span: Span {
-            start: 183,
-            end: 210,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 64,
-            end: 71,
-        },
-        original_span: Span {
-            start: 190,
-            end: 210,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 64,
             end: 71,
         },
@@ -287,46 +168,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
         original_span: Span {
             start: 198,
             end: 203,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 65,
-            end: 70,
-        },
-        original_span: Span {
-            start: 198,
-            end: 203,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 65,
-            end: 70,
-        },
-        original_span: Span {
-            start: 198,
-            end: 203,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 65,
-            end: 70,
-        },
-        original_span: Span {
-            start: 198,
-            end: 203,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 84,
-            end: 104,
-        },
-        original_span: Span {
-            start: 89,
-            end: 112,
         },
     },
     Mapping {
@@ -361,26 +202,6 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 89,
-            end: 96,
-        },
-        original_span: Span {
-            start: 95,
-            end: 101,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 97,
-            end: 104,
-        },
-        original_span: Span {
-            start: 104,
-            end: 111,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 97,
             end: 104,
         },
@@ -401,51 +222,11 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 97,
-            end: 100,
-        },
-        original_span: Span {
-            start: 104,
-            end: 107,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 101,
             end: 103,
         },
         original_span: Span {
             start: 108,
-            end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 101,
-            end: 103,
-        },
-        original_span: Span {
-            start: 108,
-            end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 101,
-            end: 103,
-        },
-        original_span: Span {
-            start: 108,
-            end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 102,
-            end: 103,
-        },
-        original_span: Span {
-            start: 109,
             end: 110,
         },
     },
@@ -472,105 +253,85 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     Mapping {
         codegen_span: Span {
             start: 107,
-            end: 139,
+            end: 117,
         },
         original_span: Span {
             start: 0,
+            end: 10,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 108,
+            end: 116,
+        },
+        original_span: Span {
+            start: 1,
+            end: 9,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 117,
+            end: 128,
+        },
+        original_span: Span {
+            start: 13,
+            end: 32,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 117,
+            end: 122,
+        },
+        original_span: Span {
+            start: 13,
+            end: 18,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 118,
+            end: 121,
+        },
+        original_span: Span {
+            start: 14,
+            end: 17,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 122,
+            end: 128,
+        },
+        original_span: Span {
+            start: 26,
+            end: 32,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 124,
+            end: 127,
+        },
+        original_span: Span {
+            start: 28,
+            end: 31,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 128,
+            end: 139,
+        },
+        original_span: Span {
+            start: 33,
             end: 44,
         },
     },
     Mapping {
         codegen_span: Span {
-            start: 108,
-            end: 116,
-        },
-        original_span: Span {
-            start: 1,
-            end: 9,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 108,
-            end: 116,
-        },
-        original_span: Span {
-            start: 1,
-            end: 9,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 117,
-            end: 128,
-        },
-        original_span: Span {
-            start: 13,
-            end: 32,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 117,
-            end: 128,
-        },
-        original_span: Span {
-            start: 13,
-            end: 32,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 118,
-            end: 121,
-        },
-        original_span: Span {
-            start: 14,
-            end: 17,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 118,
-            end: 121,
-        },
-        original_span: Span {
-            start: 14,
-            end: 17,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 124,
-            end: 127,
-        },
-        original_span: Span {
-            start: 28,
-            end: 31,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 124,
-            end: 127,
-        },
-        original_span: Span {
-            start: 28,
-            end: 31,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 130,
-            end: 138,
-        },
-        original_span: Span {
-            start: 35,
-            end: 43,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 130,
             end: 138,
         },
@@ -592,21 +353,11 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     Mapping {
         codegen_span: Span {
             start: 139,
-            end: 162,
+            end: 153,
         },
         original_span: Span {
             start: 46,
-            end: 122,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 140,
-            end: 146,
-        },
-        original_span: Span {
-            start: 47,
-            end: 53,
+            end: 60,
         },
     },
     Mapping {
@@ -631,42 +382,12 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     },
     Mapping {
         codegen_span: Span {
-            start: 147,
-            end: 152,
+            start: 153,
+            end: 162,
         },
         original_span: Span {
-            start: 54,
-            end: 59,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 147,
-            end: 152,
-        },
-        original_span: Span {
-            start: 54,
-            end: 59,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 147,
-            end: 152,
-        },
-        original_span: Span {
-            start: 54,
-            end: 59,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 155,
-            end: 161,
-        },
-        original_span: Span {
-            start: 115,
-            end: 121,
+            start: 113,
+            end: 122,
         },
     },
     Mapping {
@@ -692,41 +413,31 @@ import{ref}from'vue';const count=0;export default {data(){return{count}}};async(
     Mapping {
         codegen_span: Span {
             start: 162,
-            end: 179,
+            end: 170,
         },
         original_span: Span {
             start: 124,
+            end: 132,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 163,
+            end: 169,
+        },
+        original_span: Span {
+            start: 125,
+            end: 131,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 170,
+            end: 179,
+        },
+        original_span: Span {
+            start: 217,
             end: 226,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 163,
-            end: 169,
-        },
-        original_span: Span {
-            start: 125,
-            end: 131,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 163,
-            end: 169,
-        },
-        original_span: Span {
-            start: 125,
-            end: 131,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 172,
-            end: 178,
-        },
-        original_span: Span {
-            start: 219,
-            end: 225,
         },
     },
     Mapping {

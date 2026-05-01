@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -52,45 +53,35 @@ expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n
     Mapping {
         codegen_span: Span {
             start: 38,
-            end: 55,
+            end: 46,
         },
         original_span: Span {
             start: 0,
+            end: 8,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 39,
+            end: 45,
+        },
+        original_span: Span {
+            start: 1,
+            end: 7,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 46,
+            end: 55,
+        },
+        original_span: Span {
+            start: 23,
             end: 32,
         },
     },
     Mapping {
         codegen_span: Span {
-            start: 39,
-            end: 45,
-        },
-        original_span: Span {
-            start: 1,
-            end: 7,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 39,
-            end: 45,
-        },
-        original_span: Span {
-            start: 1,
-            end: 7,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 48,
-            end: 54,
-        },
-        original_span: Span {
-            start: 25,
-            end: 31,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 48,
             end: 54,
         },
@@ -112,21 +103,11 @@ expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n
     Mapping {
         codegen_span: Span {
             start: 55,
-            end: 78,
+            end: 69,
         },
         original_span: Span {
             start: 34,
-            end: 72,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 56,
-            end: 62,
-        },
-        original_span: Span {
-            start: 35,
-            end: 41,
+            end: 48,
         },
     },
     Mapping {
@@ -151,42 +132,12 @@ expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n
     },
     Mapping {
         codegen_span: Span {
+            start: 69,
+            end: 78,
+        },
+        original_span: Span {
             start: 63,
-            end: 68,
-        },
-        original_span: Span {
-            start: 42,
-            end: 47,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 63,
-            end: 68,
-        },
-        original_span: Span {
-            start: 42,
-            end: 47,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 63,
-            end: 68,
-        },
-        original_span: Span {
-            start: 42,
-            end: 47,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 71,
-            end: 77,
-        },
-        original_span: Span {
-            start: 65,
-            end: 71,
+            end: 72,
         },
     },
     Mapping {

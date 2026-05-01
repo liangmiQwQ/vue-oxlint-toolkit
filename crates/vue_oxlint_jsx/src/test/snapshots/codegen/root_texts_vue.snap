@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -32,11 +33,11 @@ async()=>{<><template></template><script></script><script></script><style></styl
     Mapping {
         codegen_span: Span {
             start: 12,
-            end: 33,
+            end: 22,
         },
         original_span: Span {
             start: 0,
-            end: 21,
+            end: 10,
         },
     },
     Mapping {
@@ -51,22 +52,12 @@ async()=>{<><template></template><script></script><script></script><style></styl
     },
     Mapping {
         codegen_span: Span {
-            start: 13,
+            start: 22,
+            end: 33,
+        },
+        original_span: Span {
+            start: 10,
             end: 21,
-        },
-        original_span: Span {
-            start: 1,
-            end: 9,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 24,
-            end: 32,
-        },
-        original_span: Span {
-            start: 12,
-            end: 20,
         },
     },
     Mapping {
@@ -92,45 +83,35 @@ async()=>{<><template></template><script></script><script></script><style></styl
     Mapping {
         codegen_span: Span {
             start: 33,
-            end: 50,
+            end: 41,
         },
         original_span: Span {
             start: 21,
+            end: 29,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 34,
+            end: 40,
+        },
+        original_span: Span {
+            start: 22,
+            end: 28,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 41,
+            end: 50,
+        },
+        original_span: Span {
+            start: 29,
             end: 38,
         },
     },
     Mapping {
         codegen_span: Span {
-            start: 34,
-            end: 40,
-        },
-        original_span: Span {
-            start: 22,
-            end: 28,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 34,
-            end: 40,
-        },
-        original_span: Span {
-            start: 22,
-            end: 28,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 43,
-            end: 49,
-        },
-        original_span: Span {
-            start: 31,
-            end: 37,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 43,
             end: 49,
         },
@@ -152,41 +133,31 @@ async()=>{<><template></template><script></script><script></script><style></styl
     Mapping {
         codegen_span: Span {
             start: 50,
-            end: 67,
+            end: 58,
         },
         original_span: Span {
             start: 54,
+            end: 62,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 51,
+            end: 57,
+        },
+        original_span: Span {
+            start: 55,
+            end: 61,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 58,
+            end: 67,
+        },
+        original_span: Span {
+            start: 62,
             end: 71,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 57,
-        },
-        original_span: Span {
-            start: 55,
-            end: 61,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 57,
-        },
-        original_span: Span {
-            start: 55,
-            end: 61,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 60,
-            end: 66,
-        },
-        original_span: Span {
-            start: 64,
-            end: 70,
         },
     },
     Mapping {
@@ -212,41 +183,31 @@ async()=>{<><template></template><script></script><script></script><style></styl
     Mapping {
         codegen_span: Span {
             start: 67,
-            end: 82,
+            end: 74,
         },
         original_span: Span {
             start: 102,
+            end: 109,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 68,
+            end: 73,
+        },
+        original_span: Span {
+            start: 103,
+            end: 108,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 74,
+            end: 82,
+        },
+        original_span: Span {
+            start: 109,
             end: 117,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 68,
-            end: 73,
-        },
-        original_span: Span {
-            start: 103,
-            end: 108,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 68,
-            end: 73,
-        },
-        original_span: Span {
-            start: 103,
-            end: 108,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 76,
-            end: 81,
-        },
-        original_span: Span {
-            start: 111,
-            end: 116,
         },
     },
     Mapping {

@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -17,16 +18,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
         original_span: Span {
             start: 0,
             end: 265,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 0,
-            end: 46,
-        },
-        original_span: Span {
-            start: 172,
-            end: 220,
         },
     },
     Mapping {
@@ -61,26 +52,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
-            start: 47,
-            end: 75,
-        },
-        original_span: Span {
-            start: 221,
-            end: 254,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 54,
-            end: 60,
-        },
-        original_span: Span {
-            start: 230,
-            end: 236,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 54,
             end: 60,
         },
@@ -102,21 +73,11 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 88,
-            end: 244,
+            end: 98,
         },
         original_span: Span {
             start: 0,
-            end: 145,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 89,
-            end: 97,
-        },
-        original_span: Span {
-            start: 1,
-            end: 9,
+            end: 10,
         },
     },
     Mapping {
@@ -142,7 +103,7 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 98,
-            end: 129,
+            end: 113,
         },
         original_span: Span {
             start: 13,
@@ -153,26 +114,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
         codegen_span: Span {
             start: 99,
             end: 112,
-        },
-        original_span: Span {
-            start: 14,
-            end: 27,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 99,
-            end: 112,
-        },
-        original_span: Span {
-            start: 14,
-            end: 27,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 115,
-            end: 128,
         },
         original_span: Span {
             start: 14,
@@ -202,7 +143,7 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 129,
-            end: 160,
+            end: 144,
         },
         original_span: Span {
             start: 33,
@@ -221,26 +162,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
-            start: 130,
-            end: 143,
-        },
-        original_span: Span {
-            start: 34,
-            end: 48,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 146,
-            end: 159,
-        },
-        original_span: Span {
-            start: 34,
-            end: 48,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 146,
             end: 159,
         },
@@ -262,41 +183,31 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 160,
-            end: 185,
+            end: 172,
         },
         original_span: Span {
             start: 54,
+            end: 66,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 161,
+            end: 171,
+        },
+        original_span: Span {
+            start: 55,
+            end: 65,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 172,
+            end: 185,
+        },
+        original_span: Span {
+            start: 66,
             end: 79,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 161,
-            end: 171,
-        },
-        original_span: Span {
-            start: 55,
-            end: 65,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 161,
-            end: 171,
-        },
-        original_span: Span {
-            start: 55,
-            end: 65,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 174,
-            end: 184,
-        },
-        original_span: Span {
-            start: 68,
-            end: 78,
         },
     },
     Mapping {
@@ -322,45 +233,35 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 185,
-            end: 208,
+            end: 196,
         },
         original_span: Span {
             start: 82,
+            end: 93,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 186,
+            end: 195,
+        },
+        original_span: Span {
+            start: 83,
+            end: 92,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
+            start: 196,
+            end: 208,
+        },
+        original_span: Span {
+            start: 93,
             end: 105,
         },
     },
     Mapping {
         codegen_span: Span {
-            start: 186,
-            end: 195,
-        },
-        original_span: Span {
-            start: 83,
-            end: 92,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 186,
-            end: 195,
-        },
-        original_span: Span {
-            start: 83,
-            end: 92,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 198,
-            end: 207,
-        },
-        original_span: Span {
-            start: 95,
-            end: 104,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 198,
             end: 207,
         },
@@ -382,11 +283,11 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 208,
-            end: 233,
+            end: 220,
         },
         original_span: Span {
             start: 108,
-            end: 133,
+            end: 120,
         },
     },
     Mapping {
@@ -397,26 +298,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
         original_span: Span {
             start: 109,
             end: 119,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 209,
-            end: 219,
-        },
-        original_span: Span {
-            start: 109,
-            end: 119,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 209,
-            end: 215,
-        },
-        original_span: Span {
-            start: 109,
-            end: 115,
         },
     },
     Mapping {
@@ -441,12 +322,12 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
-            start: 222,
-            end: 232,
+            start: 220,
+            end: 233,
         },
         original_span: Span {
-            start: 122,
-            end: 132,
+            start: 120,
+            end: 133,
         },
     },
     Mapping {
@@ -457,16 +338,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
         original_span: Span {
             start: 122,
             end: 132,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 222,
-            end: 228,
-        },
-        original_span: Span {
-            start: 109,
-            end: 115,
         },
     },
     Mapping {
@@ -491,12 +362,12 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
-            start: 235,
-            end: 243,
+            start: 233,
+            end: 244,
         },
         original_span: Span {
-            start: 136,
-            end: 144,
+            start: 134,
+            end: 145,
         },
     },
     Mapping {
@@ -522,21 +393,11 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     Mapping {
         codegen_span: Span {
             start: 244,
-            end: 277,
+            end: 268,
         },
         original_span: Span {
             start: 147,
-            end: 264,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 245,
-            end: 251,
-        },
-        original_span: Span {
-            start: 148,
-            end: 154,
+            end: 171,
         },
     },
     Mapping {
@@ -557,26 +418,6 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
         original_span: Span {
             start: 155,
             end: 164,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 252,
-            end: 261,
-        },
-        original_span: Span {
-            start: 155,
-            end: 164,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 252,
-            end: 256,
-        },
-        original_span: Span {
-            start: 155,
-            end: 159,
         },
     },
     Mapping {
@@ -611,42 +452,12 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
-            start: 262,
-            end: 267,
+            start: 268,
+            end: 277,
         },
         original_span: Span {
-            start: 165,
-            end: 170,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 262,
-            end: 267,
-        },
-        original_span: Span {
-            start: 165,
-            end: 170,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 262,
-            end: 267,
-        },
-        original_span: Span {
-            start: 165,
-            end: 170,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 270,
-            end: 276,
-        },
-        original_span: Span {
-            start: 257,
-            end: 263,
+            start: 255,
+            end: 264,
         },
     },
     Mapping {

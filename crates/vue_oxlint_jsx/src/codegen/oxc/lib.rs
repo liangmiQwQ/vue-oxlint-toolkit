@@ -315,6 +315,15 @@ impl<'a> Codegen<'a> {
     };
 
     self.mappings[index].codegen_span.end = self.code_len() as u32;
+    let mapping = self.mappings[index];
+    if self.mappings[index + 1..].iter().any(|child| {
+      *child == mapping
+        || (child.codegen_span == mapping.codegen_span
+          && child.original_span.start == mapping.original_span.start
+          && child.original_span.end < mapping.original_span.end)
+    }) {
+      self.mappings.remove(index);
+    }
   }
 
   #[inline]

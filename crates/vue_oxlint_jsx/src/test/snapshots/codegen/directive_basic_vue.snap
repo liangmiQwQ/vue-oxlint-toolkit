@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -32,21 +33,11 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 12,
-            end: 411,
+            end: 22,
         },
         original_span: Span {
             start: 0,
-            end: 289,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 13,
-            end: 21,
-        },
-        original_span: Span {
-            start: 1,
-            end: 9,
+            end: 10,
         },
     },
     Mapping {
@@ -72,7 +63,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 22,
-            end: 56,
+            end: 50,
         },
         original_span: Span {
             start: 13,
@@ -91,42 +82,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 23,
-            end: 26,
-        },
-        original_span: Span {
-            start: 14,
-            end: 17,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 27,
             end: 49,
         },
         original_span: Span {
             start: 18,
             end: 34,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 27,
-            end: 49,
-        },
-        original_span: Span {
-            start: 18,
-            end: 34,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 27,
-            end: 39,
-        },
-        original_span: Span {
-            start: 18,
-            end: 24,
         },
     },
     Mapping {
@@ -171,52 +132,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 40,
-            end: 49,
-        },
-        original_span: Span {
-            start: 25,
-            end: 34,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 41,
             end: 48,
         },
         original_span: Span {
             start: 26,
             end: 33,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 41,
-            end: 48,
-        },
-        original_span: Span {
-            start: 26,
-            end: 33,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 41,
-            end: 48,
-        },
-        original_span: Span {
-            start: 26,
-            end: 33,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 52,
-            end: 55,
-        },
-        original_span: Span {
-            start: 14,
-            end: 17,
         },
     },
     Mapping {
@@ -242,7 +163,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 56,
-            end: 99,
+            end: 93,
         },
         original_span: Span {
             start: 40,
@@ -261,42 +182,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 57,
-            end: 60,
-        },
-        original_span: Span {
-            start: 41,
-            end: 44,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 61,
             end: 92,
         },
         original_span: Span {
             start: 45,
             end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 61,
-            end: 92,
-        },
-        original_span: Span {
-            start: 45,
-            end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 61,
-            end: 79,
-        },
-        original_span: Span {
-            start: 45,
-            end: 52,
         },
     },
     Mapping {
@@ -341,36 +232,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 80,
-            end: 92,
-        },
-        original_span: Span {
-            start: 53,
-            end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 83,
-            end: 87,
-        },
-        original_span: Span {
-            start: 47,
-            end: 51,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 83,
-            end: 87,
-        },
-        original_span: Span {
-            start: 47,
-            end: 51,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 83,
             end: 87,
         },
@@ -387,26 +248,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
         original_span: Span {
             start: 54,
             end: 55,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 89,
-            end: 90,
-        },
-        original_span: Span {
-            start: 54,
-            end: 55,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 95,
-            end: 98,
-        },
-        original_span: Span {
-            start: 41,
-            end: 44,
         },
     },
     Mapping {
@@ -432,7 +273,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 99,
-            end: 163,
+            end: 132,
         },
         original_span: Span {
             start: 62,
@@ -451,42 +292,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 100,
-            end: 104,
-        },
-        original_span: Span {
-            start: 63,
-            end: 67,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 105,
             end: 131,
         },
         original_span: Span {
             start: 68,
             end: 84,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 105,
-            end: 131,
-        },
-        original_span: Span {
-            start: 68,
-            end: 84,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 105,
-            end: 119,
-        },
-        original_span: Span {
-            start: 68,
-            end: 76,
         },
     },
     Mapping {
@@ -531,26 +342,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 120,
-            end: 131,
-        },
-        original_span: Span {
-            start: 77,
-            end: 84,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 134,
-            end: 141,
-        },
-        original_span: Span {
-            start: 69,
-            end: 76,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 134,
             end: 141,
         },
@@ -581,62 +372,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 143,
-            end: 146,
-        },
-        original_span: Span {
-            start: 78,
-            end: 83,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 143,
-            end: 146,
-        },
-        original_span: Span {
-            start: 78,
-            end: 83,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 144,
             end: 145,
         },
         original_span: Span {
             start: 80,
             end: 81,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 144,
-            end: 145,
-        },
-        original_span: Span {
-            start: 80,
-            end: 81,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 144,
-            end: 145,
-        },
-        original_span: Span {
-            start: 80,
-            end: 81,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 158,
-            end: 162,
-        },
-        original_span: Span {
-            start: 63,
-            end: 67,
         },
     },
     Mapping {
@@ -662,7 +403,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 163,
-            end: 200,
+            end: 192,
         },
         original_span: Span {
             start: 90,
@@ -681,42 +422,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 164,
-            end: 169,
-        },
-        original_span: Span {
-            start: 91,
-            end: 96,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 170,
             end: 191,
         },
         original_span: Span {
             start: 97,
             end: 111,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 170,
-            end: 191,
-        },
-        original_span: Span {
-            start: 97,
-            end: 111,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 170,
-            end: 184,
-        },
-        original_span: Span {
-            start: 97,
-            end: 104,
         },
     },
     Mapping {
@@ -751,52 +462,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 185,
-            end: 191,
-        },
-        original_span: Span {
-            start: 105,
-            end: 111,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 186,
             end: 190,
         },
         original_span: Span {
             start: 106,
             end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 186,
-            end: 190,
-        },
-        original_span: Span {
-            start: 106,
-            end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 186,
-            end: 190,
-        },
-        original_span: Span {
-            start: 106,
-            end: 110,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 194,
-            end: 199,
-        },
-        original_span: Span {
-            start: 91,
-            end: 96,
         },
     },
     Mapping {
@@ -822,7 +493,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 200,
-            end: 240,
+            end: 233,
         },
         original_span: Span {
             start: 117,
@@ -841,42 +512,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 201,
-            end: 205,
-        },
-        original_span: Span {
-            start: 118,
-            end: 122,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 206,
             end: 232,
         },
         original_span: Span {
             start: 123,
             end: 143,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 206,
-            end: 232,
-        },
-        original_span: Span {
-            start: 123,
-            end: 143,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 206,
-            end: 228,
-        },
-        original_span: Span {
-            start: 123,
-            end: 139,
         },
     },
     Mapping {
@@ -921,52 +562,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 229,
-            end: 232,
-        },
-        original_span: Span {
-            start: 140,
-            end: 143,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 230,
             end: 231,
         },
         original_span: Span {
             start: 141,
             end: 142,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 230,
-            end: 231,
-        },
-        original_span: Span {
-            start: 141,
-            end: 142,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 230,
-            end: 231,
-        },
-        original_span: Span {
-            start: 141,
-            end: 142,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 235,
-            end: 239,
-        },
-        original_span: Span {
-            start: 118,
-            end: 122,
         },
     },
     Mapping {
@@ -992,7 +593,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 240,
-            end: 266,
+            end: 260,
         },
         original_span: Span {
             start: 149,
@@ -1011,38 +612,8 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 241,
-            end: 244,
-        },
-        original_span: Span {
-            start: 150,
-            end: 153,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 245,
             end: 259,
-        },
-        original_span: Span {
-            start: 154,
-            end: 157,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 245,
-            end: 259,
-        },
-        original_span: Span {
-            start: 154,
-            end: 157,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 245,
-            end: 254,
         },
         original_span: Span {
             start: 154,
@@ -1091,16 +662,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 262,
-            end: 265,
-        },
-        original_span: Span {
-            start: 150,
-            end: 153,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 266,
             end: 299,
         },
@@ -1112,7 +673,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 266,
-            end: 299,
+            end: 293,
         },
         original_span: Span {
             start: 163,
@@ -1131,38 +692,8 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 267,
-            end: 270,
-        },
-        original_span: Span {
-            start: 164,
-            end: 167,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 271,
             end: 292,
-        },
-        original_span: Span {
-            start: 168,
-            end: 175,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 271,
-            end: 292,
-        },
-        original_span: Span {
-            start: 168,
-            end: 175,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 271,
-            end: 284,
         },
         original_span: Span {
             start: 168,
@@ -1211,16 +742,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 295,
-            end: 298,
-        },
-        original_span: Span {
-            start: 164,
-            end: 167,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 299,
             end: 339,
         },
@@ -1232,21 +753,11 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 299,
-            end: 339,
+            end: 333,
         },
         original_span: Span {
             start: 181,
             end: 227,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 300,
-            end: 303,
-        },
-        original_span: Span {
-            start: 182,
-            end: 185,
         },
     },
     Mapping {
@@ -1271,42 +782,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 303,
-            end: 332,
-        },
-        original_span: Span {
-            start: 186,
-            end: 224,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 307,
             end: 331,
         },
         original_span: Span {
             start: 194,
             end: 223,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 307,
-            end: 331,
-        },
-        original_span: Span {
-            start: 194,
-            end: 223,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 308,
-            end: 316,
-        },
-        original_span: Span {
-            start: 196,
-            end: 205,
         },
     },
     Mapping {
@@ -1331,42 +812,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 308,
-            end: 310,
-        },
-        original_span: Span {
-            start: 196,
-            end: 198,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 311,
             end: 316,
         },
         original_span: Span {
             start: 200,
             end: 205,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 311,
-            end: 316,
-        },
-        original_span: Span {
-            start: 200,
-            end: 205,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 317,
-            end: 330,
-        },
-        original_span: Span {
-            start: 207,
-            end: 221,
         },
     },
     Mapping {
@@ -1391,42 +842,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 317,
-            end: 322,
-        },
-        original_span: Span {
-            start: 207,
-            end: 212,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 323,
             end: 330,
         },
         original_span: Span {
             start: 214,
             end: 221,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 323,
-            end: 330,
-        },
-        original_span: Span {
-            start: 214,
-            end: 221,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 335,
-            end: 338,
-        },
-        original_span: Span {
-            start: 182,
-            end: 185,
         },
     },
     Mapping {
@@ -1452,7 +873,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 339,
-            end: 365,
+            end: 359,
         },
         original_span: Span {
             start: 230,
@@ -1471,26 +892,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 340,
-            end: 343,
-        },
-        original_span: Span {
-            start: 231,
-            end: 234,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 343,
-            end: 358,
-        },
-        original_span: Span {
-            start: 235,
-            end: 252,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 343,
             end: 358,
         },
@@ -1507,26 +908,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
         original_span: Span {
             start: 238,
             end: 251,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 347,
-            end: 357,
-        },
-        original_span: Span {
-            start: 238,
-            end: 251,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 348,
-            end: 356,
-        },
-        original_span: Span {
-            start: 240,
-            end: 249,
         },
     },
     Mapping {
@@ -1551,42 +932,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 348,
-            end: 350,
-        },
-        original_span: Span {
-            start: 240,
-            end: 242,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 351,
             end: 356,
         },
         original_span: Span {
             start: 244,
             end: 249,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 351,
-            end: 356,
-        },
-        original_span: Span {
-            start: 244,
-            end: 249,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 361,
-            end: 364,
-        },
-        original_span: Span {
-            start: 231,
-            end: 234,
         },
     },
     Mapping {
@@ -1612,7 +963,7 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     Mapping {
         codegen_span: Span {
             start: 365,
-            end: 400,
+            end: 394,
         },
         original_span: Span {
             start: 258,
@@ -1631,42 +982,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 366,
-            end: 369,
-        },
-        original_span: Span {
-            start: 259,
-            end: 262,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 370,
             end: 393,
         },
         original_span: Span {
             start: 263,
             end: 274,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 370,
-            end: 393,
-        },
-        original_span: Span {
-            start: 263,
-            end: 274,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 370,
-            end: 387,
-        },
-        original_span: Span {
-            start: 263,
-            end: 268,
         },
     },
     Mapping {
@@ -1711,36 +1032,6 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 388,
-            end: 393,
-        },
-        original_span: Span {
-            start: 269,
-            end: 274,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 389,
-            end: 392,
-        },
-        original_span: Span {
-            start: 270,
-            end: 273,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 389,
-            end: 392,
-        },
-        original_span: Span {
-            start: 270,
-            end: 273,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 389,
             end: 392,
         },
@@ -1761,22 +1052,12 @@ async()=>{<><template><div v-bind:class={'w-100'}></div><div v-bind:__v_some___=
     },
     Mapping {
         codegen_span: Span {
-            start: 396,
-            end: 399,
+            start: 400,
+            end: 411,
         },
         original_span: Span {
-            start: 259,
-            end: 262,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 402,
-            end: 410,
-        },
-        original_span: Span {
-            start: 280,
-            end: 288,
+            start: 278,
+            end: 289,
         },
     },
     Mapping {

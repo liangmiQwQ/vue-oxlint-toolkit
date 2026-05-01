@@ -1,5 +1,6 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
+assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -27,26 +28,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 20,
             end: 66,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 0,
-            end: 40,
-        },
-        original_span: Span {
-            start: 20,
-            end: 66,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 7,
-            end: 10,
-        },
-        original_span: Span {
-            start: 29,
-            end: 32,
         },
     },
     Mapping {
@@ -81,16 +62,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 18,
-            end: 21,
-        },
-        original_span: Span {
-            start: 41,
-            end: 44,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 25,
             end: 28,
         },
@@ -111,16 +82,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 41,
-            end: 59,
-        },
-        original_span: Span {
-            start: 67,
-            end: 88,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 48,
             end: 58,
         },
@@ -141,42 +102,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 48,
-            end: 51,
-        },
-        original_span: Span {
-            start: 76,
-            end: 79,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 55,
             end: 58,
         },
         original_span: Span {
             start: 83,
             end: 86,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 55,
-            end: 58,
-        },
-        original_span: Span {
-            start: 83,
-            end: 86,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 60,
-            end: 77,
-        },
-        original_span: Span {
-            start: 90,
-            end: 109,
         },
     },
     Mapping {
@@ -211,42 +142,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 65,
-            end: 73,
-        },
-        original_span: Span {
-            start: 96,
-            end: 103,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 74,
             end: 77,
         },
         original_span: Span {
             start: 106,
             end: 109,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 74,
-            end: 77,
-        },
-        original_span: Span {
-            start: 106,
-            end: 109,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 78,
-            end: 103,
-        },
-        original_span: Span {
-            start: 110,
-            end: 137,
         },
     },
     Mapping {
@@ -281,42 +182,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 83,
-            end: 93,
-        },
-        original_span: Span {
-            start: 116,
-            end: 125,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 94,
             end: 103,
         },
         original_span: Span {
             start: 128,
             end: 137,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 94,
-            end: 103,
-        },
-        original_span: Span {
-            start: 128,
-            end: 137,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 104,
-            end: 118,
-        },
-        original_span: Span {
-            start: 138,
-            end: 154,
         },
     },
     Mapping {
@@ -351,42 +222,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 109,
-            end: 113,
-        },
-        original_span: Span {
-            start: 144,
-            end: 147,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 114,
             end: 118,
         },
         original_span: Span {
             start: 150,
             end: 154,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 114,
-            end: 118,
-        },
-        original_span: Span {
-            start: 150,
-            end: 154,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 119,
-            end: 138,
-        },
-        original_span: Span {
-            start: 155,
-            end: 176,
         },
     },
     Mapping {
@@ -421,42 +262,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 124,
-            end: 131,
-        },
-        original_span: Span {
-            start: 161,
-            end: 167,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 132,
             end: 138,
         },
         original_span: Span {
             start: 170,
             end: 176,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 132,
-            end: 138,
-        },
-        original_span: Span {
-            start: 170,
-            end: 176,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 139,
-            end: 157,
-        },
-        original_span: Span {
-            start: 177,
-            end: 197,
         },
     },
     Mapping {
@@ -491,42 +302,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 144,
-            end: 151,
-        },
-        original_span: Span {
-            start: 183,
-            end: 189,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 152,
             end: 157,
         },
         original_span: Span {
             start: 192,
             end: 197,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 152,
-            end: 157,
-        },
-        original_span: Span {
-            start: 192,
-            end: 197,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 158,
-            end: 178,
-        },
-        original_span: Span {
-            start: 198,
-            end: 220,
         },
     },
     Mapping {
@@ -561,42 +342,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 163,
-            end: 171,
-        },
-        original_span: Span {
-            start: 204,
-            end: 211,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 172,
             end: 178,
         },
         original_span: Span {
             start: 214,
             end: 220,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 172,
-            end: 178,
-        },
-        original_span: Span {
-            start: 214,
-            end: 220,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 179,
-            end: 223,
-        },
-        original_span: Span {
-            start: 221,
-            end: 268,
         },
     },
     Mapping {
@@ -631,26 +382,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 184,
-            end: 190,
-        },
-        original_span: Span {
-            start: 227,
-            end: 232,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 191,
-            end: 223,
-        },
-        original_span: Span {
-            start: 235,
-            end: 268,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 191,
             end: 223,
         },
@@ -667,26 +398,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 236,
             end: 239,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 192,
-            end: 195,
-        },
-        original_span: Span {
-            start: 236,
-            end: 239,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 196,
-            end: 210,
-        },
-        original_span: Span {
-            start: 240,
-            end: 254,
         },
     },
     Mapping {
@@ -711,26 +422,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 196,
-            end: 201,
-        },
-        original_span: Span {
-            start: 240,
-            end: 245,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 202,
-            end: 210,
-        },
-        original_span: Span {
-            start: 246,
-            end: 254,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 202,
             end: 210,
         },
@@ -751,52 +442,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 203,
-            end: 209,
-        },
-        original_span: Span {
-            start: 247,
-            end: 253,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 203,
-            end: 209,
-        },
-        original_span: Span {
-            start: 247,
-            end: 253,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 211,
             end: 221,
         },
         original_span: Span {
             start: 255,
             end: 265,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 211,
-            end: 221,
-        },
-        original_span: Span {
-            start: 255,
-            end: 265,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 211,
-            end: 214,
-        },
-        original_span: Span {
-            start: 255,
-            end: 258,
         },
     },
     Mapping {
@@ -831,16 +482,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 224,
-            end: 245,
-        },
-        original_span: Span {
-            start: 269,
-            end: 296,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 229,
             end: 245,
         },
@@ -861,42 +502,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 229,
-            end: 237,
-        },
-        original_span: Span {
-            start: 275,
-            end: 282,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 238,
             end: 245,
         },
         original_span: Span {
             start: 285,
             end: 296,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 238,
-            end: 245,
-        },
-        original_span: Span {
-            start: 285,
-            end: 296,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 238,
-            end: 243,
-        },
-        original_span: Span {
-            start: 285,
-            end: 292,
         },
     },
     Mapping {
@@ -922,41 +533,11 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     Mapping {
         codegen_span: Span {
             start: 239,
-            end: 242,
-        },
-        original_span: Span {
-            start: 286,
-            end: 291,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 239,
             end: 240,
         },
         original_span: Span {
             start: 286,
             end: 287,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 239,
-            end: 240,
-        },
-        original_span: Span {
-            start: 286,
-            end: 287,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 241,
-            end: 242,
-        },
-        original_span: Span {
-            start: 290,
-            end: 291,
         },
     },
     Mapping {
@@ -977,26 +558,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 295,
             end: 296,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 244,
-            end: 245,
-        },
-        original_span: Span {
-            start: 295,
-            end: 296,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 246,
-            end: 282,
-        },
-        original_span: Span {
-            start: 297,
-            end: 340,
         },
     },
     Mapping {
@@ -1031,42 +592,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 251,
-            end: 258,
-        },
-        original_span: Span {
-            start: 303,
-            end: 309,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 259,
             end: 282,
         },
         original_span: Span {
             start: 312,
             end: 340,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 259,
-            end: 282,
-        },
-        original_span: Span {
-            start: 312,
-            end: 340,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 260,
-            end: 267,
-        },
-        original_span: Span {
-            start: 314,
-            end: 322,
         },
     },
     Mapping {
@@ -1091,42 +622,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 260,
-            end: 263,
-        },
-        original_span: Span {
-            start: 314,
-            end: 317,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 264,
             end: 267,
         },
         original_span: Span {
             start: 319,
             end: 322,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 264,
-            end: 267,
-        },
-        original_span: Span {
-            start: 319,
-            end: 322,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 268,
-            end: 281,
-        },
-        original_span: Span {
-            start: 324,
-            end: 338,
         },
     },
     Mapping {
@@ -1151,26 +652,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 268,
-            end: 275,
-        },
-        original_span: Span {
-            start: 324,
-            end: 331,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 276,
-            end: 281,
-        },
-        original_span: Span {
-            start: 333,
-            end: 338,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 276,
             end: 281,
         },
@@ -1187,26 +668,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 334,
             end: 337,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 277,
-            end: 280,
-        },
-        original_span: Span {
-            start: 334,
-            end: 337,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 283,
-            end: 314,
-        },
-        original_span: Span {
-            start: 341,
-            end: 382,
         },
     },
     Mapping {
@@ -1241,16 +702,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 288,
-            end: 307,
-        },
-        original_span: Span {
-            start: 347,
-            end: 373,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 289,
             end: 296,
         },
@@ -1267,26 +718,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 349,
             end: 352,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 289,
-            end: 292,
-        },
-        original_span: Span {
-            start: 349,
-            end: 352,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 293,
-            end: 296,
-        },
-        original_span: Span {
-            start: 354,
-            end: 357,
         },
     },
     Mapping {
@@ -1321,42 +752,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 297,
-            end: 300,
-        },
-        original_span: Span {
-            start: 359,
-            end: 362,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 301,
             end: 306,
         },
         original_span: Span {
             start: 364,
             end: 371,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 301,
-            end: 306,
-        },
-        original_span: Span {
-            start: 364,
-            end: 371,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 301,
-            end: 304,
-        },
-        original_span: Span {
-            start: 364,
-            end: 367,
         },
     },
     Mapping {
@@ -1381,42 +782,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 305,
-            end: 306,
-        },
-        original_span: Span {
-            start: 370,
-            end: 371,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 308,
             end: 314,
         },
         original_span: Span {
             start: 376,
             end: 382,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 308,
-            end: 314,
-        },
-        original_span: Span {
-            start: 376,
-            end: 382,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 315,
-            end: 333,
-        },
-        original_span: Span {
-            start: 383,
-            end: 405,
         },
     },
     Mapping {
@@ -1447,26 +818,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 389,
             end: 394,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 320,
-            end: 326,
-        },
-        original_span: Span {
-            start: 389,
-            end: 394,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 327,
-            end: 333,
-        },
-        original_span: Span {
-            start: 397,
-            end: 405,
         },
     },
     Mapping {
@@ -1501,52 +852,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 328,
-            end: 329,
-        },
-        original_span: Span {
-            start: 398,
-            end: 399,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 328,
-            end: 329,
-        },
-        original_span: Span {
-            start: 398,
-            end: 399,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 332,
             end: 333,
         },
         original_span: Span {
             start: 404,
             end: 405,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 332,
-            end: 333,
-        },
-        original_span: Span {
-            start: 404,
-            end: 405,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 334,
-            end: 358,
-        },
-        original_span: Span {
-            start: 406,
-            end: 432,
         },
     },
     Mapping {
@@ -1581,42 +892,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 339,
-            end: 348,
-        },
-        original_span: Span {
-            start: 412,
-            end: 420,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
             start: 349,
             end: 358,
         },
         original_span: Span {
             start: 423,
             end: 432,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 349,
-            end: 358,
-        },
-        original_span: Span {
-            start: 423,
-            end: 432,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 352,
-            end: 356,
-        },
-        original_span: Span {
-            start: 427,
-            end: 430,
         },
     },
     Mapping {
@@ -1642,21 +923,11 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     Mapping {
         codegen_span: Span {
             start: 371,
-            end: 399,
+            end: 390,
         },
         original_span: Span {
             start: 0,
-            end: 442,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 372,
-            end: 378,
-        },
-        original_span: Span {
-            start: 1,
-            end: 7,
+            end: 19,
         },
     },
     Mapping {
@@ -1677,26 +948,6 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
         original_span: Span {
             start: 8,
             end: 18,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 379,
-            end: 389,
-        },
-        original_span: Span {
-            start: 8,
-            end: 18,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 379,
-            end: 383,
-        },
-        original_span: Span {
-            start: 8,
-            end: 12,
         },
     },
     Mapping {
@@ -1721,12 +972,12 @@ import{foo as foo,bar as baz}from'./dep';export{foo as foo};const decimal=1.0;co
     },
     Mapping {
         codegen_span: Span {
-            start: 392,
-            end: 398,
+            start: 390,
+            end: 399,
         },
         original_span: Span {
-            start: 435,
-            end: 441,
+            start: 433,
+            end: 442,
         },
     },
     Mapping {
