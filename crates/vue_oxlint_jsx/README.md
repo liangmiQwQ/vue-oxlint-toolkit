@@ -4,7 +4,7 @@ A transformer that transforms AST returned by [`vue_oxlint_jsx`](https://github.
 
 ## Credits
 
-This crate includes a fork of [vue-oxc-parser](https://github.com/zhiyuanzmj/vue-oxc-parser) by [zhiyuanzmj](https://github.com/zhiyuanzmj).
+This project includes a forks of [vue-oxc-parser](https://github.com/zhiyuanzmj/vue-oxc-parser) (by zhiyuanzmj) and [oxc_codegen](https://github.com/oxc-project/oxc) (by VoidZero Inc.).
 
 ## License
 
