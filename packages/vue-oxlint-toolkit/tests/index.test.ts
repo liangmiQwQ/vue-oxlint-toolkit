@@ -12,17 +12,19 @@ const msg: string = 'hello'
   const result = transformJsx(source)
 
   expect(result.scriptKind).toBe('tsx')
-  expect(result.sourceText).toContain("const msg:string='hello';")
+  expect(result.sourceText).toContain("const msg: string = 'hello';")
   expect(result.sourceText).toContain('<div>{msg}</div>')
 
-  const originalStart = source.indexOf('msg }}</')
-  const virtualStart = result.sourceText.indexOf('{msg}') + 1
+  const originalTemplate = '<template>\n  <div>{{ msg }}</div>\n</template>'
+  const virtualTemplate = '<template><div>{msg}</div></template>'
+  const originalStart = source.indexOf(originalTemplate)
+  const virtualStart = result.sourceText.indexOf(virtualTemplate)
 
   expect(result.mappings).toContainEqual({
     virtualStart,
-    virtualEnd: virtualStart + 'msg'.length,
+    virtualEnd: virtualStart + virtualTemplate.length,
     originalStart,
-    originalEnd: originalStart + 'msg'.length,
+    originalEnd: originalStart + originalTemplate.length,
   })
 })
 
