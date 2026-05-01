@@ -7,9 +7,9 @@ An experimental toolkit to provide high performance Vue linting support.
 
 ## Credits
 
-This project includes a fork of [vue-oxc-parser](https://github.com/zhiyuanzmj/vue-oxc-parser) by zhiyuanzmj.
+This project includes a forks of [vue-oxc-parser](https://github.com/zhiyuanzmj/vue-oxc-parser) (by zhiyuanzmj) and [oxc_codegen](https://github.com/oxc-project/oxc) (by VoidZero Inc.).
 
-The [`vue_oxc_parser`](./crates/vue_oxc_parser) crate is a rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser).
+<!-- The [vue_oxc_parser](./crates/vue_oxc_parser) crate is a rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser). -->
 
 ## License
 
