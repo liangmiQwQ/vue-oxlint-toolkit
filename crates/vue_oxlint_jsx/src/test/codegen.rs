@@ -5,7 +5,7 @@ use crate::{
   test::{read_file, snapshot_name},
 };
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{AstKind, ast::Program};
 use oxc_codegen::Codegen;
 use oxc_parser::ParseOptions;
 
@@ -22,6 +22,10 @@ struct SpanMapper {
 
 impl VisitMut<'_> for SpanMapper {
   fn visit_span(&mut self, span: &mut Span) {
+    // Translate each codegen-output span back to its original SFC span.
+    // Spans with no mapping entry (synthetic nodes built with SPAN, or token-level
+    // nodes not yet covered by the mapping) are zeroed out so they compare equal
+    // to the SPAN placeholders in the origin AST.
     *span = self
       .mappings
       .iter()
@@ -102,6 +106,14 @@ struct SpanCollector {
 
 impl<'a> Visit<'a> for SpanCollector {
   fn enter_node(&mut self, kind: oxc_ast::AstKind<'a>) {
+    // ExpressionStatement is excluded because the parser's Program mapping
+    // (codegen_span = 0..total) coincides with the reparsed ExpressionStatement
+    // span when the statement is the sole top-level node, causing SpanMapper to
+    // wrongly assign it the program's original_span instead of SPAN.
+    if matches!(kind, AstKind::ExpressionStatement(_)) {
+      return;
+    }
+
     let kind_str = format!("{kind:?}");
     let kind_name = match memchr::memchr(b'(', kind_str.as_bytes()) {
       Some(index) => kind_str[..index].to_owned(),
