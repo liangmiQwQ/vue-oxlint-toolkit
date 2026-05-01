@@ -89,9 +89,11 @@ impl Gen for Directive<'_> {
         _ => {}
       }
     }
-    quote.print(p);
-    p.print_str(directive);
-    quote.print(p);
+    p.print_with_mapping(self.expression.span, |p| {
+      quote.print(p);
+      p.print_str(directive);
+      quote.print(p);
+    });
     p.print_ascii_byte(b';');
   }
 }
@@ -562,15 +564,17 @@ impl Gen for Function<'_> {
       if let Some(type_parameters) = &self.type_parameters {
         type_parameters.print(p, ctx);
       }
-      p.print_ascii_byte(b'(');
-      if let Some(this_param) = &self.this_param {
-        this_param.print(p, ctx);
-        if !self.params.is_empty() || self.params.rest.is_some() {
-          p.print_ascii_byte(b',');
+      p.print_with_mapping(self.params.span, |p| {
+        p.print_ascii_byte(b'(');
+        if let Some(this_param) = &self.this_param {
+          this_param.print(p, ctx);
+          if !self.params.is_empty() || self.params.rest.is_some() {
+            p.print_ascii_byte(b',');
+          }
         }
-      }
-      self.params.print(p, ctx);
-      p.print_ascii_byte(b')');
+        self.params.print(p, ctx);
+        p.print_ascii_byte(b')');
+      });
       if let Some(return_type) = &self.return_type {
         p.print_str(": ");
         return_type.print(p, ctx);
@@ -662,9 +666,11 @@ impl Gen for ImportDeclaration<'_> {
       if specifiers.is_empty() {
         p.print_str("{}");
         p.print_str("from");
-        p.print_ascii_byte(b'"');
-        p.print_str(self.source.value.as_str());
-        p.print_ascii_byte(b'"');
+        p.print_with_mapping(self.source.span, |p| {
+          p.print_ascii_byte(b'"');
+          p.print_str(self.source.value.as_str());
+          p.print_ascii_byte(b'"');
+        });
         if let Some(with_clause) = &self.with_clause {
           p.print_hard_space();
           with_clause.print(p, ctx);
@@ -734,7 +740,7 @@ impl Gen for ImportDeclaration<'_> {
       }
       p.print_str("from");
     }
-    p.print_string_literal(&self.source, false);
+    self.source.print(p, ctx);
     if let Some(with_clause) = &self.with_clause {
       with_clause.print(p, ctx);
     }
@@ -760,14 +766,14 @@ impl Gen for ImportAttribute<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     match &self.key {
       ImportAttributeKey::Identifier(identifier) => {
-        p.print_str(identifier.name.as_str());
+        identifier.print(p, Context::empty());
       }
       ImportAttributeKey::StringLiteral(literal) => {
-        p.print_string_literal(literal, false);
+        literal.print(p, Context::empty());
       }
     }
     p.print_colon();
-    p.print_string_literal(&self.value, false);
+    self.value.print(p, Context::empty());
   }
 }
 
@@ -867,7 +873,7 @@ impl Gen for ModuleExportName<'_> {
     match self {
       Self::IdentifierName(ident) => ident.print(p, ctx),
       Self::IdentifierReference(ident) => ident.print(p, ctx),
-      Self::StringLiteral(literal) => p.print_string_literal(literal, false),
+      Self::StringLiteral(literal) => literal.print(p, ctx),
     }
   }
 }
@@ -887,7 +893,7 @@ impl Gen for ExportAllDeclaration<'_> {
     }
 
     p.print_str("from");
-    p.print_string_literal(&self.source, false);
+    self.source.print(p, ctx);
     if let Some(with_clause) = &self.with_clause {
       p.print_hard_space();
       with_clause.print(p, ctx);
@@ -1008,14 +1014,18 @@ impl Gen for IdentifierReference<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     let name = p.get_identifier_reference_name(self);
     p.print_space_before_identifier();
-    p.print_str(name);
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str(name);
+    });
   }
 }
 
 impl Gen for IdentifierName<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     p.print_space_before_identifier();
-    p.print_str(self.name.as_str());
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str(self.name.as_str());
+    });
   }
 }
 
@@ -1023,86 +1033,98 @@ impl Gen for BindingIdentifier<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     let name = p.get_binding_identifier_name(self);
     p.print_space_before_identifier();
-    p.print_str(name);
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str(name);
+    });
   }
 }
 
 impl Gen for LabelIdentifier<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     p.print_space_before_identifier();
-    p.print_str(self.name.as_str());
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str(self.name.as_str());
+    });
   }
 }
 
 impl Gen for BooleanLiteral {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     p.print_space_before_identifier();
-    p.print_str(self.as_str());
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str(self.as_str());
+    });
   }
 }
 
 impl Gen for NullLiteral {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
     p.print_space_before_identifier();
-    p.print_str("null");
+    p.print_with_mapping(self.span(), |p| {
+      p.print_str("null");
+    });
   }
 }
 
 impl GenExpr for NumericLiteral<'_> {
   fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
     let value = self.value;
-    if let Some(raw) = &self.raw {
-      p.print_space_before_identifier();
-      p.print_str(raw.as_str());
-    } else if ctx.contains(Context::TYPESCRIPT) {
-      p.print_str(&self.raw_str());
-    } else if value.is_nan() {
-      p.print_space_before_identifier();
-      p.print_str("NaN");
-    } else if value.is_infinite() {
-      let wrap = precedence >= Precedence::Multiply
-        || (value.is_sign_negative() && precedence >= Precedence::Prefix);
-      p.wrap(wrap, |p| {
-        if value.is_sign_negative() {
-          p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-          p.print_ascii_byte(b'-');
-        } else {
-          p.print_space_before_identifier();
-        }
-        p.print_str("1/0");
-      });
-    } else if value.is_sign_positive() {
-      p.print_space_before_identifier();
-      p.print_non_negative_float(value);
-    } else if precedence >= Precedence::Prefix {
-      p.print_str("(-");
-      p.print_non_negative_float(value.abs());
-      p.print_ascii_byte(b')');
-    } else {
-      p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-      p.print_ascii_byte(b'-');
-      p.print_non_negative_float(value.abs());
-    }
+    p.print_with_mapping(self.span(), |p| {
+      if let Some(raw) = &self.raw {
+        p.print_space_before_identifier();
+        p.print_str(raw.as_str());
+      } else if ctx.contains(Context::TYPESCRIPT) {
+        p.print_str(&self.raw_str());
+      } else if value.is_nan() {
+        p.print_space_before_identifier();
+        p.print_str("NaN");
+      } else if value.is_infinite() {
+        let wrap = precedence >= Precedence::Multiply
+          || (value.is_sign_negative() && precedence >= Precedence::Prefix);
+        p.wrap(wrap, |p| {
+          if value.is_sign_negative() {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+            p.print_ascii_byte(b'-');
+          } else {
+            p.print_space_before_identifier();
+          }
+          p.print_str("1/0");
+        });
+      } else if value.is_sign_positive() {
+        p.print_space_before_identifier();
+        p.print_non_negative_float(value);
+      } else if precedence >= Precedence::Prefix {
+        p.print_str("(-");
+        p.print_non_negative_float(value.abs());
+        p.print_ascii_byte(b')');
+      } else {
+        p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        p.print_ascii_byte(b'-');
+        p.print_non_negative_float(value.abs());
+      }
+    });
   }
 }
 
 impl GenExpr for BigIntLiteral<'_> {
   fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
     p.print_space_before_identifier();
-    if let Some(raw) = &self.raw {
-      p.print_str(raw.as_str());
-      return;
-    }
+    p.print_with_mapping(self.span(), |p| {
+      if let Some(raw) = &self.raw {
+        p.print_str(raw.as_str());
+        return;
+      }
 
-    let value = self.value.as_str();
-    if value.starts_with('-') && precedence >= Precedence::Prefix {
-      p.print_ascii_byte(b'(');
-      p.print_str(value);
-      p.print_str("n)");
-    } else {
-      p.print_str(value);
-      p.print_ascii_byte(b'n');
-    }
+      let value = self.value.as_str();
+      if value.starts_with('-') && precedence >= Precedence::Prefix {
+        p.print_ascii_byte(b'(');
+        p.print_str(value);
+        p.print_str("n)");
+      } else {
+        p.print_str(value);
+        p.print_ascii_byte(b'n');
+      }
+    });
   }
 }
 
@@ -1131,7 +1153,9 @@ impl Gen for RegExpLiteral<'_> {
 
 impl Gen for StringLiteral<'_> {
   fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-    p.print_string_literal(self, true);
+    p.print_with_mapping(self.span(), |p| {
+      p.print_string_literal(self, true);
+    });
   }
 }
 
@@ -1317,15 +1341,17 @@ impl Gen for ObjectProperty<'_> {
         if let Some(type_parameters) = &func.type_parameters {
           type_parameters.print(p, ctx);
         }
-        p.print_ascii_byte(b'(');
-        if let Some(this_param) = &func.this_param {
-          this_param.print(p, ctx);
-          if !func.params.is_empty() || func.params.rest.is_some() {
-            p.print_ascii_byte(b',');
+        p.print_with_mapping(func.params.span, |p| {
+          p.print_ascii_byte(b'(');
+          if let Some(this_param) = &func.this_param {
+            this_param.print(p, ctx);
+            if !func.params.is_empty() || func.params.rest.is_some() {
+              p.print_ascii_byte(b',');
+            }
           }
-        }
-        func.params.print(p, ctx);
-        p.print_ascii_byte(b')');
+          func.params.print(p, ctx);
+          p.print_ascii_byte(b')');
+        });
         if let Some(return_type) = &func.return_type {
           p.print_colon();
           return_type.print(p, ctx);
@@ -1368,7 +1394,7 @@ impl Gen for PropertyKey<'_> {
     match self {
       Self::StaticIdentifier(ident) => ident.print(p, ctx),
       Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-      Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
+      Self::StringLiteral(s) => s.print(p, ctx),
       _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
     }
   }
@@ -1384,8 +1410,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
       if let Some(type_parameters) = &self.type_parameters {
         type_parameters.print(p, ctx);
       }
-      p.wrap(true, |p| {
+      p.print_with_mapping(self.params.span, |p| {
+        p.print_ascii_byte(b'(');
         self.params.print(p, ctx);
+        p.print_ascii_byte(b')');
       });
       if let Some(return_type) = &self.return_type {
         p.print_colon();
@@ -1642,9 +1670,13 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
       self.binding.print(p, ctx);
     } else {
       // `({x: a} = y);`
-      p.print_str(self.binding.name.as_str());
+      p.print_with_mapping(self.binding.span, |p| {
+        p.print_str(self.binding.name.as_str());
+      });
       p.print_colon();
-      p.print_str(ident_name);
+      p.print_with_mapping(self.binding.span, |p| {
+        p.print_str(ident_name);
+      });
     }
     if let Some(expr) = &self.init {
       p.print_equal();
@@ -2070,24 +2102,26 @@ impl Gen for JSXElement<'_> {
     // Opening element.
     // Cannot `impl Gen for JSXOpeningElement` because it needs to know value of `self.closing_element`
     // to determine whether to print a trailing `/`.
-    p.print_ascii_byte(b'<');
-    self.opening_element.name.print(p, ctx);
-    if let Some(type_arguments) = &self.opening_element.type_arguments {
-      type_arguments.print(p, ctx);
-    }
-    for attr in &self.opening_element.attributes {
-      match attr {
-        JSXAttributeItem::Attribute(_) => {
-          p.print_hard_space();
-        }
-        JSXAttributeItem::SpreadAttribute(_) => {}
+    p.print_with_mapping(self.opening_element.span, |p| {
+      p.print_ascii_byte(b'<');
+      self.opening_element.name.print(p, ctx);
+      if let Some(type_arguments) = &self.opening_element.type_arguments {
+        type_arguments.print(p, ctx);
       }
-      attr.print(p, ctx);
-    }
-    if self.closing_element.is_none() {
-      p.print_ascii_byte(b'/');
-    }
-    p.print_ascii_byte(b'>');
+      for attr in &self.opening_element.attributes {
+        match attr {
+          JSXAttributeItem::Attribute(_) => {
+            p.print_hard_space();
+          }
+          JSXAttributeItem::SpreadAttribute(_) => {}
+        }
+        attr.print(p, ctx);
+      }
+      if self.closing_element.is_none() {
+        p.print_ascii_byte(b'/');
+      }
+      p.print_ascii_byte(b'>');
+    });
 
     // Children
     for child in &self.children {
@@ -2096,9 +2130,11 @@ impl Gen for JSXElement<'_> {
 
     // Closing element
     if let Some(closing_element) = &self.closing_element {
-      p.print_str("</");
-      closing_element.name.print(p, ctx);
-      p.print_ascii_byte(b'>');
+      p.print_with_mapping(closing_element.span, |p| {
+        p.print_str("</");
+        closing_element.name.print(p, ctx);
+        p.print_ascii_byte(b'>');
+      });
     }
   }
 }
@@ -2936,10 +2972,10 @@ impl Gen for TSSignature<'_> {
               key.print(p, ctx);
             }
             PropertyKey::PrivateIdentifier(key) => {
-              p.print_str(key.name.as_str());
+              key.print(p, ctx);
             }
             PropertyKey::StringLiteral(key) => {
-              p.print_string_literal(key, false);
+              key.print(p, ctx);
             }
             key => {
               key.to_expression().print_expr(p, Precedence::Comma, ctx);
@@ -2985,10 +3021,10 @@ impl Gen for TSPropertySignature<'_> {
           key.print(p, ctx);
         }
         PropertyKey::PrivateIdentifier(key) => {
-          p.print_str(key.name.as_str());
+          key.print(p, ctx);
         }
         PropertyKey::StringLiteral(key) => {
-          p.print_string_literal(key, false);
+          key.print(p, ctx);
         }
         key => {
           key.to_expression().print_expr(p, Precedence::Comma, ctx);
@@ -3027,7 +3063,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 impl Gen for TSImportType<'_> {
   fn r#gen(&self, p: &mut Codegen, ctx: Context) {
     p.print_str("import(");
-    p.print_string_literal(&self.source, false);
+    self.source.print(p, ctx);
     if let Some(options) = &self.options {
       p.print_str(", ");
       options.print_expr(p, Precedence::Lowest, ctx);
@@ -3047,7 +3083,7 @@ impl Gen for TSImportTypeQualifier<'_> {
   fn r#gen(&self, p: &mut Codegen, ctx: Context) {
     match self {
       TSImportTypeQualifier::Identifier(ident) => {
-        p.print_str(ident.name.as_str());
+        ident.print(p, ctx);
       }
       TSImportTypeQualifier::QualifiedName(qualified) => {
         qualified.print(p, ctx);
@@ -3060,7 +3096,7 @@ impl Gen for TSImportTypeQualifiedName<'_> {
   fn r#gen(&self, p: &mut Codegen, ctx: Context) {
     self.left.print(p, ctx);
     p.print_ascii_byte(b'.');
-    p.print_str(self.right.name.as_str());
+    self.right.print(p, ctx);
   }
 }
 
@@ -3085,7 +3121,9 @@ impl Gen for TSIndexSignature<'_> {
       if index != 0 {
         p.print_ascii_byte(b',');
       }
-      p.print_str(parameter.name.as_str());
+      p.print_with_mapping(parameter.span, |p| {
+        p.print_str(parameter.name.as_str());
+      });
       p.print_colon();
       parameter.type_annotation.print(p, ctx);
     }
@@ -3327,7 +3365,7 @@ impl Gen for TSModuleReference<'_> {
     match self {
       Self::ExternalModuleReference(decl) => {
         p.print_str("require(");
-        p.print_string_literal(&decl.expression, false);
+        decl.expression.print(p, ctx);
         p.print_ascii_byte(b')');
       }
       Self::IdentifierReference(ident) => ident.print(p, ctx),

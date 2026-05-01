@@ -24,6 +24,41 @@ const msg: string = 'hello'
     originalStart,
     originalEnd: originalStart + 'msg'.length,
   })
+
+  const bindingOriginalStart = source.indexOf('msg: string')
+  const bindingVirtualStart = result.sourceText.indexOf('msg:string')
+  expect(result.mappings).toContainEqual({
+    virtualStart: bindingVirtualStart,
+    virtualEnd: bindingVirtualStart + 'msg'.length,
+    originalStart: bindingOriginalStart,
+    originalEnd: bindingOriginalStart + 'msg'.length,
+  })
+
+  const literalOriginalStart = source.indexOf("'hello'")
+  const literalVirtualStart = result.sourceText.indexOf("'hello'")
+  expect(result.mappings).toContainEqual({
+    virtualStart: literalVirtualStart,
+    virtualEnd: literalVirtualStart + "'hello'".length,
+    originalStart: literalOriginalStart,
+    originalEnd: literalOriginalStart + "'hello'".length,
+  })
+})
+
+it('maps script numeric literals to their exact tokens', () => {
+  const source = `<script setup>
+const count = 1
+</script>`
+  const result = transformJsx(source)
+
+  const originalStart = source.indexOf('1')
+  const virtualStart = result.sourceText.indexOf('1')
+
+  expect(result.mappings).toContainEqual({
+    virtualStart,
+    virtualEnd: virtualStart + 1,
+    originalStart,
+    originalEnd: originalStart + 1,
+  })
 })
 
 it('returns parser metadata', () => {

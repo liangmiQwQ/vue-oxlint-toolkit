@@ -317,6 +317,12 @@ impl<'a> Codegen<'a> {
     self.mappings[index].codegen_span.end = self.code_len() as u32;
   }
 
+  pub(crate) fn print_with_mapping<F: FnOnce(&mut Self)>(&mut self, span: Span, op: F) {
+    self.enter_mapping(span);
+    op(self);
+    self.leave_mapping();
+  }
+
   #[inline]
   fn print_hard_space(&mut self) {
     self.print_ascii_byte(b' ');

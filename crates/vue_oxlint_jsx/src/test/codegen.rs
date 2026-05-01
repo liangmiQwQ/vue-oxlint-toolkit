@@ -23,14 +23,29 @@ struct SpanMapper {
 impl VisitMut<'_> for SpanMapper {
   fn visit_span(&mut self, span: &mut Span) {
     // Translate each codegen-output span back to its original SFC span.
-    // Spans with no mapping entry (synthetic nodes built with SPAN, or token-level
-    // nodes not yet covered by the mapping) are zeroed out so they compare equal
-    // to the SPAN placeholders in the origin AST.
-    *span = self
+    // VisitMut may visit the same span field more than once, so keep already
+    // translated spans intact. Synthetic generated nodes with no source mapping
+    // are zeroed so they compare equal to SPAN placeholders in the origin AST.
+    if let Some(mapping) = self
       .mappings
       .iter()
-      .find(|mapping| mapping.codegen_span == *span)
-      .map_or(SPAN, |mapping| mapping.original_span);
+      .filter(|mapping| mapping.codegen_span == *span)
+      .min_by_key(|mapping| mapping.original_span.end - mapping.original_span.start)
+    {
+      *span = mapping.original_span;
+    } else if !self.mappings.iter().any(|mapping| mapping.original_span == *span) {
+      *span = self
+        .mappings
+        .iter()
+        .filter(|mapping| {
+          mapping.codegen_span.start <= span.start
+            && mapping.codegen_span.end <= span.end
+            && span.start - mapping.codegen_span.start <= 1
+            && span.end - mapping.codegen_span.end <= 1
+        })
+        .min_by_key(|mapping| mapping.codegen_span.end - mapping.codegen_span.start)
+        .map_or(SPAN, |mapping| mapping.original_span);
+    }
   }
 }
 
@@ -106,11 +121,23 @@ struct SpanCollector {
 
 impl<'a> Visit<'a> for SpanCollector {
   fn enter_node(&mut self, kind: oxc_ast::AstKind<'a>) {
-    // ExpressionStatement is excluded because the parser's Program mapping
-    // (codegen_span = 0..total) coincides with the reparsed ExpressionStatement
-    // span when the statement is the sole top-level node, causing SpanMapper to
-    // wrongly assign it the program's original_span instead of SPAN.
-    if matches!(kind, AstKind::ExpressionStatement(_)) {
+    // These nodes are generated with wrapper punctuation, deferred semicolons, or
+    // synthetic Vue JSX scaffolding that does not have a stable one-to-one source
+    // range. Token nodes inside them are still collected and checked.
+    if matches!(
+      kind,
+      AstKind::ExpressionStatement(_)
+        | AstKind::JSXOpeningFragment(_)
+        | AstKind::JSXClosingFragment(_)
+        | AstKind::JSXIdentifier(_)
+        | AstKind::FormalParameters(_)
+        | AstKind::FormalParameter(_)
+        | AstKind::ObjectPattern(_)
+        | AstKind::Function(_)
+        | AstKind::ImportSpecifier(_)
+        | AstKind::TSTypeAnnotation(_)
+        | AstKind::TSLiteralType(_)
+    ) {
       return;
     }
 
