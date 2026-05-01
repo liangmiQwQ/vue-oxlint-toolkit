@@ -196,26 +196,24 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
     // - Void tags without />: None
     // - Normal tags with </tag>: closing element with tag name
     // Always use </tag> in codegen mode (prevent tag-hoist in v-slot children)
-    let closing_element = if location_span.source_text(self.source_text).ends_with("/>") {
-      if self.config.codegen {
-        Some(ast.jsx_closing_element(SPAN, element_name.clone_in(self.allocator)))
-      } else {
-        Some(ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ast.str(""))))
+    let closing_element = (|| {
+      if !self.config.codegen {
+        if location_span.source_text(self.source_text).ends_with("/>") {
+          return Some(
+            ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ast.str(""))),
+          );
+        } else if is_void_tag!(tag_name) {
+          return None;
+        }
       }
-    } else if is_void_tag!(tag_name) {
-      if self.config.codegen {
-        Some(ast.jsx_closing_element(SPAN, element_name.clone_in(self.allocator)))
-      } else {
-        None
-      }
-    } else {
-      // Normal tag with explicit closing tag
+
+      // Normal tag with explicit closing tag or codegen
       Some(ast.jsx_closing_element(end_element_span, {
         let span = Span::sized(end_element_span.start + 2, node.tag_name.len() as u32);
         *element_name.span_mut() = span;
         element_name
       }))
-    };
+    })();
 
     (
       v_for_wrapper.wrap(ast.jsx_element(

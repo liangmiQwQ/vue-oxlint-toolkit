@@ -1,6 +1,5 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -122,12 +121,22 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
+            start: 113,
+            end: 129,
+        },
+        original_span: Span {
+            start: 13,
+            end: 30,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 115,
             end: 128,
         },
         original_span: Span {
-            start: 14,
-            end: 27,
+            start: 15,
+            end: 28,
         },
     },
     Mapping {
@@ -162,12 +171,22 @@ import SomeComponent from'./SomeComponent.vue';import{motion}from'motion-v';asyn
     },
     Mapping {
         codegen_span: Span {
+            start: 144,
+            end: 160,
+        },
+        original_span: Span {
+            start: 33,
+            end: 51,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 146,
             end: 159,
         },
         original_span: Span {
-            start: 34,
-            end: 48,
+            start: 35,
+            end: 49,
         },
     },
     Mapping {

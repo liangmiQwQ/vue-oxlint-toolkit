@@ -1,6 +1,5 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
@@ -142,12 +141,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 71,
+            end: 77,
+        },
+        original_span: Span {
+            start: 13,
+            end: 43,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 73,
             end: 76,
         },
         original_span: Span {
-            start: 14,
-            end: 17,
+            start: 15,
+            end: 18,
         },
     },
     Mapping {
@@ -242,12 +251,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 131,
+            end: 137,
+        },
+        original_span: Span {
+            start: 46,
+            end: 78,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 133,
             end: 136,
         },
         original_span: Span {
-            start: 47,
-            end: 50,
+            start: 48,
+            end: 51,
         },
     },
     Mapping {
@@ -362,12 +381,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 198,
+            end: 204,
+        },
+        original_span: Span {
+            start: 81,
+            end: 123,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 200,
             end: 203,
         },
         original_span: Span {
-            start: 82,
-            end: 85,
+            start: 83,
+            end: 86,
         },
     },
     Mapping {
@@ -522,12 +551,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 272,
+            end: 278,
+        },
+        original_span: Span {
+            start: 126,
+            end: 179,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 274,
             end: 277,
         },
         original_span: Span {
-            start: 127,
-            end: 130,
+            start: 128,
+            end: 131,
         },
     },
     Mapping {
@@ -642,12 +681,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 337,
+            end: 343,
+        },
+        original_span: Span {
+            start: 182,
+            end: 222,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 339,
             end: 342,
         },
         original_span: Span {
-            start: 183,
-            end: 186,
+            start: 184,
+            end: 187,
         },
     },
     Mapping {
@@ -782,12 +831,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 408,
+            end: 414,
+        },
+        original_span: Span {
+            start: 225,
+            end: 274,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 410,
             end: 413,
         },
         original_span: Span {
-            start: 226,
-            end: 229,
+            start: 227,
+            end: 230,
         },
     },
     Mapping {
@@ -962,12 +1021,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 489,
+            end: 495,
+        },
+        original_span: Span {
+            start: 277,
+            end: 340,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 491,
             end: 494,
         },
         original_span: Span {
-            start: 278,
-            end: 281,
+            start: 279,
+            end: 282,
         },
     },
     Mapping {
@@ -1092,12 +1161,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 563,
+            end: 569,
+        },
+        original_span: Span {
+            start: 343,
+            end: 393,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 565,
             end: 568,
         },
         original_span: Span {
-            start: 344,
-            end: 347,
+            start: 345,
+            end: 348,
         },
     },
     Mapping {
@@ -1212,12 +1291,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 634,
+            end: 640,
+        },
+        original_span: Span {
+            start: 396,
+            end: 440,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 636,
             end: 639,
         },
         original_span: Span {
-            start: 397,
-            end: 400,
+            start: 398,
+            end: 401,
         },
     },
     Mapping {
@@ -1352,12 +1441,22 @@ async()=>{<><template>{(source)((item)=>(<div v-for:__v___={undefined}></div>))}
     },
     Mapping {
         codegen_span: Span {
+            start: 710,
+            end: 716,
+        },
+        original_span: Span {
+            start: 443,
+            end: 494,
+        },
+    },
+    Mapping {
+        codegen_span: Span {
             start: 712,
             end: 715,
         },
         original_span: Span {
-            start: 444,
-            end: 447,
+            start: 445,
+            end: 448,
         },
     },
     Mapping {
