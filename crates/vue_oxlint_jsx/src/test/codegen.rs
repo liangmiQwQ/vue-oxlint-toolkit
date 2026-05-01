@@ -1,5 +1,6 @@
 use crate::{
   VueJsxCodegen,
+  codegen::SourceMapping,
   parser::{ParseConfig, ParserImpl},
   test::{read_file, snapshot_name},
 };
@@ -15,11 +16,17 @@ pub fn format_program_codegen(program: &Program) -> String {
 use oxc_ast_visit::VisitMut;
 use oxc_span::{SPAN, Span};
 
-struct SpanMapper;
+struct SpanMapper {
+  mappings: Vec<SourceMapping>,
+}
 
 impl VisitMut<'_> for SpanMapper {
   fn visit_span(&mut self, span: &mut Span) {
-    *span = SPAN;
+    *span = self
+      .mappings
+      .iter()
+      .find(|mapping| mapping.codegen_span == *span)
+      .map_or(SPAN, |mapping| mapping.original_span);
   }
 }
 
@@ -41,12 +48,14 @@ pub fn run_codegen_test(file_path: &str) {
   let mut reparsed = oxc_parser::Parser::new(&allocator, &codegen, ret.source_type)
     .with_options(ParseOptions::default())
     .parse();
-  SpanMapper.visit_program(&mut reparsed.program);
   assert!(
     reparsed.errors.is_empty(),
     "Invalid codegen syntax in {file_path}: {:#?}",
     reparsed.errors,
   );
+
+  let mut span_mapper = SpanMapper { mappings: ret.mappings };
+  span_mapper.visit_program(&mut reparsed.program);
 
   assert_reparsed_codegen_ast(file_path, &source_text, &reparsed.program);
 }
