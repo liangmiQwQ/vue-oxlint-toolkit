@@ -1730,8 +1730,10 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_parser",
  "oxc_span",
- "vue-compiler-core",
+ "oxc_syntax",
+ "rustc-hash 2.1.2",
 ]
 
 [[package]]

@@ -14,10 +14,12 @@ description = "Rust port of vue-eslint-parser: AST types and SFC parser for Vue 
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
 
 memchr = { workspace = true }
-vue-compiler-core = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
