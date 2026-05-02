@@ -1,7 +1,6 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import type { NativeMapping, NativeRange, NativeTransformResult } from '../bindings'
 import { transformJsx as nativeTransformJsx } from '../bindings'
-import type { AST } from 'vue-eslint-parser'
 
 export interface Mapping {
   virtualStart: number
@@ -20,7 +19,8 @@ export interface ToolkitTransformResult {
 }
 
 export interface ParseResult {
-  ast: AST.ESLintProgram
+  // ast: AST.ESLintProgram (the import of AST brings a lot of unnecessary types definition in dts, remove it temporarily)
+  ast: any
   transform: ToolkitTransformResult
 }
 
