@@ -29,8 +29,9 @@
     "version": "napi version"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.2.0",
-    "@types/node": "catalog:types"
+    "@napi-rs/cli": "catalog:napi",
+    "@types/node": "catalog:types",
+    "vue-eslint-parser": "catalog:eslint"
   },
   "peerDependencies": {
     "@oxlint/plugins": "catalog:oxlint"
