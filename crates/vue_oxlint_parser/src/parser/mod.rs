@@ -8,7 +8,7 @@ use oxc_ast::{
   ast::{Directive, Program, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_parser::ParseOptions;
+use oxc_parser::{ParseOptions, Token, config::TokensParserConfig};
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashSet;
@@ -16,6 +16,7 @@ use rustc_hash::FxHashSet;
 pub mod attribute;
 pub mod element;
 pub mod expression;
+pub mod lexer;
 pub mod script;
 
 use crate::ast::VueSingleFileComponent;
@@ -34,6 +35,10 @@ pub struct Parser<'a> {
   pub source_type: SourceType,
   pub module_record: ModuleRecord<'a>,
   pub script_comments: Vec<Comment>,
+  /// JS tokens from `<script>` / `<script setup>` bodies, collected via
+  /// `TokensParserConfig`. Consumers need these to produce `vue-eslint-parser`-shaped
+  /// `Program.tokens` arrays.
+  pub script_tokens: Vec<Token>,
   pub clean_spans: FxHashSet<Span>,
   pub errors: Vec<OxcDiagnostic>,
 
@@ -68,6 +73,7 @@ impl<'a> Parser<'a> {
       source_type: SourceType::mjs().with_unambiguous(true),
       module_record: ModuleRecord::new(allocator),
       script_comments: Vec::new(),
+      script_tokens: Vec::new(),
       clean_spans: FxHashSet::default(),
       errors: Vec::new(),
       pos: 0,
@@ -150,6 +156,10 @@ impl<'a> Parser<'a> {
   }
 
   /// Parse a raw script slice directly (no wrap).
+  /// Tokens are collected via [`TokensParserConfig`] and appended to
+  /// `self.script_tokens` so downstream consumers can populate
+  /// `vue-eslint-parser`-shaped `Program.tokens`.
+  ///
   /// Returns `(Program, ModuleRecord)`.
   pub fn oxc_parse_script(&mut self, span: Span) -> Option<(Program<'a>, ModuleRecord<'a>)> {
     let start = span.start as usize;
@@ -170,6 +180,7 @@ impl<'a> Parser<'a> {
 
     let allocator = self.allocator;
     let mut ret = oxc_parser::Parser::new(allocator, slice, self.source_type)
+      .with_config(TokensParserConfig)
       .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
       .parse();
 
@@ -181,8 +192,10 @@ impl<'a> Parser<'a> {
     if ret.panicked {
       None
     } else {
-      // Extract comments from the script program
       self.script_comments.extend(ret.program.comments.iter().copied());
+      // Collect tokens — copy out of the arena Vec into an owned Vec.
+      // Token is Copy (a u128) so this is cheap.
+      self.script_tokens.extend(ret.tokens.iter().copied());
       Some((ret.program, ret.module_record))
     }
   }
@@ -201,79 +214,9 @@ impl<'a> Parser<'a> {
     if ret.panicked {
       None
     } else {
-      // Extract comments
       self.script_comments.extend(ret.program.comments.iter().copied());
       Some((ret.program.directives, ret.program.body, ret.module_record))
     }
-  }
-
-  // ──── source navigation helpers ────────────────────────────────────────
-
-  #[must_use]
-  pub fn current_byte(&self) -> Option<u8> {
-    self.source_text.as_bytes().get(self.pos).copied()
-  }
-
-  #[must_use]
-  pub const fn is_eof(&self) -> bool {
-    self.pos >= self.source_text.len()
-  }
-
-  #[must_use]
-  pub fn peek_byte(&self, offset: usize) -> Option<u8> {
-    self.source_text.as_bytes().get(self.pos + offset).copied()
-  }
-
-  #[must_use]
-  pub fn matches_at(&self, pos: usize, s: &str) -> bool {
-    self.source_text.as_bytes().get(pos..pos + s.len()) == Some(s.as_bytes())
-  }
-
-  #[must_use]
-  pub fn matches(&self, s: &str) -> bool {
-    self.matches_at(self.pos, s)
-  }
-
-  /// Advance position by `n` bytes
-  pub const fn advance(&mut self, n: usize) {
-    self.pos += n;
-  }
-
-  /// Consume one byte and return it
-  pub fn consume_byte(&mut self) -> Option<u8> {
-    let b = self.current_byte();
-    if b.is_some() {
-      self.pos += 1;
-    }
-    b
-  }
-
-  /// Current position as `u32` for span building
-  #[must_use]
-  pub const fn pos_u32(&self) -> u32 {
-    self.pos as u32
-  }
-
-  /// Return a string slice from `start..end` in `source_text`
-  #[must_use]
-  pub fn slice(&self, start: u32, end: u32) -> &'a str {
-    &self.source_text[start as usize..end as usize]
-  }
-
-  /// Skip ASCII whitespace
-  pub fn skip_whitespace(&mut self) {
-    while let Some(b) = self.current_byte() {
-      if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
-        self.pos += 1;
-      } else {
-        break;
-      }
-    }
-  }
-
-  /// Push a recoverable error
-  pub fn push_error(&mut self, err: OxcDiagnostic) {
-    self.errors.push(err);
   }
 }
 
@@ -283,19 +226,17 @@ pub fn parse_impl<'a>(
   source_text: &'a str,
 ) -> VueSingleFileComponent<'a> {
   let mut parser = Parser::new(allocator, source_text);
-  parser.pos = 0;
 
   let children = parser.parse_children(None);
   parser.sort_script_comments();
 
-  let source_len = source_text.len() as u32;
   let irregular_whitespaces = collect_irregular_whitespaces(source_text);
-
   let panicked = parser.panicked;
 
   VueSingleFileComponent {
     children,
     script_comments: parser.script_comments,
+    script_tokens: parser.script_tokens,
     irregular_whitespaces,
     clean_spans: parser.clean_spans,
     module_record: parser.module_record,

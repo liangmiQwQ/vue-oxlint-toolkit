@@ -1,10 +1,11 @@
 //! Attribute and directive parsing.
 
+use oxc_span::Span;
+
 use crate::ast::{
   DirectiveArgument, DirectiveName, VAttrOrDirective, VAttribute, VAttributeValue, VDirective,
 };
 use crate::parser::Parser;
-use oxc_span::Span;
 
 impl<'a> Parser<'a> {
   /// Parse one attribute or directive from the current position.

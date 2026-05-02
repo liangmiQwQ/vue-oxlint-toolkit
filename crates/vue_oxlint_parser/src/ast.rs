@@ -3,6 +3,7 @@
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::{BindingPattern, Expression, FormalParameters, Program, Statement};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_parser::Token;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashSet;
@@ -13,6 +14,12 @@ pub struct VueSingleFileComponent<'a> {
   pub children: Vec<VNode<'a>>,
   /// ONLY comments from `<script>` / `<script setup>` bodies
   pub script_comments: Vec<oxc_ast::Comment>,
+  /// Lexed JS tokens from `<script>` / `<script setup>` bodies.
+  ///
+  /// Collected via `oxc_parser::TokensParserConfig`. Required by
+  /// `vue-eslint-parser`-shaped consumers that need `Program.tokens`.
+  /// Token spans are in original SFC byte-offset space.
+  pub script_tokens: Vec<Token>,
   pub irregular_whitespaces: Box<[Span]>,
   pub clean_spans: FxHashSet<Span>,
   pub module_record: ModuleRecord<'a>,

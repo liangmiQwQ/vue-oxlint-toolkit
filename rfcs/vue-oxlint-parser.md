@@ -23,14 +23,17 @@
 VueSingleFileComponent {
   children: Vec<VNode>,                 // SFC tags as a flat children list
   script_comments: Vec<Comment>,        // ONLY comments from <script> / <script setup> bodies
+  script_tokens: Vec<Token>,            // JS tokens from scripts, collected via TokensParserConfig
   irregular_whitespaces: Box<[Span]>,
   clean_spans: FxHashSet<Span>,
-  module_record: ModuleRecord,  // Moved from the current jsx crate
+  module_record: ModuleRecord,          // Moved from the current jsx crate
   source_type: SourceType,              // derived from <script (setup) lang>
   errors: Vec<OxcDiagnostic>,
   panicked: bool,                       // unrecoverable parse failure, like oxc_parser
 }
 ```
+
+`Token` is `oxc_parser::Token` (a packed `u128` with `kind()`, `span()`, etc.). Token spans are in original SFC byte-offset space. Consumers mapping to `vue-eslint-parser`-shaped output should include these in `Program.tokens`.
 
 HTML `<!-- -->` comments live as `VComment` nodes in the tree — they are _not_ flattened into `script_comments`. The two comment worlds stay separate; the ESTree adapter on the toolkit side will route script comments to `Program.comments` and leave template comments on their tree positions.
 
@@ -126,6 +129,25 @@ Once every V-node has a real span and embedded JS is pre-parsed:
 - v-on gains a real implementation: `($event-less) => { stmts }` arrow wrappers in JSX output (`() => { ... }` block-statement form) so statement-list handlers stop being silently dropped.
 
 `ParserImpl` shrinks to a "V-tree → JSX `Program` transformer." The mutable buffer / `oxc_parse` trick moves out of the JSX crate into `vue_oxlint_parser`, where it belongs.
+
+## Module Layout
+
+```
+crates/vue_oxlint_parser/src/
+├── lib.rs                   # public API: parse_sfc(), VueSfcParserReturn
+├── ast.rs                   # all AST types
+├── irregular_whitespaces.rs # collect_irregular_whitespaces utility
+└── parser/
+    ├── mod.rs               # Parser struct, oxc_parse_with_wrap trick, parse_impl
+    ├── element.rs           # VNode/VElement construction (consumes lexer output)
+    ├── attribute.rs         # VAttribute / VDirective construction
+    ├── script.rs            # <script> block parsing
+    ├── expression.rs        # embedded JS: interpolations, directives, v-for, v-slot, v-on
+    └── lexer/
+        └── mod.rs           # byte-level scanning helpers (impl Parser<'a>)
+```
+
+The `lexer/` sub-module follows the same `impl Parser<'a>` pattern used by `vue_oxlint_jsx/parser/elements/`. It owns all low-level source navigation (`current_byte`, `matches`, `advance`, `skip_whitespace`, etc.) so that `element.rs` and `attribute.rs` stay focused on AST construction.
 
 ## Migration Phases
 
