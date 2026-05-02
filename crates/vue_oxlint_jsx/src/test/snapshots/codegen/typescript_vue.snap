@@ -1,11 +1,10 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
 
-async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>};
+async()=>{const a = someFunction<{ msg: 1 }>();const b = someFunction<SomeType>();<><script lang="ts" setup></script><template><div>{a.msg}</div><div></div></template></>};
 
 =============== Mappings ===============
 
@@ -13,7 +12,7 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 166,
+            end: 172,
         },
         original_span: Span {
             start: 0,
@@ -23,7 +22,7 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     Mapping {
         codegen_span: Span {
             start: 10,
-            end: 42,
+            end: 46,
         },
         original_span: Span {
             start: 25,
@@ -32,108 +31,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 15,
-            end: 42,
-        },
-        original_span: Span {
-            start: 31,
-            end: 61,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 15,
-            end: 17,
-        },
-        original_span: Span {
-            start: 31,
-            end: 32,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 18,
-            end: 42,
-        },
-        original_span: Span {
-            start: 35,
-            end: 61,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 18,
-            end: 30,
-        },
-        original_span: Span {
-            start: 35,
-            end: 47,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 30,
-            end: 40,
-        },
-        original_span: Span {
             start: 47,
-            end: 59,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 31,
-            end: 39,
-        },
-        original_span: Span {
-            start: 48,
-            end: 58,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 32,
-            end: 37,
-        },
-        original_span: Span {
-            start: 50,
-            end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 32,
-            end: 35,
-        },
-        original_span: Span {
-            start: 50,
-            end: 53,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 36,
-            end: 37,
-        },
-        original_span: Span {
-            start: 53,
-            end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 36,
-            end: 37,
-        },
-        original_span: Span {
-            start: 55,
-            end: 56,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 43,
-            end: 75,
+            end: 81,
         },
         original_span: Span {
             start: 62,
@@ -142,68 +41,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 48,
-            end: 75,
-        },
-        original_span: Span {
-            start: 68,
-            end: 96,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 48,
-            end: 50,
-        },
-        original_span: Span {
-            start: 68,
-            end: 69,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 75,
-        },
-        original_span: Span {
-            start: 72,
-            end: 96,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 51,
-            end: 63,
-        },
-        original_span: Span {
-            start: 72,
-            end: 84,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 63,
-            end: 73,
-        },
-        original_span: Span {
             start: 84,
-            end: 94,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 64,
-            end: 72,
-        },
-        original_span: Span {
-            start: 85,
-            end: 93,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 78,
-            end: 111,
+            end: 117,
         },
         original_span: Span {
             start: 0,
@@ -212,8 +51,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 78,
-            end: 102,
+            start: 84,
+            end: 108,
         },
         original_span: Span {
             start: 0,
@@ -222,8 +61,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 79,
-            end: 85,
+            start: 85,
+            end: 91,
         },
         original_span: Span {
             start: 1,
@@ -232,8 +71,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 86,
-            end: 95,
+            start: 92,
+            end: 101,
         },
         original_span: Span {
             start: 8,
@@ -242,8 +81,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 86,
-            end: 90,
+            start: 92,
+            end: 96,
         },
         original_span: Span {
             start: 8,
@@ -252,8 +91,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 91,
-            end: 95,
+            start: 97,
+            end: 101,
         },
         original_span: Span {
             start: 14,
@@ -262,8 +101,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 96,
-            end: 101,
+            start: 102,
+            end: 107,
         },
         original_span: Span {
             start: 18,
@@ -272,8 +111,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 102,
-            end: 111,
+            start: 108,
+            end: 117,
         },
         original_span: Span {
             start: 115,
@@ -282,8 +121,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 104,
-            end: 110,
+            start: 110,
+            end: 116,
         },
         original_span: Span {
             start: 117,
@@ -292,8 +131,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 111,
-            end: 161,
+            start: 117,
+            end: 167,
         },
         original_span: Span {
             start: 126,
@@ -302,8 +141,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 111,
-            end: 121,
+            start: 117,
+            end: 127,
         },
         original_span: Span {
             start: 126,
@@ -312,8 +151,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 112,
-            end: 120,
+            start: 118,
+            end: 126,
         },
         original_span: Span {
             start: 127,
@@ -322,8 +161,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 121,
-            end: 139,
+            start: 127,
+            end: 145,
         },
         original_span: Span {
             start: 139,
@@ -332,8 +171,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 121,
-            end: 126,
+            start: 127,
+            end: 132,
         },
         original_span: Span {
             start: 139,
@@ -342,8 +181,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 122,
-            end: 125,
+            start: 128,
+            end: 131,
         },
         original_span: Span {
             start: 140,
@@ -352,8 +191,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 126,
-            end: 133,
+            start: 132,
+            end: 139,
         },
         original_span: Span {
             start: 144,
@@ -362,8 +201,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 127,
-            end: 132,
+            start: 133,
+            end: 138,
         },
         original_span: Span {
             start: 147,
@@ -372,8 +211,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 127,
-            end: 128,
+            start: 133,
+            end: 134,
         },
         original_span: Span {
             start: 147,
@@ -382,8 +221,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 129,
-            end: 132,
+            start: 135,
+            end: 138,
         },
         original_span: Span {
             start: 149,
@@ -392,8 +231,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 133,
-            end: 139,
+            start: 139,
+            end: 145,
         },
         original_span: Span {
             start: 155,
@@ -402,8 +241,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 135,
-            end: 138,
+            start: 141,
+            end: 144,
         },
         original_span: Span {
             start: 157,
@@ -412,8 +251,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 139,
-            end: 150,
+            start: 145,
+            end: 156,
         },
         original_span: Span {
             start: 164,
@@ -422,8 +261,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 139,
-            end: 144,
+            start: 145,
+            end: 150,
         },
         original_span: Span {
             start: 164,
@@ -432,8 +271,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 140,
-            end: 143,
+            start: 146,
+            end: 149,
         },
         original_span: Span {
             start: 165,
@@ -442,8 +281,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 144,
-            end: 150,
+            start: 150,
+            end: 156,
         },
         original_span: Span {
             start: 195,
@@ -452,8 +291,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 146,
-            end: 149,
+            start: 152,
+            end: 155,
         },
         original_span: Span {
             start: 197,
@@ -462,8 +301,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 150,
-            end: 161,
+            start: 156,
+            end: 167,
         },
         original_span: Span {
             start: 202,
@@ -472,8 +311,8 @@ async()=>{const a=someFunction<{msg:1;}>();const b=someFunction<SomeType>();<><s
     },
     Mapping {
         codegen_span: Span {
-            start: 152,
-            end: 160,
+            start: 158,
+            end: 166,
         },
         original_span: Span {
             start: 204,

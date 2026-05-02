@@ -19,7 +19,7 @@ use oxc_syntax::{
   operator::{BinaryOperator, UnaryOperator, UpdateOperator},
   precedence::Precedence,
 };
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 mod binary_expr_visitor;
 mod context;
@@ -85,6 +85,11 @@ pub struct Codegen<'a> {
   mappings: Vec<Mapping>,
   mapping_stack: Vec<Option<usize>>,
 
+  /// Clean node spans — these map to original source text and can be emitted verbatim.
+  clean_spans: FxHashSet<Span>,
+  /// Original source text, populated at build time from the program.
+  source_text: Option<&'a str>,
+
   // states
   prev_op_end: usize,
   prev_reg_exp_end: usize,
@@ -125,6 +130,8 @@ impl<'a> Codegen<'a> {
       code: CodeBuffer::default(),
       mappings: Vec::new(),
       mapping_stack: Vec::new(),
+      clean_spans: FxHashSet::default(),
+      source_text: None,
       needs_semicolon: false,
       need_space_before_dot: 0,
       binary_expr_stack: Stack::with_capacity(12),
@@ -140,10 +147,18 @@ impl<'a> Codegen<'a> {
     }
   }
 
+  /// Register clean spans so the codegen can copy source text verbatim for unchanged nodes.
+  #[must_use]
+  pub fn with_clean_spans(mut self, clean_spans: FxHashSet<Span>) -> Self {
+    self.clean_spans = clean_spans;
+    self
+  }
+
   /// Print a [`Program`] into a string of source code.
   ///
   #[must_use]
   pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
+    self.source_text = Some(program.source_text);
     self.code.reserve(program.source_text.len());
     program.print(&mut self, Context::default());
     let code = self.code.into_string();
@@ -293,6 +308,32 @@ impl<'a> Codegen<'a> {
 
   fn code_len(&self) -> usize {
     self.code().len()
+  }
+
+  /// Attempt to emit a clean node by copying source text verbatim.
+  ///
+  /// Returns `true` and emits the original source slice + a single mapping when `span` is in
+  /// the clean set. Returns `false` when the node should be emitted via normal codegen.
+  pub(crate) fn try_emit_clean(&mut self, span: Span) -> bool {
+    if span.start == 0 && span.end == 0 {
+      return false;
+    }
+    let Some(source_text) = self.source_text else {
+      return false;
+    };
+    if !self.clean_spans.contains(&span) {
+      return false;
+    }
+    let text = &source_text[span.start as usize..span.end as usize];
+    let codegen_start = self.code_len() as u32;
+    self.print_str(text);
+    let codegen_end = self.code_len() as u32;
+    self.mappings.push(Mapping::new(Span::new(codegen_start, codegen_end), span));
+    // If the clean text already ends with `;` no extra separator is needed.
+    // In all other cases (including `}`) signal that a `;` should precede the next statement.
+    // Function/class declarations that end with `}` will harmlessly get a trailing `;\n`.
+    self.needs_semicolon = self.last_byte() != Some(b';');
+    true
   }
 
   pub(crate) fn enter_mapping(&mut self, span: Span) {
@@ -484,6 +525,7 @@ impl<'a> Codegen<'a> {
     ctx: Context,
   ) {
     for directive in directives {
+      self.print_semicolon_if_needed();
       directive.print(self, ctx);
     }
     self.print_stmts(stmts, ctx);

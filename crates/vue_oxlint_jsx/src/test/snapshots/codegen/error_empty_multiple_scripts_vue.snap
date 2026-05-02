@@ -1,11 +1,10 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
 
-const a=1;async()=>{<><script></script><script></script></>};
+const a = 1;async()=>{<><script></script><script></script></>};
 
 =============== Mappings ===============
 
@@ -13,7 +12,7 @@ const a=1;async()=>{<><script></script><script></script></>};
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 61,
+            end: 63,
         },
         original_span: Span {
             start: 0,
@@ -23,7 +22,7 @@ const a=1;async()=>{<><script></script><script></script></>};
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 9,
+            end: 12,
         },
         original_span: Span {
             start: 9,
@@ -32,38 +31,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 5,
-            end: 9,
-        },
-        original_span: Span {
-            start: 15,
-            end: 20,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 5,
-            end: 7,
-        },
-        original_span: Span {
-            start: 15,
-            end: 16,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 8,
-            end: 9,
-        },
-        original_span: Span {
-            start: 19,
-            end: 20,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 22,
-            end: 39,
+            start: 24,
+            end: 41,
         },
         original_span: Span {
             start: 0,
@@ -72,8 +41,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 22,
-            end: 30,
+            start: 24,
+            end: 32,
         },
         original_span: Span {
             start: 0,
@@ -82,8 +51,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 23,
-            end: 29,
+            start: 25,
+            end: 31,
         },
         original_span: Span {
             start: 1,
@@ -92,8 +61,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 30,
-            end: 39,
+            start: 32,
+            end: 41,
         },
         original_span: Span {
             start: 22,
@@ -102,8 +71,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 32,
-            end: 38,
+            start: 34,
+            end: 40,
         },
         original_span: Span {
             start: 24,
@@ -112,8 +81,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 39,
-            end: 56,
+            start: 41,
+            end: 58,
         },
         original_span: Span {
             start: 33,
@@ -122,8 +91,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 39,
-            end: 47,
+            start: 41,
+            end: 49,
         },
         original_span: Span {
             start: 33,
@@ -132,8 +101,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 40,
-            end: 46,
+            start: 42,
+            end: 48,
         },
         original_span: Span {
             start: 34,
@@ -142,8 +111,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 47,
-            end: 56,
+            start: 49,
+            end: 58,
         },
         original_span: Span {
             start: 43,
@@ -152,8 +121,8 @@ const a=1;async()=>{<><script></script><script></script></>};
     },
     Mapping {
         codegen_span: Span {
-            start: 49,
-            end: 55,
+            start: 51,
+            end: 57,
         },
         original_span: Span {
             start: 45,

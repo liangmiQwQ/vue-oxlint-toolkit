@@ -49,6 +49,7 @@ impl<'a> ParserImpl<'a> {
           global,
           setup,
           sfc_struct_jsx_statement: sfc_return,
+          clean_spans,
           ..
         } = self;
 
@@ -69,6 +70,7 @@ impl<'a> ParserImpl<'a> {
             ),
           ),
           irregular_whitespaces: collect_irregular_whitespaces(source_text),
+          clean_spans,
           fatal: false,
           errors,
           module_record,
@@ -80,6 +82,7 @@ impl<'a> ParserImpl<'a> {
         errors: self.errors,
         module_record: ModuleRecord::new(self.allocator),
         irregular_whitespaces: Box::new([]),
+        clean_spans: rustc_hash::FxHashSet::default(),
       },
     }
   }

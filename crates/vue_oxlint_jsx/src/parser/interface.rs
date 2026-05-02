@@ -99,7 +99,7 @@ impl<'a> VueJsxParser<'a> {
   /// ```
   #[must_use]
   pub fn parse(self) -> VueJsxParserReturn<'a> {
-    let ParserImplReturn { program, errors, fatal, module_record, irregular_whitespaces } =
+    let ParserImplReturn { program, errors, fatal, module_record, irregular_whitespaces, .. } =
       ParserImpl::new(self.allocator, self.source_text, self.options, ParseConfig::default())
         .parse();
 

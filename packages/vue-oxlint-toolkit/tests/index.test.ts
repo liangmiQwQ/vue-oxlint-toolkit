@@ -12,7 +12,7 @@ const msg: string = 'hello'
   const result = transformJsx(source)
 
   expect(result.scriptKind).toBe('tsx')
-  expect(result.sourceText).toContain("const msg:string='hello';")
+  expect(result.sourceText).toContain("const msg: string = 'hello'")
   expect(result.sourceText).toContain('<div>{msg}</div>')
 
   const originalStart = source.indexOf('msg }}</')

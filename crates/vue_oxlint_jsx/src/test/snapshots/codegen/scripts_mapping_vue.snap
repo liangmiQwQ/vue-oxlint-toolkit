@@ -22,11 +22,11 @@ expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 1,
+            end: 2,
         },
         original_span: Span {
             start: 9,
-            end: 10,
+            end: 11,
         },
     },
     Mapping {

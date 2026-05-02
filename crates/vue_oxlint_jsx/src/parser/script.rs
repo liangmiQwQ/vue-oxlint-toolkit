@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::Statement;
 
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType};
 use vue_compiler_core::{
   parser::{ElemProp, Element},
   util::{find_prop, prop_finder},
@@ -69,6 +69,13 @@ impl<'a> ParserImpl<'a> {
       else {
         return ResParse::success(());
       };
+
+      for directive in &directives {
+        self.clean_spans.insert(directive.span());
+      }
+      for stmt in &body {
+        self.clean_spans.insert(stmt.span());
+      }
 
       // Deal with modules record there
       if is_setup {

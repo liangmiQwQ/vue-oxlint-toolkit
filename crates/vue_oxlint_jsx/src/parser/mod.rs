@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::ParseOptions;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
+use rustc_hash::FxHashSet;
 
 mod codegen;
 mod elements;
@@ -51,6 +52,8 @@ pub struct ParserImpl<'a> {
   global: ScriptBlock<'a>,
   setup: ScriptBlock<'a>,
   sfc_struct_jsx_statement: Option<Statement<'a>>,
+
+  clean_spans: FxHashSet<Span>,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -85,6 +88,8 @@ impl<'a> ParserImpl<'a> {
       global: ScriptBlock { directives: ast.vec(), statements: ast.vec() },
       setup: ScriptBlock { directives: ast.vec(), statements: ast.vec() },
       sfc_struct_jsx_statement: None,
+
+      clean_spans: FxHashSet::default(),
     }
   }
 }
@@ -93,6 +98,7 @@ pub struct ParserImplReturn<'a> {
   pub program: Program<'a>,
   pub module_record: ModuleRecord<'a>,
   pub irregular_whitespaces: Box<[Span]>,
+  pub clean_spans: FxHashSet<Span>,
 
   pub fatal: bool,
   pub errors: Vec<OxcDiagnostic>,

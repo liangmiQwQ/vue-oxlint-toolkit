@@ -1,11 +1,10 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============
 
-import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></template><script setup></script></>};
+import { ref } from 'vue';async()=>{const count = ref(0);<><template><div></div></template><script setup></script></>};
 
 =============== Mappings ===============
 
@@ -13,7 +12,7 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 112,
+            end: 119,
         },
         original_span: Span {
             start: 0,
@@ -23,7 +22,7 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     Mapping {
         codegen_span: Span {
             start: 0,
-            end: 20,
+            end: 25,
         },
         original_span: Span {
             start: 61,
@@ -32,18 +31,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 7,
-            end: 10,
-        },
-        original_span: Span {
-            start: 70,
-            end: 73,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 31,
-            end: 49,
+            start: 36,
+            end: 56,
         },
         original_span: Span {
             start: 88,
@@ -52,58 +41,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 36,
-            end: 49,
-        },
-        original_span: Span {
-            start: 94,
-            end: 108,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 36,
-            end: 42,
-        },
-        original_span: Span {
-            start: 94,
-            end: 99,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 43,
-            end: 49,
-        },
-        original_span: Span {
-            start: 102,
-            end: 108,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 43,
-            end: 46,
-        },
-        original_span: Span {
-            start: 102,
-            end: 105,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 47,
-            end: 48,
-        },
-        original_span: Span {
-            start: 106,
-            end: 107,
-        },
-    },
-    Mapping {
-        codegen_span: Span {
-            start: 52,
-            end: 84,
+            start: 59,
+            end: 91,
         },
         original_span: Span {
             start: 0,
@@ -112,8 +51,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 52,
-            end: 62,
+            start: 59,
+            end: 69,
         },
         original_span: Span {
             start: 0,
@@ -122,8 +61,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 53,
-            end: 61,
+            start: 60,
+            end: 68,
         },
         original_span: Span {
             start: 1,
@@ -132,8 +71,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 62,
-            end: 73,
+            start: 69,
+            end: 80,
         },
         original_span: Span {
             start: 13,
@@ -142,8 +81,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 62,
-            end: 67,
+            start: 69,
+            end: 74,
         },
         original_span: Span {
             start: 13,
@@ -152,8 +91,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 63,
-            end: 66,
+            start: 70,
+            end: 73,
         },
         original_span: Span {
             start: 14,
@@ -162,8 +101,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 67,
-            end: 73,
+            start: 74,
+            end: 80,
         },
         original_span: Span {
             start: 26,
@@ -172,8 +111,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 69,
-            end: 72,
+            start: 76,
+            end: 79,
         },
         original_span: Span {
             start: 28,
@@ -182,8 +121,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 73,
-            end: 84,
+            start: 80,
+            end: 91,
         },
         original_span: Span {
             start: 33,
@@ -192,8 +131,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 75,
-            end: 83,
+            start: 82,
+            end: 90,
         },
         original_span: Span {
             start: 35,
@@ -202,8 +141,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 84,
-            end: 107,
+            start: 91,
+            end: 114,
         },
         original_span: Span {
             start: 46,
@@ -212,8 +151,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 84,
-            end: 98,
+            start: 91,
+            end: 105,
         },
         original_span: Span {
             start: 46,
@@ -222,8 +161,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 85,
-            end: 91,
+            start: 92,
+            end: 98,
         },
         original_span: Span {
             start: 47,
@@ -232,8 +171,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 92,
-            end: 97,
+            start: 99,
+            end: 104,
         },
         original_span: Span {
             start: 54,
@@ -242,8 +181,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 98,
-            end: 107,
+            start: 105,
+            end: 114,
         },
         original_span: Span {
             start: 109,
@@ -252,8 +191,8 @@ import{ref}from'vue';async()=>{const count=ref(0);<><template><div></div></templ
     },
     Mapping {
         codegen_span: Span {
-            start: 100,
-            end: 106,
+            start: 107,
+            end: 113,
         },
         original_span: Span {
             start: 111,

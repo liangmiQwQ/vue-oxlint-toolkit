@@ -99,7 +99,7 @@ impl<'a> VueJsxCodegen<'a> {
       };
     }
 
-    let codegen_ret = Codegen::new().build(&ret.program);
+    let codegen_ret = Codegen::new().with_clean_spans(ret.clean_spans).build(&ret.program);
     let source_text = codegen_ret.code;
     let source_type = ret.program.source_type;
     let comments = ret.program.comments.iter().copied().collect();
@@ -123,4 +123,6 @@ mod tests {
   test_ast!(scripts_codegen_fidelity_vue, "scripts/codegen_fidelity.vue");
 
   test_ast!(scripts_mapping_vue, "scripts/mapping.vue");
+
+  test_ast!(scripts_directive_prologue_vue, "scripts/directive_prologue.vue");
 }

@@ -45,6 +45,7 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 - A `ScriptBlock` is collected for the global `<script>` and the `<script setup>` block independently (`global` and `setup`); they're stitched into a single `Program` during parse.
 - Comments and irregular whitespaces are tracked separately because they're stripped/relocated during the SFC→JS rewrite but must be reported back with original-source spans.
 - The codegen entry point (`VueJsxCodegen`) drops the parser allocator before returning — only owned data is exposed. Use `VueJsxParser` instead if you need the AST itself.
+- **Clean-set mapping**: `ParserImpl` maintains a `clean_spans: FxHashSet<Span>` of spans that come directly from the original source (top-level statements and directives from each `<script>` block). `Codegen` receives this set via `with_clean_spans()` and, before printing any node, checks if its span is clean. Clean nodes are emitted verbatim from `program.source_text` with a single mapping entry; dirty nodes use the normal per-child traversal. This eliminates overlapping mapping entries for unchanged script content and preserves original whitespace/formatting.
 
 ## Vue/SFC parsing context
 
