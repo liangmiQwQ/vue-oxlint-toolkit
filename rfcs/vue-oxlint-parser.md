@@ -6,7 +6,7 @@
 
 1. Replace `vue-compiler-core` with a Rust-native SFC parser owned by this repo.
 2. Produce one canonical AST (`VueSingleFileComponent`) consumed by both downstreams.
-3. Parse every embedded JS region exactly once during SFC parsing where practical. A small number of secondary parses is acceptable when needed for `vue-eslint-parser` compatibility.
+3. Parse every embedded JS region exactly once during SFC parsing where practical.
 4. Strict, complete spans on every node — no missing locations.
 5. Preserve and extend the `clean_spans` mechanism from the clean-codegen-mapping RFC.
 
@@ -25,8 +25,8 @@ VueSingleFileComponent {
   script_comments: Vec<Comment>,        // ONLY comments from <script> / <script setup> bodies
   irregular_whitespaces: Box<[Span]>,
   clean_spans: FxHashSet<Span>,
-  module_record: ModuleRecord,
-  source_type: SourceType,              // derived from <script lang>
+  module_record: ModuleRecord,  // Moved from the current jsx crate
+  source_type: SourceType,              // derived from <script (setup) lang>
   errors: Vec<OxcDiagnostic>,
   panicked: bool,                       // unrecoverable parse failure, like oxc_parser
 }
@@ -55,23 +55,15 @@ Every embedded JS region is parsed during SFC parsing and stored as an `oxc_ast`
 | `:foo` / `v-bind` / `v-if` / `v-show` / `v-model` | parse as expression                                                                                  | `Expression` on the directive                                    |
 | `v-for="(a,i) in xs"`                             | regex-split on `\s(in\|of)\s`; wrap LHS as `((LHS)=>0)` to recover patterns; parse RHS as expression | `VForDirective { left: Vec<BindingPattern>, right: Expression }` |
 | `v-slot:name="(props)"`                           | wrap as `((props)=>0)` to get parameters                                                             | `VSlotDirective { params: Option<Vec<BindingPattern>> }`         |
-| `v-on` / `@evt`                                   | try as expression first; on failure, parse as statement list with `{ ... }` wrap                     | `VOnDirective { body: VOnBody }`                                 |
-
-Where:
-
-```
-VOnBody = Expression(Expression) | Statements(Vec<Statement>)
-```
-
-`v-on` is the one place where strict "parse exactly once" gives way to compatibility — `vue-eslint-parser` exposes `VOnExpression { body: Statement[] }` for the statement-list form, and matching that shape requires the second-attempt parse path.
+| `v-on` / `@evt`                                   | parse as statements list with `{ ... }` (BlockStatement) wrap                                        | `VOnExpression`                                                  |
 
 ### Reusing the `oxc_parse` mutation trick
 
 The in-place wrap-and-reset pattern in today's `parser/mod.rs::oxc_parse` (writing wrap bytes into the arena buffer, parsing, then resetting) is the foundation of "spans always point to original SFC offsets." This is lifted into `vue_oxlint_parser` essentially verbatim.
 
-## TypeScript
+## SourceType
 
-`VueSingleFileComponent.source_type` is derived during parsing: if either `<script>` block has `lang="ts"` (or `tsx`), the SFC is TS. `<script setup lang="ts">` + plain `<script>` → still TS (setup dominates). This matches how `vue-eslint-parser` + `@typescript-eslint/parser` currently interact.
+`VueSingleFileComponent.source_type` is derived during parsing. We should follow the similar logic in the current jsx crate, parse script's source_type first before doing other things, error on multiple sourceTypes in the one single SFC. This matches how `vue-eslint-parser` + `@typescript-eslint/parser` currently interact.
 
 ## Arena Ownership
 
@@ -149,5 +141,4 @@ Each phase keeps the JSX crate's existing test suite green; regressions surface 
 
 ## Open Questions
 
-- The two-allocator (`'b: 'a`) ownership scheme is unproven in this codebase. Phase 1 should prototype it before committing the full API surface.
-- The eventual binary serialization format across the napi boundary, if JSON proves too slow at scale.
+- The two-allocator (`'b: 'a`) ownership scheme is unproven in this codebase.
