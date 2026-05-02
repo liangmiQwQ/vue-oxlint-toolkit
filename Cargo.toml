@@ -3,7 +3,7 @@ resolver = "3"
 members = ["benchmark", "crates/*", "packages/*"]
 
 [workspace.package]
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Liang Mi <https://github.com/liangmiQwQ>", "contributors"]
 categories = ["parsing", "parser-implementations"]
 keywords = ["Vue", "oxc", "oxlint"]
