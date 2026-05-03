@@ -1,4 +1,5 @@
 //! The definition of JavaScript related nodes
+//! Most of these nodes need needs 'b lifetime to make js related nodes storage in `js_allocator`
 //!
 //! ## Expressions
 //!
@@ -15,7 +16,7 @@
 //!
 //! It's only used in <script> and <script setup> blocks.
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{Directive, Expression, FormalParameters, Statement};
 use oxc_span::Span;
 
@@ -30,6 +31,7 @@ pub struct VInterpolation<'a, 'b> {
 
 #[derive(Debug)]
 pub struct VDirectiveExpression<'a, 'b> {
+  // TODO: should we add Box wrapper to expression? (Expression is a enum, which includes a Box)
   pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
@@ -43,23 +45,23 @@ pub struct VDirectiveArgumentExpression<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct VOnExpression<'a, 'b> {
+pub struct VOnExpression<'b> {
   pub body: Vec<'b, Statement<'b>>,
-  pub references: Vec<'a, Reference<'a>>,
+  pub references: Vec<'b, Reference<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VForExpression<'a, 'b> {
-  pub left: FormalParameters<'b>,
+pub struct VForExpression<'b> {
+  pub left: Box<'b, FormalParameters<'b>>,
   pub right: Expression<'b>,
-  pub references: Vec<'a, Reference<'a>>,
+  pub references: Vec<'b, Reference<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VSlotExpression<'b> {
-  pub params: FormalParameters<'b>,
+  pub params: Box<'b, FormalParameters<'b>>,
   // There shouldn't be references in slot expression
   pub span: Span,
 }

@@ -5,11 +5,11 @@ use crate::ast::nodes::directive::{VDirective, VForDirective, VOnDirective, VSlo
 
 #[derive(Debug)]
 pub enum VAttribute<'a, 'b> {
-  Normal(Box<'a, VPureAttribute<'a>>),
-  Directive(Box<'a, VDirective<'a, 'b>>),
-  OnDirective(Box<'a, VOnDirective<'a, 'b>>),
-  SlotDirective(Box<'a, VSlotDirective<'a, 'b>>),
-  ForDirective(Box<'a, VForDirective<'a, 'b>>),
+  VPureAttribute(Box<'a, VPureAttribute<'a>>),
+  VDirective(Box<'a, VDirective<'a, 'b>>),
+  VOnDirective(Box<'a, VOnDirective<'a, 'b>>),
+  VSlotDirective(Box<'a, VSlotDirective<'a, 'b>>),
+  VForDirective(Box<'a, VForDirective<'a, 'b>>),
 }
 
 #[derive(Debug)]
