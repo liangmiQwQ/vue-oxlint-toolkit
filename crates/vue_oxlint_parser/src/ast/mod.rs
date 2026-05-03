@@ -1,9 +1,11 @@
-use crate::ast::nodes::elements::VNode;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_span::SourceType;
 
-pub mod bindings;
-pub mod nodes;
+mod bindings;
+mod nodes;
+
+pub use bindings::*;
+pub use nodes::*;
 
 /// The parsed Vue SFC.
 ///

@@ -15,7 +15,6 @@ use oxc_span::Span;
 pub struct VDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
   pub value: VDirectiveExpression<'a, 'b>,
-  pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 
@@ -23,7 +22,6 @@ pub struct VDirective<'a, 'b> {
 pub struct VOnDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
   pub value: VOnExpression<'b>,
-  pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 
@@ -31,7 +29,6 @@ pub struct VOnDirective<'a, 'b> {
 pub struct VSlotDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
   pub value: VSlotExpression<'b>,
-  pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 
@@ -39,7 +36,6 @@ pub struct VSlotDirective<'a, 'b> {
 pub struct VForDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
   pub value: VForExpression<'b>,
-  pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 
@@ -47,6 +43,7 @@ pub struct VForDirective<'a, 'b> {
 pub struct VDirectiveKey<'a, 'b> {
   pub name: &'a VIdentifier<'a>,
   pub argument: VDirectiveArgument<'a, 'b>,
+  pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 

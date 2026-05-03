@@ -3,6 +3,7 @@ use oxc_span::Span;
 
 use crate::ast::nodes::directive::{VDirective, VForDirective, VOnDirective, VSlotDirective};
 
+/// All the things inside this enum will be serialized into `VAttribute` struct.
 #[derive(Debug)]
 pub enum VAttribute<'a, 'b> {
   VPureAttribute(Box<'a, VPureAttribute<'a>>),
