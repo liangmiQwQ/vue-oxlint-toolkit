@@ -8,9 +8,10 @@ mod template;
 
 use std::ptr;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_ast::Comment;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_parser::ParseOptions;
+use oxc_parser::{ParseOptions, Token};
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashSet;
@@ -59,10 +60,7 @@ pub struct VueParseConfig {
 /// Two-allocator design is documented in the RFC; phase 1 wires the lifetime
 /// plumbing without committing to its correctness — the open question is
 /// flagged in the RFC.
-#[expect(
-  dead_code,
-  reason = "phases 3-4 will read these fields; kept on the struct so the public surface is stable from phase 1"
-)]
+#[allow(dead_code, reason = "phase 4 parser integration will consume the stored script-side state")]
 pub struct VueParser<'a, 'b>
 where
   'b: 'a,
@@ -74,18 +72,27 @@ where
   options: ParseOptions,
   config: VueParseConfig,
 
-  /// Mirror of [`crate::lexer::Lexer`]'s mutable buffer trick from the JSX
-  /// crate — wrap bytes are written here, parsed via `oxc_parser`, then the
-  /// buffer is reset to match `origin_source_text`.
+  /// Template-side source used by the lexer and recursive-descent parser.
+  source_text: &'a str,
+
+  /// Mirror of the JSX crate's mutable buffer trick for `oxc_parser` calls:
+  /// wrap bytes are written here, parsed, then reset to match
+  /// `origin_source_text`.
   ///
   /// Spans on the resulting AST refer to original SFC offsets, not the
   /// rewritten buffer.
-  source_text: &'a str,
-  mut_ptr_source_text: *mut [u8],
+  oxc_source_text: &'b str,
+  mut_ptr_oxc_source_text: *mut [u8],
 
   source_type: SourceType,
   errors: Vec<OxcDiagnostic>,
   clean_spans: FxHashSet<Span>,
+  script_comments: ArenaVec<'a, Comment>,
+  script_tokens: ArenaVec<'b, Token>,
+  module_record: ModuleRecord<'b>,
+  script_lang: Option<&'a str>,
+  script_set: bool,
+  script_setup_set: bool,
 }
 
 impl<'a, 'b> VueParser<'a, 'b>
@@ -99,7 +106,8 @@ where
     options: ParseOptions,
     config: VueParseConfig,
   ) -> Self {
-    let alloced_str = allocator_a.alloc_slice_copy(source_text.as_bytes());
+    let alloced_str_a = allocator_a.alloc_slice_copy(source_text.as_bytes());
+    let alloced_str_b = allocator_b.alloc_slice_copy(source_text.as_bytes());
 
     Self {
       allocator_a,
@@ -108,13 +116,20 @@ where
       options,
       config,
 
-      mut_ptr_source_text: ptr::from_mut(alloced_str),
-      // SAFETY: `alloced_str` was just copied from a `&str`.
-      source_text: unsafe { str::from_utf8_unchecked(alloced_str) },
+      // SAFETY: both slices were copied from a `&str`.
+      source_text: unsafe { str::from_utf8_unchecked(alloced_str_a) },
+      mut_ptr_oxc_source_text: ptr::from_mut(alloced_str_b),
+      oxc_source_text: unsafe { str::from_utf8_unchecked(alloced_str_b) },
 
       source_type: SourceType::mjs().with_unambiguous(true),
       errors: Vec::new(),
       clean_spans: FxHashSet::default(),
+      script_comments: ArenaVec::new_in(allocator_a),
+      script_tokens: ArenaVec::new_in(allocator_b),
+      module_record: ModuleRecord::new(allocator_b),
+      script_lang: None,
+      script_set: false,
+      script_setup_set: false,
     }
   }
 
@@ -130,13 +145,13 @@ where
   /// Called after each in-place wrap-and-parse cycle (see the RFC's
   /// "Reusing the `oxc_parse` mutation trick" section).
   pub const fn sync_source_text(&mut self) {
-    // SAFETY: `self.origin_source_text` and `self.mut_ptr_source_text` have
+    // SAFETY: `self.origin_source_text` and `self.mut_ptr_oxc_source_text` have
     // identical lengths; the former lives on the heap and the latter in the
     // arena, so the regions cannot overlap.
     unsafe {
       ptr::copy_nonoverlapping(
         self.origin_source_text.as_ptr(),
-        self.mut_ptr_source_text.cast(),
+        self.mut_ptr_oxc_source_text.cast(),
         self.origin_source_text.len(),
       );
     }

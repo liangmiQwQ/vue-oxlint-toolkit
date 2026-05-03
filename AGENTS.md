@@ -30,7 +30,12 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
   - `test/` — `test_ast!` and `test_module_record!` macros driving snapshot tests in `test/snapshots/`. `test_ast!` runs both AST and codegen checks on each fixture.
   - Public API is intentionally narrow: `VueJsxParser`/`VueJsxParserReturn` + `VueJsxCodegen`/`VueJsxCodegenReturn` (re-exported from `lib.rs`).
 
-- **`crates/vue_oxlint_parser`** — placeholder crate intended as a Rust port of `vue-eslint-parser`. Currently only contains a `parse_vue()` stub (`todo!()`). Plan to implement it to replace the internal parser of `vue_oxlint_jsx` and provide custom AST apis for napi bindings so that other existing Vue js plugins will be compatible with it.
+- **`crates/vue_oxlint_parser`** — in-progress Rust port of `vue-eslint-parser`.
+  - `ast.rs` — canonical V-tree surface (`VueSingleFileComponent`, `VElement`, directive/value nodes, embedded-JS attachment points).
+  - `lexer/` — first-party HTML/Vue template tokenizer, including raw-text/RCDATA/foreign-content/v-pre modes and vue-eslint-parser-compatible token kinds.
+  - `parser/mod.rs` — two-allocator `VueParser` scaffold and parse return surface.
+  - `parser/script.rs` — phase-3 script-side utilities: wrapped `oxc_parser` calls, script lang/source-type resolution, duplicate-script guards, module-record aggregation, comment/token collection, and clean-span tracking.
+  - `parser/template.rs` — reserved for the recursive-descent V-tree builder in phase 4.
 
 - **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
   - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` which calls `VueJsxCodegen::build` and converts results to N-API types (`NativeTransformResult`).
