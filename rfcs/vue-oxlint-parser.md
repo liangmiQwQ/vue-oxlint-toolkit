@@ -147,7 +147,7 @@ Once every V-node has a real span and embedded JS is pre-parsed:
 
 1. Define V-tree asts, and parser structure, use `todo!()` to mark parse / lexe / metadata logic.
 2. Define Tokens (lexer/tokens.rs) (Compatible with vue-eslint-parser's), implement high-compatible lexer, including things like raw_text, v-pre.
-3. Copy utils functions from jsx crate for `<script>` / `<script setup>` parsing + module record + comments.
+3. Copy utils functions from jsx crate for calling oxc_parser, expression parsing utils + module record + comments.
 4. Implement recursive descent parser, generate the ast. Handle all scripts part and template part.
 5. Move tests inside the jsx crate to project root, as global fixtures (use errors, panic, pass three directory, and storage .vue file flatly, adjust test code to traverse these files instead of calling test_ast! (change to only call once each crate)).
 6. Polish return value, add metadata in the return struct.
