@@ -1,34 +1,66 @@
 //! Tokens emitted by the Vue template lexer.
 //!
-//! The intent is to be compatible with `vue-eslint-parser`'s token output, so
-//! that the toolkit's `ESTree` adapter can include them in `Program.tokens`.
-//!
-//! Phase 2 of the RFC will flesh this out and implement the lexer that
-//! produces it.
+//! The variant set mirrors `vue-eslint-parser`'s intermediate-tokenizer output
+//! so that the toolkit's `ESTree` adapter can include them in `Program.tokens`
+//! verbatim. Token spans are in original SFC byte-offset space.
 
 use oxc_span::Span;
 
 /// A single template-side token.
-///
-/// Spans are in original SFC byte-offset space.
-//
-// NOTE: This is a placeholder shape. Phase 2 will:
-//   - finalise the variant set against `vue-eslint-parser`'s token kinds
-//   - decide whether to pack into `u128` like `oxc_parser::Token` for parity
-//     with the script-side tokens
 #[derive(Debug, Clone, Copy)]
 pub struct VToken {
   pub kind: VTokenKind,
   pub span: Span,
 }
 
+impl VToken {
+  #[must_use]
+  pub const fn new(kind: VTokenKind, span: Span) -> Self {
+    Self { kind, span }
+  }
+}
+
 /// Template-side token kinds.
 ///
-/// This enum is intentionally not yet exhaustive — phase 2 will expand it to
-/// match `vue-eslint-parser`'s token kinds (the `HTML*` family, plus
-/// `VExpressionStart` / `VExpressionEnd`, `Punctuator`, etc.).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Names mirror `vue-eslint-parser`'s `Token["type"]` strings: when the
+/// adapter on the toolkit side serialises tokens it can map these 1:1.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VTokenKind {
-  /// Placeholder for the not-yet-defined variants.
-  Placeholder,
+  /// `<` — opening of a start tag, immediately followed by an
+  /// [`HTMLIdentifier`](Self::HTMLIdentifier) for the tag name.
+  HTMLTagOpen,
+  /// `</` — opening of an end tag.
+  HTMLEndTagOpen,
+  /// `>` — closing of a start or end tag.
+  HTMLTagClose,
+  /// `/>` — self-closing tag terminator.
+  HTMLSelfClosingTagClose,
+  /// A tag name or attribute / directive name.
+  HTMLIdentifier,
+  /// `=` between an attribute name and value.
+  HTMLAssociation,
+  /// A quoted or unquoted attribute value (content only, quotes excluded
+  /// — quote characters live as part of the surrounding span on the parser
+  /// side, matching `vue-eslint-parser`).
+  HTMLLiteral,
+  /// Whitespace inside a tag (between attributes, around `=`, etc.).
+  HTMLWhitespace,
+  /// Plain text run in the data state.
+  HTMLText,
+  /// Body of an `<![CDATA[ ... ]]>` section (foreign content only).
+  HTMLCDataText,
+  /// Body of a `<script>` / `<style>` / `<xmp>` element — the raw text mode.
+  HTMLRawText,
+  /// Body of a `<textarea>` / `<title>` element — the RCDATA mode.
+  HTMLRCDataText,
+  /// `<!-- ... -->` — single token covering open, body, and close.
+  HTMLComment,
+  /// `<!foo>` / `</...>` malformed — single bogus-comment token.
+  HTMLBogusComment,
+  /// `{{` — opening of a Vue interpolation.
+  VExpressionStart,
+  /// `}}` — closing of a Vue interpolation.
+  VExpressionEnd,
+  /// `:`, `.`, `#`, `@`, `*` — directive shorthand / separator punctuation.
+  Punctuator,
 }
