@@ -1,14 +1,13 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-use crate::ast::VAttribute;
+use crate::ast::{VAttribute, nodes::javascript::VInterpolation};
 
 pub enum VNode<'a> {
   Element(VElement<'a>),
   Text(VText<'a>),
   Comment(VComment<'a>),
   Interpolation(VInterpolation<'a>),
-  CData(VCData<'a>),
 }
 
 pub struct VElement<'a> {
@@ -27,5 +26,16 @@ pub struct VStartTag<'a> {
 }
 
 pub struct VEndTag {
+  pub span: Span,
+}
+
+pub struct VText<'a> {
+  pub text: &'a str,
+  pub span: Span,
+}
+
+/// This won't be serialized, will just simply skip to follow vue-eslint-parser's behavior.
+pub struct VComment<'a> {
+  pub value: &'a str,
   pub span: Span,
 }
