@@ -9,8 +9,8 @@ pub mod nodes;
 ///
 /// `children` is a flat list of top-level SFC nodes (e.g. `<template>`,
 /// `<script>`, `<style>`, plus any whitespace / comments between them).
-pub struct VueSingleFileComponent<'a> {
-  pub children: ArenaVec<'a, VNode<'a>>,
+pub struct VueSingleFileComponent<'a, 'b> {
+  pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub script_comments: ArenaVec<'a, oxc_ast::Comment>,
   pub template_comments: ArenaVec<'a, ()>,
   pub source_type: SourceType,

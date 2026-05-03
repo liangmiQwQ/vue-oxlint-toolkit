@@ -25,7 +25,7 @@ use crate::lexer::Lexer;
 /// parsed root, side-channel metadata, and a recoverable-vs-fatal split via
 /// `errors` + `panicked`.
 pub struct VueParserReturn<'a, 'b> {
-  pub sfc: VueSingleFileComponent<'a>,
+  pub sfc: VueSingleFileComponent<'a, 'b>,
   pub irregular_whitespaces: Box<[Span]>,
   /// Spans coming directly from a single `oxc_parser` call — see the
   /// clean-codegen-mapping RFC for how the codegen side consumes this.

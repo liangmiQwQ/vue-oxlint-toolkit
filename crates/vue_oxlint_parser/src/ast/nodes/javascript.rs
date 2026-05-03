@@ -22,51 +22,52 @@ use oxc_span::Span;
 use crate::ast::bindings::Reference;
 
 #[derive(Debug)]
-pub struct VInterpolation<'a> {
-  pub expression: Expression<'a>,
+pub struct VInterpolation<'a, 'b> {
+  pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VDirectiveExpression<'a> {
-  pub expression: Expression<'a>,
+pub struct VDirectiveExpression<'a, 'b> {
+  pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VDirectiveArgumentExpression<'a> {
-  pub expression: Expression<'a>,
+pub struct VDirectiveArgumentExpression<'a, 'b> {
+  pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VOnExpression<'a> {
-  pub body: Vec<'a, Statement<'a>>,
+pub struct VOnExpression<'a, 'b> {
+  pub body: Vec<'b, Statement<'b>>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VForExpression<'a> {
-  pub left: FormalParameters<'a>,
-  pub right: Expression<'a>,
+pub struct VForExpression<'a, 'b> {
+  pub left: FormalParameters<'b>,
+  pub right: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VSlotExpression<'a> {
-  pub params: FormalParameters<'a>,
+pub struct VSlotExpression<'b> {
+  pub params: FormalParameters<'b>,
+  // There shouldn't be references in slot expression
   pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct VPureScript<'a> {
-  pub statements: Vec<'a, Statement<'a>>,
-  pub directives: Vec<'a, Directive<'a>>,
+pub struct VPureScript<'b> {
+  pub statements: Vec<'b, Statement<'b>>,
+  pub directives: Vec<'b, Directive<'b>>,
   pub span: Span,
 }
 

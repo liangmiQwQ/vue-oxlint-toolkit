@@ -4,12 +4,12 @@ use oxc_span::Span;
 use crate::ast::nodes::directive::{VDirective, VForDirective, VOnDirective, VSlotDirective};
 
 #[derive(Debug)]
-pub enum VAttribute<'a> {
+pub enum VAttribute<'a, 'b> {
   Normal(Box<'a, VPureAttribute<'a>>),
-  Directive(Box<'a, VDirective<'a>>),
-  OnDirective(Box<'a, VOnDirective<'a>>),
-  SlotDirective(Box<'a, VSlotDirective<'a>>),
-  ForDirective(Box<'a, VForDirective<'a>>),
+  Directive(Box<'a, VDirective<'a, 'b>>),
+  OnDirective(Box<'a, VOnDirective<'a, 'b>>),
+  SlotDirective(Box<'a, VSlotDirective<'a, 'b>>),
+  ForDirective(Box<'a, VForDirective<'a, 'b>>),
 }
 
 #[derive(Debug)]
