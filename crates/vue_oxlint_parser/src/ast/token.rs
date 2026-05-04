@@ -1,13 +1,14 @@
-use oxc_estree::{ESTree, Serializer};
-use oxc_estree_tokens::to_estree_tokens_json;
-use oxc_parser::Token;
-
 use crate::lexer::VToken;
+use oxc_estree::{ESTree, Serializer};
 
 #[derive(Debug)]
 pub enum SerializableToken {
   VToken(VToken),
-  OxcToken(Token),
+  /// It should be already serialized, it is a part of a JSON array
+  /// e.g. `{"type":"Identifier","start": 12,"end":13}`
+  ///
+  /// (serilizing oxc tokens is really really hard, need a lot of metadatas)
+  OxcToken(String),
 }
 
 impl From<VToken> for SerializableToken {
@@ -16,26 +17,24 @@ impl From<VToken> for SerializableToken {
   }
 }
 
-impl From<Token> for SerializableToken {
-  fn from(value: Token) -> Self {
+impl From<String> for SerializableToken {
+  fn from(value: String) -> Self {
     Self::OxcToken(value)
   }
 }
 
+/// For internal uses, usually we won't use this struct directly
+/// Only calls this in a `ArenaVec<'_, SerializableToken>`
 impl ESTree for SerializableToken {
   fn serialize<S: Serializer>(&self, mut serializer: S) {
     match self {
-      Self::OxcToken(token) => todo!(),
-      Self::VToken(token) => {
-        let mut buffer = serializer.buffer_mut();
-        buffer.print_str(to_estree_tokens_json(
-          tokens,
-          program,
-          source_text,
-          span_converter,
-          options,
-        ))
+      Self::OxcToken(string) if !string.is_empty() => {
+        serializer.buffer_mut().print_str(format!(",{string}"));
       }
+      Self::VToken(token) => {
+        todo!()
+      }
+      _ => (),
     }
   }
 }

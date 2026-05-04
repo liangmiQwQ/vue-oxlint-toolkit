@@ -1,7 +1,10 @@
 use std::ptr;
 
 use oxc_allocator::{Allocator, CloneIn, TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::{Directive, Expression, Statement};
+use oxc_ast::ast::{Directive, Expression, Statement, Str};
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
+use oxc_parser::config::TokensParserConfig;
 use oxc_span::Span;
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -24,7 +27,8 @@ where
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: Option<&'c Allocator>,
-  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>)> {
+  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>, String)>
+  {
     let start = span.start as usize;
     let end = span.end as usize;
 
@@ -78,9 +82,9 @@ where
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: &'c Allocator,
-  ) -> Option<Expression<'c>> {
+  ) -> Option<(Expression<'c>, String)> {
     // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it
-    let (_, mut body, _) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
+    let (_, mut body, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
     let Some(Statement::ExpressionStatement(stmt)) = body.get_mut(0) else {
       // SAFETY: We always wrap the source in parentheses, so it should always be an expression statement.
@@ -90,17 +94,19 @@ where
       // SAFETY: We always wrap the source in parentheses, so it should always be a parenthesized expression
       unreachable!()
     };
-    Some(expression.expression.take_in(self.js_allocator))
+    Some((expression.expression.take_in(self.js_allocator), tokens))
   }
 
   fn call_oxc_parse(
     &mut self,
     source: &'a str,
     allocator: &'c Allocator,
-  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>)> {
+  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>, String)>
+  {
     // SAFETY: all oxc_parse happens after <script> tag parsing
     let mut ret = oxc_parser::Parser::new(allocator, source, self.sfc.source_type.unwrap())
       .with_options(self.options)
+      .with_config(TokensParserConfig)
       .parse();
 
     self.errors.append(&mut ret.errors);
@@ -109,7 +115,14 @@ where
     } else {
       let mut comments = ret.program.comments.clone_in(self.js_allocator);
       self.sfc.script_comments.append(&mut comments);
-      Some((ret.program.directives, ret.program.body, ret.module_record))
+      let tokens = to_estree_tokens_json(
+        &ret.tokens,
+        &ret.program,
+        source,
+        &Utf8ToUtf16::new(source),
+        ESTreeTokenOptions::new(ret.program.source_type.is_typescript()),
+      );
+      Some((ret.program.directives, ret.program.body, ret.module_record, tokens))
     }
   }
 

@@ -19,6 +19,7 @@ oxc_span = { workspace = true, features = ["serialize"] }
 oxc_syntax = { workspace = true }
 oxc_estree = { workspace = true, features = ["serialize"] }
 oxc_estree_tokens = { workspace = true }
+oxc_ast_visit = { workspace = true }
 
 memchr = { workspace = true }
 rustc-hash = { workspace = true }
