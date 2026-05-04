@@ -29,6 +29,7 @@ use oxc_span::Span;
 
 /// Tokenizer mode. The parser flips this when it crosses element boundaries.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum LexerMode {
   /// Default mode — recognises tags, comments, character references, etc.
   Data,
@@ -66,6 +67,7 @@ pub struct Lexer<'a> {
   errors: Vec<OxcDiagnostic>,
 }
 
+#[allow(dead_code)]
 impl<'a> Lexer<'a> {
   #[must_use]
   pub fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {

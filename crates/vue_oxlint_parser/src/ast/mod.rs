@@ -53,7 +53,7 @@ where
       .collect::<Vec<ESTreeComment>>();
     state.serialize_field("template_comments", &template_comments);
 
-    state.serialize_field("source_type", &self.source_type.map(|s| s.module_kind()));
+    state.serialize_field("source_type", &self.source_type.map(SourceType::module_kind));
     state.serialize_span(self.span);
     state.end();
   }
