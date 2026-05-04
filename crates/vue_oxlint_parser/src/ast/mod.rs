@@ -1,12 +1,16 @@
 use oxc_allocator::Vec as ArenaVec;
+use oxc_ast::Comment;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 
 mod bindings;
+mod comments;
 mod nodes;
 
 pub use bindings::*;
 pub use nodes::*;
+
+use crate::ast::comments::ESTreeComment;
 
 /// The parsed Vue SFC.
 ///
@@ -16,19 +20,39 @@ pub use nodes::*;
 /// Will be serialization into  `VueSingleFileComponent` object, **NOT `ESLintProgram`**.
 pub struct VueSingleFileComponent<'a, 'b> {
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
-  pub script_comments: ArenaVec<'a, oxc_ast::Comment>,
-  pub template_comments: ArenaVec<'a, ()>,
+  pub script_comments: ArenaVec<'a, Comment>,
+  pub template_comments: ArenaVec<'a, VComment<'a>>,
   pub source_type: SourceType,
+  pub source_text: &'b str,
+  pub span: Span,
 }
 
-impl ESTree for VueSingleFileComponent<'_, '_> {
+impl<'a, 'b> ESTree for VueSingleFileComponent<'a, 'b>
+where
+  'b: 'a,
+{
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VueSingleFileComponent"));
     state.serialize_field("children", &self.children);
-    // state.serialize_field("script_comments", &self.script_comments);
-    // state.serialize_field("template_comments", &self.template_comments);
+
+    // Process comments (oxc do not serialize comments by default)
+    let script_comments: &[ESTreeComment] = &self
+      .script_comments
+      .iter()
+      .map(|comment| ESTreeComment::from_oxc_comment(comment, self.source_text))
+      .collect::<Vec<ESTreeComment>>();
+    state.serialize_field("script_comments", &script_comments);
+
+    let template_comments: &[ESTreeComment] = &self
+      .template_comments
+      .iter()
+      .map(ESTreeComment::from_v_comment)
+      .collect::<Vec<ESTreeComment>>();
+    state.serialize_field("template_comments", &template_comments);
+
     state.serialize_field("source_type", &self.source_type.module_kind());
+    state.serialize_span(self.span);
     state.end();
   }
 }
