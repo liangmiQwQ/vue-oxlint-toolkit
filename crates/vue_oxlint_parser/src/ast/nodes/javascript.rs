@@ -114,7 +114,7 @@ impl ESTree for VOnExpression<'_> {
       body: &'b Vec<'b, Statement<'b>>,
       span: Span,
     }
-    impl<'b> ESTree for VOnExpression<'b> {
+    impl ESTree for VOnExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VOnExpression"));
@@ -141,7 +141,7 @@ impl ESTree for VForExpression<'_> {
       right: &'b Expression<'b>,
       span: Span,
     }
-    impl<'b> ESTree for VForExpression<'b> {
+    impl ESTree for VForExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VForExpression"));
@@ -171,7 +171,7 @@ impl ESTree for VSlotExpression<'_> {
       params: &'b FormalParameters<'b>,
       span: Span,
     }
-    impl<'b> ESTree for VSlotExpression<'b> {
+    impl ESTree for VSlotExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VSlotScopeExpression"));

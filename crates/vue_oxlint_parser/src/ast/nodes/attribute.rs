@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_estree::{ESTree, JsonSafeString, StructSerializer};
+use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
 use crate::ast::nodes::directive::{VDirective, VForDirective, VOnDirective, VSlotDirective};
@@ -34,8 +34,20 @@ pub struct VLiteral<'a> {
   pub span: Span,
 }
 
+impl ESTree for VAttribute<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    match self {
+      VAttribute::VPureAttribute(attr) => attr.serialize(serializer),
+      VAttribute::VDirective(dir) => dir.serialize(serializer),
+      VAttribute::VOnDirective(dir) => dir.serialize(serializer),
+      VAttribute::VSlotDirective(dir) => dir.serialize(serializer),
+      VAttribute::VForDirective(dir) => dir.serialize(serializer),
+    }
+  }
+}
+
 impl ESTree for VPureAttribute<'_> {
-  fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
+  fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VPureAttribute"));
     state.serialize_field("key", &self.key);
@@ -46,18 +58,18 @@ impl ESTree for VPureAttribute<'_> {
 }
 
 impl ESTree for VIdentifier<'_> {
-  fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
+  fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VIdentifier"));
     state.serialize_field("name", &self.name);
-    state.serialize_field("raw_name", &self.raw_name);
+    state.serialize_field("rawName", &self.raw_name);
     state.serialize_span(self.span);
     state.end();
   }
 }
 
 impl ESTree for VLiteral<'_> {
-  fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
+  fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VLiteral"));
     state.serialize_field("value", &self.value);
