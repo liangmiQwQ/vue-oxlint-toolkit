@@ -15,7 +15,12 @@ impl<'a, 'b: 'a> VueParser<'a, 'b> {
   /// Parse the SFC. Phase 4 will implement this.
   #[must_use]
   pub fn parse(self) -> VueParserReturn<'a, 'b> {
-    let _lexer = Lexer::new(self.vue_allocator, self.source_text);
+    let mut lexer = Lexer::new(self.vue_allocator, self.source_text);
+
+    while let Some(token) = lexer.next_token() {
+      todo!("token: {:p}", &token)
+    }
+
     todo!()
   }
 
