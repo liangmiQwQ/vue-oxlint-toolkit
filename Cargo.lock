@@ -969,6 +969,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_estree_tokens"
+version = "0.128.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5c36992beba48845a1b1d0deb79a2259b9c14a82fd0d370ec4db6f487087ae1"
+dependencies = [
+ "itoa",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_data_structures",
+ "oxc_estree",
+ "oxc_parser",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_index"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1741,6 +1756,7 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_estree",
+ "oxc_estree_tokens",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",

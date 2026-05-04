@@ -1,9 +1,3 @@
-//! Tokens emitted by the Vue template lexer.
-//!
-//! The variant set mirrors `vue-eslint-parser`'s intermediate-tokenizer output
-//! so that the toolkit's `ESTree` adapter can include them in `Program.tokens`
-//! verbatim. Token spans are in original SFC byte-offset space.
-
 use oxc_span::Span;
 
 /// A single template-side token.
@@ -26,41 +20,59 @@ impl VToken {
 /// adapter on the toolkit side serialises tokens it can map these 1:1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VTokenKind {
-  /// `<` — opening of a start tag, immediately followed by an
-  /// [`HTMLIdentifier`](Self::HTMLIdentifier) for the tag name.
+  // HTML Tokens, which produce by lexer
+  /// e.g. <
   HTMLTagOpen,
-  /// `</` — opening of an end tag.
-  HTMLEndTagOpen,
-  /// `>` — closing of a start or end tag.
+  /// e.g. >
   HTMLTagClose,
-  /// `/>` — self-closing tag terminator.
+  /// e.g. </
+  HTMLEndTagOpen,
+  /// e.g. />
   HTMLSelfClosingTagClose,
-  /// A tag name or attribute / directive name.
+  /// e.g. div, button
   HTMLIdentifier,
-  /// `=` between an attribute name and value.
+  /// e.g. =
   HTMLAssociation,
-  /// A quoted or unquoted attribute value (content only, quotes excluded
-  /// — quote characters live as part of the surrounding span on the parser
-  /// side, matching `vue-eslint-parser`).
+  /// e.g. "hello", 'hello'
   HTMLLiteral,
-  /// Whitespace inside a tag (between attributes, around `=`, etc.).
-  HTMLWhitespace,
-  /// Plain text run in the data state.
+  /// Plain text
   HTMLText,
-  /// Body of an `<![CDATA[ ... ]]>` section (foreign content only).
-  HTMLCDataText,
-  /// Body of a `<script>` / `<style>` / `<xmp>` element — the raw text mode.
-  HTMLRawText,
-  /// Body of a `<textarea>` / `<title>` element — the RCDATA mode.
+  /// Whitespace in template
+  HTMLWhitespace,
+  /// RCDATA text (e.g. <title> internal)
   HTMLRCDataText,
-  /// `<!-- ... -->` — single token covering open, body, and close.
-  HTMLComment,
-  /// `<!foo>` / `</...>` malformed — single bogus-comment token.
-  HTMLBogusComment,
-  /// `{{` — opening of a Vue interpolation.
+  /// Raw text (e.g. <script>、<style> internal)
+  HTMLRawText,
+  /// Data in <![CDATA[...]]>
+  HTMLCDataText,
+  /// {{
   VExpressionStart,
-  /// `}}` — closing of a Vue interpolation.
+  /// }}
   VExpressionEnd,
-  /// `:`, `.`, `#`, `@`, `*` — directive shorthand / separator punctuation.
+
+  // Directive Related
+  /// e.g. `:`, `@`, `#` of (:class @click #default)
   Punctuator,
+}
+
+impl VTokenKind {
+  fn as_str(&self) -> &str {
+    match self {
+      VTokenKind::HTMLTagOpen => "HTMLTagOpen",
+      VTokenKind::HTMLTagClose => "HTMLTagClose",
+      VTokenKind::HTMLEndTagOpen => "HTMLEndTagOpen",
+      VTokenKind::HTMLSelfClosingTagClose => "HTMLSelfClosingTagClose",
+      VTokenKind::HTMLIdentifier => "HTMLIdentifier",
+      VTokenKind::HTMLAssociation => "HTMLAssociation",
+      VTokenKind::HTMLLiteral => "HTMLLiteral",
+      VTokenKind::HTMLText => "HTMLText",
+      VTokenKind::HTMLWhitespace => "HTMLWhitespace",
+      VTokenKind::HTMLRCDataText => "HTMLRCDataText",
+      VTokenKind::HTMLRawText => "HTMLRawText",
+      VTokenKind::HTMLCDataText => "HTMLCDataText",
+      VTokenKind::VExpressionStart => "VExpressionStart",
+      VTokenKind::VExpressionEnd => "VExpressionEnd",
+      VTokenKind::Punctuator => "Punctuator",
+    }
+  }
 }
