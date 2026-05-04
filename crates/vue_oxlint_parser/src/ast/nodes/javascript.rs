@@ -17,8 +17,8 @@
 //! It's only used in <script> and <script setup> blocks.
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::{Directive, Expression, FormalParameters, Statement};
-use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_ast::ast::{Directive, Expression, FormalParameters, Program, Statement};
+use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
 use crate::ast::bindings::Reference;
@@ -195,8 +195,7 @@ impl ESTree for VPureScript<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VPureScript"));
-    state.serialize_field("statements", &self.statements);
-    state.serialize_field("directives", &self.directives);
+    state.serialize_field("body", &Concat2(&self.directives, &self.statements));
     state.serialize_span(self.span);
     state.end();
   }
