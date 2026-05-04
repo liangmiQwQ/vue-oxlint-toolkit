@@ -11,12 +11,13 @@ rust-version.workspace = true
 description = "Rust port of vue-eslint-parser: AST types and SFC parser for Vue single-file components."
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
+oxc_allocator = { workspace = true, features = ["serialize"] }
+oxc_ast = { workspace = true, features = ["serialize"] }
 oxc_diagnostics = { workspace = true }
 oxc_parser = { workspace = true }
-oxc_span = { workspace = true }
+oxc_span = { workspace = true, features = ["serialize"] }
 oxc_syntax = { workspace = true }
+oxc_estree = { workspace = true, features = ["serialize"] }
 
 memchr = { workspace = true }
 rustc-hash = { workspace = true }

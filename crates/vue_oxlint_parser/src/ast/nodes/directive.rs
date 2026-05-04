@@ -8,6 +8,7 @@ use crate::ast::nodes::{
   },
 };
 use oxc_allocator::{Box, Vec};
+use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
 /// For normal directives, like `v-bind`, `v-model`, `v-if`.
@@ -51,4 +52,72 @@ pub struct VDirectiveKey<'a, 'b> {
 pub enum VDirectiveArgument<'a, 'b> {
   VDirectiveArgument(Box<'a, VDirectiveArgumentExpression<'a, 'b>>),
   VIdentifier(Box<'a, VIdentifier<'a>>),
+}
+
+impl ESTree for VDirective<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("directive", &true);
+    state.serialize_field("key", &self.key);
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VOnDirective<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("directive", &true);
+    state.serialize_field("key", &self.key);
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VSlotDirective<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("directive", &true);
+    state.serialize_field("key", &self.key);
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VForDirective<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("directive", &true);
+    state.serialize_field("key", &self.key);
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VDirectiveKey<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("name", &self.name);
+    state.serialize_field("argument", &self.argument);
+    state.serialize_field("modifiers", &self.modifiers);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VDirectiveArgument<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    match self {
+      VDirectiveArgument::VDirectiveArgument(expr) => expr.serialize(serializer),
+      VDirectiveArgument::VIdentifier(ident) => ident.serialize(serializer),
+    }
+  }
 }

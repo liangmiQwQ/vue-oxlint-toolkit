@@ -47,6 +47,7 @@ oxc_semantic = ">=0.128.0"
 oxc_span = ">=0.128.0"
 oxc_str = ">=0.128.0"
 oxc_syntax = ">=0.128.0"
+oxc_estree = ">=0.128.0"
 
 bitflags = "2.11.1"
 cow-utils = "0.1.3"
