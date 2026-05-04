@@ -17,7 +17,7 @@
 //! It's only used in <script> and <script setup> blocks.
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::{Directive, Expression, FormalParameters, Program, Statement};
+use oxc_ast::ast::{Directive, Expression, FormalParameters, Statement};
 use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
