@@ -2,27 +2,25 @@ use std::ptr;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::ParseOptions;
-use oxc_span::{SourceType, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashSet;
 
 use crate::ast::VueSingleFileComponent;
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 pub mod ast;
-pub mod lexer;
+mod lexer;
 pub mod parser;
 
 /// Result of a Vue SFC parse.
-///
-/// Mirrors `oxc_parser::ParserReturn` in spirit: a single struct with the
-/// parsed root, side-channel metadata, and a recoverable-vs-fatal split via
-/// `errors` + `panicked`.
 pub struct VueParserReturn<'a, 'b> {
   pub sfc: VueSingleFileComponent<'a, 'b>,
+
   pub irregular_whitespaces: Box<[Span]>,
-  pub clean_spans: FxHashSet<Span>,
   pub module_record: ModuleRecord<'b>,
+  pub clean_spans: FxHashSet<Span>,
+
   pub errors: Vec<OxcDiagnostic>,
   pub panicked: bool,
 }
@@ -48,10 +46,12 @@ where
   /// This `source_text` may be changed as we define `mut_ptr_oxc_source_text`.
   /// This is a trick to reduce memory allocator and avoid creating a new `&str` in allocator.
   source_text: &'b str,
-  mut_ptr_oxc_source_text: *mut [u8],
+  mut_ptr_source_text: *mut [u8],
+
+  sfc: VueSingleFileComponent<'a, 'b>,
+  module_record: ModuleRecord<'b>,
 
   errors: Vec<OxcDiagnostic>,
-  source_type: SourceType,
 
   clean_spans: FxHashSet<Span>,
 }
@@ -72,10 +72,21 @@ impl<'a, 'b: 'a> VueParser<'a, 'b> {
       origin_source_text: source_text,
       options: ParseOptions::default(),
 
-      mut_ptr_oxc_source_text: ptr::from_mut(alloced_str),
+      mut_ptr_source_text: ptr::from_mut(alloced_str),
       source_text: unsafe { str::from_utf8_unchecked(alloced_str) },
 
-      source_type: SourceType::mjs().with_unambiguous(true),
+      sfc: VueSingleFileComponent {
+        source_text,
+        script_comments: ArenaVec::new_in(vue_allocator),
+        template_comments: ArenaVec::new_in(vue_allocator),
+        script_tokens: ArenaVec::new_in(js_allocator),
+        template_tokens: ArenaVec::new_in(vue_allocator),
+        children: ArenaVec::new_in(vue_allocator),
+        span: Span::new(0, source_text.len() as u32),
+        source_type: None,
+      },
+      module_record: ModuleRecord::new(js_allocator),
+
       errors: Vec::new(),
 
       clean_spans: FxHashSet::default(),

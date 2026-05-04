@@ -25,7 +25,7 @@ pub struct VueSingleFileComponent<'a, 'b> {
   pub script_tokens: ArenaVec<'b, oxc_parser::Token>,
   pub template_tokens: ArenaVec<'a, crate::lexer::VToken>,
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
-  pub source_type: SourceType,
+  pub source_type: Option<SourceType>,
   pub span: Span,
 }
 
@@ -53,7 +53,7 @@ where
       .collect::<Vec<ESTreeComment>>();
     state.serialize_field("template_comments", &template_comments);
 
-    state.serialize_field("source_type", &self.source_type.module_kind());
+    state.serialize_field("source_type", &self.source_type.map(|s| s.module_kind()));
     state.serialize_span(self.span);
     state.end();
   }

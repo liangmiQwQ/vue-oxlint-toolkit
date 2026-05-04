@@ -1,0 +1,132 @@
+use std::ptr;
+
+use oxc_allocator::{Allocator, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_ast::ast::{Directive, Expression, Statement};
+use oxc_span::Span;
+use oxc_syntax::module_record::ModuleRecord;
+
+use crate::VueParser;
+
+#[allow(dead_code)]
+impl<'a, 'b, 'c> VueParser<'a, 'b>
+where
+  'b: 'a,
+  'a: 'c,
+{
+  /// Call [`oxc_parser::Parser::parse`] with a custom wrap
+  /// Everything before `start` and `start_wrap` will be ignored
+  ///
+  /// If you need to parse with any wrapper, it will produce unused AST nodes
+  /// `allocator` param in `'c` lifetime should provided and drop unused AST nodes as a temporary Arena
+  pub(crate) fn oxc_parse(
+    &mut self,
+    span: Span,
+    start_wrap: &[u8],
+    end_wrap: &[u8],
+    allocator: Option<&'c Allocator>,
+  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>)> {
+    let start = span.start as usize;
+    let end = span.end as usize;
+
+    // SAFETY: we don't edit between `start` and `end`, and reset before returning
+    unsafe {
+      let real_start = start - start_wrap.len();
+      let first_byte_ptr = self.mut_ptr_source_text.cast::<u8>();
+
+      // Copy start_wrap to the front of the source text
+      ptr::copy_nonoverlapping(
+        start_wrap.as_ptr(),
+        first_byte_ptr.add(real_start),
+        start_wrap.len(),
+      );
+      // Copy end_wrap to the end of the source text
+      ptr::copy_nonoverlapping(end_wrap.as_ptr(), first_byte_ptr.add(end), end_wrap.len());
+
+      // Pad source with space
+      for i in 0..real_start {
+        first_byte_ptr.add(i).write(b' ');
+      }
+    }
+
+    // SAFETY: it must be a valid utf-8 string
+    let result = self.call_oxc_parse(
+      unsafe { str::from_utf8_unchecked(&self.source_text.as_bytes()[..end + end_wrap.len()]) },
+      allocator.unwrap_or(self.js_allocator),
+    );
+
+    // Reset
+    self.sync_source_text();
+    result
+  }
+
+  pub fn parse_pure_expression(&mut self, span: Span) -> Option<Expression<'b>> {
+    let allocator = Allocator::new();
+    // SAFETY: use `()` as wrap
+    unsafe { self.parse_expression(span, b"(", b")", &allocator).clone_in(self.js_allocator) }
+  }
+
+  /// Parse expression with [`oxc_parser`]
+  /// The reason we don't wrap the expression with `(` and `)` is to avoid unnecessary copy
+  /// `b"(("` and `b")=>{})"` is much more efficient than passing `b"("` `b")=>{}"` and copy it in a [`Vec`] and push and slice
+  ///
+  /// ## Safety
+  /// - `start_wrap` must start with `(`
+  /// - `end_wrap` must end with `)`
+  pub unsafe fn parse_expression(
+    &mut self,
+    span: Span,
+    start_wrap: &[u8],
+    end_wrap: &[u8],
+    allocator: &'c Allocator,
+  ) -> Option<Expression<'c>> {
+    // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it
+    let (_, mut body, _) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
+
+    let Some(Statement::ExpressionStatement(stmt)) = body.get_mut(0) else {
+      // SAFETY: We always wrap the source in parentheses, so it should always be an expression statement.
+      unreachable!()
+    };
+    let Expression::ParenthesizedExpression(expression) = &mut stmt.expression else {
+      // SAFETY: We always wrap the source in parentheses, so it should always be a parenthesized expression
+      unreachable!()
+    };
+    Some(expression.expression.take_in(self.js_allocator))
+  }
+
+  fn call_oxc_parse(
+    &mut self,
+    source: &'a str,
+    allocator: &'c Allocator,
+  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>)> {
+    // SAFETY: all oxc_parse happens after <script> tag parsing
+    let mut ret = oxc_parser::Parser::new(allocator, source, self.sfc.source_type.unwrap())
+      .with_options(self.options)
+      .parse();
+
+    self.errors.append(&mut ret.errors);
+    if ret.panicked {
+      None
+    } else {
+      let mut comments = ret.program.comments.clone_in(self.js_allocator);
+      self.sfc.script_comments.append(&mut comments);
+      Some((ret.program.directives, ret.program.body, ret.module_record))
+    }
+  }
+
+  /// Reset the mutable source buffer to match the original source.
+  ///
+  /// Called after each in-place wrap-and-parse cycle (see the RFC's
+  /// "Reusing the `oxc_parse` mutation trick" section).
+  const fn sync_source_text(&mut self) {
+    // SAFETY: `self.origin_source_text` and `self.mut_ptr_source_text` have
+    // identical lengths; the former lives on the heap and the latter in the
+    // arena, so the regions cannot overlap.
+    unsafe {
+      ptr::copy_nonoverlapping(
+        self.origin_source_text.as_ptr(),
+        self.mut_ptr_source_text.cast(),
+        self.origin_source_text.len(),
+      );
+    }
+  }
+}
