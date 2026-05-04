@@ -8,6 +8,7 @@ use crate::ast::nodes::{
   },
 };
 use oxc_allocator::{Box, Vec};
+use oxc_estree::{ESTree, JsonSafeString, StructSerializer};
 use oxc_span::Span;
 
 /// For normal directives, like `v-bind`, `v-model`, `v-if`.
@@ -51,4 +52,26 @@ pub struct VDirectiveKey<'a, 'b> {
 pub enum VDirectiveArgument<'a, 'b> {
   VDirectiveArgument(Box<'a, VDirectiveArgumentExpression<'a, 'b>>),
   VIdentifier(Box<'a, VIdentifier<'a>>),
+}
+
+impl ESTree for VDirective<'_, '_> {
+  fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("key", &self.key);
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+impl ESTree for VDirectiveKey<'_> {
+  fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("name", &self.name);
+    state.serialize_field("argument", &self.argument);
+    state.serialize_field("modifiers", &self.modifiers);
+    state.serialize_span(self.span);
+    state.end();
+  }
 }

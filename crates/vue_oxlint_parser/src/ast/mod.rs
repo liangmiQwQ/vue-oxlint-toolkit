@@ -11,6 +11,8 @@ pub use nodes::*;
 ///
 /// `children` is a flat list of top-level SFC nodes (e.g. `<template>`,
 /// `<script>`, `<style>`, plus any whitespace / comments between them).
+///
+/// Will be serialization into  `VueSingleFileComponent` object, **NOT `ESLintProgram`**.
 pub struct VueSingleFileComponent<'a, 'b> {
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub script_comments: ArenaVec<'a, oxc_ast::Comment>,

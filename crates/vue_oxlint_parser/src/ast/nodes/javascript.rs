@@ -32,14 +32,14 @@ pub struct VInterpolation<'a, 'b> {
 #[derive(Debug)]
 pub struct VDirectiveExpression<'a, 'b> {
   // TODO: should we add Box wrapper to expression? (Expression is a enum, which includes a Box)
-  pub expression: Expression<'b>,
+  pub expression: Box<'b, Expression<'b>>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VDirectiveArgumentExpression<'a, 'b> {
-  pub expression: Expression<'b>,
+  pub expression: Box<'b, Expression<'b>>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
@@ -72,5 +72,3 @@ pub struct VPureScript<'b> {
   pub directives: Vec<'b, Directive<'b>>,
   pub span: Span,
 }
-
-// TODO: impl Serialize (VExpressionContainer as the result) for all the nodes above
