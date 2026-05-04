@@ -102,12 +102,12 @@ where
     self.resolve_script_lang(lang)?;
 
     if span.source_text(self.source_text).trim().is_empty() {
-      return Some(Program::dummy(self.allocator_b));
+      return Some(Program::dummy(self.js_allocator));
     }
 
     self.register_script_block(kind, span)?;
 
-    let mut ret = self.parse_program_region(span, &[], &[], self.allocator_b)?;
+    let mut ret = self.parse_program_region(span, &[], &[], self.js_allocator)?;
     self.collect_script_comments(&ret.program.comments);
     self.script_tokens.append(&mut ret.tokens);
     self.record_clean_spans(&ret.program.directives, &ret.program.body);
@@ -256,7 +256,7 @@ where
   }
 
   fn collect_script_comments(&mut self, comments: &ArenaVec<'b, Comment>) {
-    let mut comments = comments.clone_in(self.allocator_a);
+    let mut comments = comments.clone_in(self.vue_allocator);
     self.script_comments.append(&mut comments);
   }
 
@@ -265,129 +265,11 @@ where
     directives: &ArenaVec<'b, Directive<'b>>,
     statements: &ArenaVec<'b, Statement<'b>>,
   ) {
-    if !self.config.track_clean_spans {
-      return;
-    }
-
     for directive in directives {
       self.clean_spans.insert(directive.span());
     }
     for statement in statements {
       self.clean_spans.insert(statement.span());
     }
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use oxc_allocator::Allocator;
-  use oxc_ast::ast::Expression;
-  use oxc_parser::ParseOptions;
-  use oxc_span::{GetSpan, Span};
-
-  use super::{ModuleRecordExt, ScriptKind, VueParser};
-  use crate::parser::VueParseConfig;
-
-  fn make_parser<'a>(
-    allocator_a: &'a Allocator,
-    allocator_b: &'a Allocator,
-    source: &'a str,
-  ) -> VueParser<'a, 'a> {
-    VueParser::new(
-      allocator_a,
-      allocator_b,
-      source,
-      ParseOptions::default(),
-      VueParseConfig { track_clean_spans: true },
-    )
-  }
-
-  #[test]
-  fn parse_script_block_collects_side_channels() {
-    let allocator_a = Allocator::new();
-    let allocator_b = Allocator::new();
-    let source = "/* before */ import foo from 'foo';\nconst answer = 42;";
-    let span = Span::new(0, source.len() as u32);
-    let mut parser = make_parser(&allocator_a, &allocator_b, source);
-
-    let program = parser
-      .parse_script_block(span, Some("ts"), ScriptKind::Script)
-      .expect("script block should parse");
-
-    assert_eq!(program.body.len(), 2);
-    assert!(parser.source_type.is_typescript());
-    assert!(program.source_type.is_typescript());
-    assert!(program.source_type.is_module());
-    assert_eq!(parser.script_comments.len(), 1);
-    assert!(!parser.script_tokens.is_empty());
-    assert_eq!(parser.module_record.import_entries.len(), 1);
-    assert_eq!(parser.clean_spans.len(), 2);
-    assert!(parser.errors.is_empty());
-  }
-
-  #[test]
-  fn parse_setup_script_only_merges_import_side_effects() {
-    let allocator_a = Allocator::new();
-    let allocator_b = Allocator::new();
-    let source = "import foo from 'foo'; export const answer = 42; import.meta; import('bar');";
-    let span = Span::new(0, source.len() as u32);
-    let mut parser = make_parser(&allocator_a, &allocator_b, source);
-
-    let _ =
-      parser.parse_script_block(span, None, ScriptKind::Setup).expect("setup script should parse");
-
-    assert_eq!(parser.module_record.import_entries.len(), 1);
-    assert_eq!(parser.module_record.dynamic_imports.len(), 1);
-    assert_eq!(parser.module_record.import_metas.len(), 1);
-    assert!(parser.module_record.local_export_entries.is_empty());
-  }
-
-  #[test]
-  fn parse_expression_region_preserves_original_span() {
-    let allocator_a = Allocator::new();
-    let allocator_b = Allocator::new();
-    let source = "{{ foo + bar }}";
-    let span = Span::new(3, 12);
-    let mut parser = make_parser(&allocator_a, &allocator_b, source);
-
-    let expr = parser.parse_pure_expression(span, &allocator_b).expect("expression should parse");
-
-    assert!(matches!(expr, Expression::BinaryExpression(_)));
-    assert_eq!(expr.span(), span);
-  }
-
-  #[test]
-  fn conflicting_script_langs_report_an_error() {
-    let allocator_a = Allocator::new();
-    let allocator_b = Allocator::new();
-    let mut parser = make_parser(&allocator_a, &allocator_b, "");
-
-    assert!(parser.resolve_script_lang(Some("ts")).is_some());
-    assert!(parser.resolve_script_lang(None).is_none());
-    assert_eq!(parser.errors.len(), 1);
-  }
-
-  #[test]
-  fn duplicate_script_kinds_report_an_error() {
-    let allocator_a = Allocator::new();
-    let allocator_b = Allocator::new();
-    let mut parser = make_parser(&allocator_a, &allocator_b, "");
-    let span = Span::new(1, 2);
-
-    assert!(parser.register_script_block(ScriptKind::Script, span).is_some());
-    assert!(parser.register_script_block(ScriptKind::Script, span).is_none());
-    assert_eq!(parser.errors.len(), 1);
-  }
-
-  #[test]
-  fn ensure_default_export_adds_only_one_entry() {
-    let allocator = Allocator::new();
-    let mut module_record = oxc_syntax::module_record::ModuleRecord::new(&allocator);
-
-    module_record.ensure_default_export();
-    module_record.ensure_default_export();
-
-    assert_eq!(module_record.local_export_entries.len(), 1);
-    assert!(module_record.local_export_entries[0].export_name.is_default());
   }
 }

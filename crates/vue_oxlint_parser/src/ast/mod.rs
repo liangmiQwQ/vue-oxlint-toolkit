@@ -19,11 +19,13 @@ use crate::ast::comments::ESTreeComment;
 ///
 /// Will be serialization into  `VueSingleFileComponent` object, **NOT `ESLintProgram`**.
 pub struct VueSingleFileComponent<'a, 'b> {
-  pub children: ArenaVec<'a, VNode<'a, 'b>>,
+  pub source_text: &'b str,
   pub script_comments: ArenaVec<'a, Comment>,
   pub template_comments: ArenaVec<'a, VComment<'a>>,
+  pub script_tokens: ArenaVec<'b, oxc_parser::Token>,
+  pub template_tokens: ArenaVec<'a, crate::lexer::VToken>,
+  pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub source_type: SourceType,
-  pub source_text: &'b str,
   pub span: Span,
 }
 
