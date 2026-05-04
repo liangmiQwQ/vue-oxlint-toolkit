@@ -32,7 +32,7 @@ impl<'a> ESTreeComment<'a> {
     Self { r#type, value, span }
   }
 
-  pub fn from_v_comment(comment: &VComment<'a>) -> Self {
+  pub const fn from_v_comment(comment: &VComment<'a>) -> Self {
     Self { r#type: comment.r#type, value: comment.value, span: comment.span }
   }
 }

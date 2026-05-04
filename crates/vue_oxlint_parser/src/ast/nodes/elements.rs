@@ -51,7 +51,7 @@ pub struct VText<'a> {
 /// `VComment` won't be serialized as normal ast node, will just simply skip to follow vue-eslint-parser's behavior.
 #[derive(Debug)]
 pub struct VComment<'a> {
-  /// HTMLBogusComment, or HTMLComment
+  /// `HTMLBogusComment`, or `HTMLComment`
   pub r#type: &'static str,
   pub value: &'a str,
   pub span: Span,
