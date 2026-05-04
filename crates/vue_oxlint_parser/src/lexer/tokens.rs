@@ -1,16 +1,27 @@
+use oxc_estree::{ESTree, Serializer, StructSerializer};
 use oxc_span::Span;
 
 /// A single template-side token.
 #[derive(Debug, Clone, Copy)]
-pub struct VToken {
+pub struct VToken<'b> {
   pub kind: VTokenKind,
   pub span: Span,
+  pub value: Option<&'b str>,
 }
 
-impl VToken {
+impl<'b> ESTree for VToken<'b> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", self.kind.as_str());
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+  }
+}
+
+impl<'b> VToken<'b> {
   #[must_use]
-  pub const fn new(kind: VTokenKind, span: Span) -> Self {
-    Self { kind, span }
+  pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
+    Self { kind, span, value }
   }
 }
 
