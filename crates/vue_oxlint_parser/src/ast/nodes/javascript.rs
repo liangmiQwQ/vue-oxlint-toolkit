@@ -32,15 +32,14 @@ pub struct VInterpolation<'a, 'b> {
 
 #[derive(Debug)]
 pub struct VDirectiveExpression<'a, 'b> {
-  // TODO: should we add Box wrapper to expression? (Expression is a enum, which includes a Box)
-  pub expression: Box<'b, Expression<'b>>,
+  pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VDirectiveArgumentExpression<'a, 'b> {
-  pub expression: Box<'b, Expression<'b>>,
+  pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
 }
@@ -55,7 +54,7 @@ pub struct VOnExpression<'b> {
 #[derive(Debug)]
 pub struct VForExpression<'b> {
   pub left: Box<'b, FormalParameters<'b>>,
-  pub right: Box<'b, Expression<'b>>,
+  pub right: Expression<'b>,
   pub references: Vec<'b, Reference<'b>>,
   pub span: Span,
 }
