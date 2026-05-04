@@ -1,14 +1,12 @@
 # vue_oxlint_parser
 
-Rust port of [vue-eslint-parser](https://github.com/vuejs/vue-eslint-parser).
+A `vue-eslint-parser` compatible Vue parser, based on [Oxc](https://github.com/oxc-project/oxc).
 
-Defines Vue SFC AST node types (`VElement`, `VAttribute`, `VDirective`, `VText`, etc.) and a `VueParser` that produces them from raw `.vue` source text.
+## Feature
 
-The [`vue_oxlint_jsx`](../vue_oxlint_jsx) crate consumes this AST and converts it into an OXC-compatible `Program` for downstream linting.
-
-## Status
-
-Work in progress — AST types are defined, parser implementation is in progress.
+- **Serialize**: Use `oxc_estree` to serialize vue-eslint-parser compatible AST to JSON for napi use.
+- **Two-Arena Architecture**: Use two `allocators`, one for V\* nodes and one for JS Oxc Nodes, easy to manage memory.
+- **High Performance**: Follow lexer / parser design mode, built on top of the fastest JavaScript parser [Oxc](https://github.com/oxc-project/oxc).
 
 ## License
 
