@@ -32,14 +32,14 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 
 - **`crates/vue_oxlint_parser`** — in-progress Rust port of `vue-eslint-parser`.
   - `ast.rs` — canonical V-tree surface (`VueSingleFileComponent`, `VElement`, directive/value nodes, embedded-JS attachment points).
-  - `lexer/` — first-party HTML/Vue template tokenizer, including raw-text/RCDATA/foreign-content/v-pre modes and vue-eslint-parser-compatible token kinds.
+  - `lexer/` — first-party HTML/Vue template tokenizer, split by mode (`data.rs`, `tag.rs`, `text.rs`, `utils.rs`, `tokens.rs`) and covering raw-text/RCDATA/foreign-content/v-pre handling plus vue-eslint-parser-compatible token kinds.
   - `parser/mod.rs` — two-allocator `VueParser` parse entry point and parse return surface.
-  - `parser/parse/` — token-stream-driven recursive parser for top-level SFC nodes, elements, attributes, raw-text/RCDATA children, comments, and script handoff.
+  - `parser/parse/` — token-stream-driven recursive parser split by responsibility: children/text/comment handling, element parsing, attributes/directives, embedded expression parsing, variables, and shared utilities.
   - `parser/oxc_parse.rs` — wrapped `oxc_parser` calls for script bodies, script comment/token collection, diagnostics, and clean-span tracking.
 
 - **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
   - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` and `parseVue(source)`, converting Rust parser/codegen results to N-API types.
-  - `js/index.ts` — JS wrapper that converts native UTF-8 byte offsets into JS UTF-16 indices and `{ line, column }` locations via a per-source `createLocator`. Returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
+  - `js/` — JS wrapper split into public exports (`index.ts`), native parse/transform adapters, UTF-8 to UTF-16 location helpers, shared types, and the Vue AST adapter (`vue-ast.ts`). It returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
   - Built with `napi build` (`build:debug` also runs `vp pack` to produce the JS bundle).
 
 - **`benchmark/`** — Criterion benches over `small.vue`, `medium.vue`, `large.vue`.

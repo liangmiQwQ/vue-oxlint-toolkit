@@ -7,7 +7,7 @@ use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
 use oxc_parser::config::TokensParserConfig;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{VueParser, ast::Reference};
@@ -54,14 +54,16 @@ where
       self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
     let Some(Statement::ExpressionStatement(stmt)) = statements.get_mut(0) else {
+      // SAFETY: every caller wraps the input as an expression statement before parsing.
       unreachable!("wrapped expressions parse as expression statements")
     };
     let Expression::ParenthesizedExpression(expression) = &mut stmt.expression else {
+      // SAFETY: `parse_expression` requires wrappers that produce a parenthesized expression.
       unreachable!("wrapped expressions parse as parenthesized expressions")
     };
 
     let tokens = tokens.as_bytes();
-    let start_needle = format!(r#""end":{}}},"#, span.start - 1);
+    let start_needle = format!(r#""end":{}}},"#, span.start);
     let end_needle = format!(r#""end":{}}}"#, span.end);
     let tokens = if let Some(start) = find(tokens, start_needle.as_bytes())
       && let Some(end) = rfind(tokens, end_needle.as_bytes())
@@ -131,8 +133,9 @@ where
     source: &'c str,
     allocator: &'c Allocator,
   ) -> Option<OxcParseReturn<'a, 'c>> {
-    // SAFETY: all oxc_parse happens after the parser has resolved the script source type.
-    let mut ret = oxc_parser::Parser::new(allocator, source, self.sfc.source_type.unwrap())
+    let source_type =
+      self.sfc.source_type.unwrap_or_else(|| SourceType::mjs().with_unambiguous(true));
+    let mut ret = oxc_parser::Parser::new(allocator, source, source_type)
       .with_options(self.options)
       .with_config(TokensParserConfig)
       .parse();

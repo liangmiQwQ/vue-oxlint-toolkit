@@ -34,3 +34,50 @@ impl VueParser<'_, '_> {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::{fs, path::Path};
+
+  use oxc_allocator::Allocator;
+  use oxc_syntax::module_record::ModuleRecord;
+
+  use crate::VueParser;
+
+  #[test]
+  fn basic() {
+    assert_module_record("modules/basic.vue", true);
+    assert_module_record("modules/import.vue", true);
+    assert_module_record("modules/no-imports.vue", false);
+  }
+
+  #[test]
+  fn setup() {
+    assert_module_record("modules/setup.vue", true);
+  }
+
+  fn assert_module_record(relative_fixture: &str, has_vue_import: bool) {
+    with_module_record(relative_fixture, |record| {
+      assert!(record.has_module_syntax);
+      assert!(record.local_export_entries.iter().any(|entry| entry.export_name.is_default()));
+      assert_eq!(has_requested_module(record, "vue"), has_vue_import);
+    });
+  }
+
+  fn with_module_record(relative_fixture: &str, assert_record: impl FnOnce(&ModuleRecord<'_>)) {
+    let source = fs::read_to_string(
+      Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures").join(relative_fixture),
+    )
+    .expect("fixture should be readable");
+
+    let vue_allocator = Allocator::default();
+    let js_allocator = Allocator::default();
+    let ret = VueParser::new(&vue_allocator, &js_allocator, &source).parse();
+    assert!(!ret.panicked, "{relative_fixture} should parse without panicking");
+    assert_record(&ret.module_record);
+  }
+
+  fn has_requested_module(record: &ModuleRecord<'_>, name: &str) -> bool {
+    record.requested_modules.keys().any(|module| module.as_str() == name)
+  }
+}
