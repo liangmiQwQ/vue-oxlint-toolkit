@@ -23,7 +23,23 @@ pub struct VueSingleFileComponent<'a, 'b> {
   pub source_text: &'b str,
   pub script_comments: ArenaVec<'a, Comment>,
   pub template_comments: ArenaVec<'a, VComment<'a>>,
+  /// Only for serialization use
+  /// Corresponding: `ReturnValue<typeof await('vue-eslint-parser')>['tokens']`
+  ///
+  /// Including: `<script setup>` `</script>` as punctuators
+  /// JavaScript tokens in `<script>` tag. (**Not** including script in template)
+  ///
+  /// This field should be filled while calling `oxc_parse` function while parse `<script>` tag
+  /// `<script setup>` and `<script>` tokens are also added before or after this.
   pub(crate) script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
+  /// Only for serialization use
+  /// Corresponding: `ReturnValue<typeof await('vue-eslint-parser')>['templateBody']['tokens']`
+  ///
+  /// Including: the whole SFC's token.
+  /// Replace script in template tokens to JavaScript tokens.
+  /// Script tokens in `<script>` tag is in `script_tokens` above, they should be stored as `HTMLRawText` here.
+  ///
+  /// This field should be filled when doing `Lexer::next_token()`
   pub(crate) template_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub source_type: Option<SourceType>,
