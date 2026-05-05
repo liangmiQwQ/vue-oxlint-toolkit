@@ -21,6 +21,8 @@ export interface ToolkitTransformResult {
 export interface ParseResult {
   // ast: AST.ESLintProgram (the import of AST brings a lot of unnecessary types definition in dts, remove it temporarily)
   ast: any
+  errors: Diagnostic[]
+  panicked: boolean
   transform: ToolkitTransformResult
 }
 
