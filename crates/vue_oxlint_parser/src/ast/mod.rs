@@ -23,8 +23,8 @@ pub struct VueSingleFileComponent<'a, 'b> {
   pub source_text: &'b str,
   pub script_comments: ArenaVec<'a, Comment>,
   pub template_comments: ArenaVec<'a, VComment<'a>>,
-  pub script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
-  pub template_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
+  pub(crate) script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
+  pub(crate) template_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub source_type: Option<SourceType>,
   pub span: Span,
@@ -54,6 +54,8 @@ where
       .collect::<Vec<ESTreeComment>>();
     state.serialize_field("template_comments", &template_comments);
 
+    state.serialize_field("scriptTokens", &self.script_tokens);
+    state.serialize_field("templateTokens", &self.template_tokens);
     state.serialize_field("source_type", &self.source_type.map(SourceType::module_kind));
     state.serialize_span(self.span);
     state.end();

@@ -9,7 +9,7 @@ pub struct VToken<'b> {
   pub value: Option<&'b str>,
 }
 
-impl<'b> ESTree for VToken<'b> {
+impl ESTree for VToken<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", self.kind.as_str());
@@ -18,6 +18,7 @@ impl<'b> ESTree for VToken<'b> {
   }
 }
 
+#[allow(dead_code)]
 impl<'b> VToken<'b> {
   #[must_use]
   pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
@@ -30,6 +31,7 @@ impl<'b> VToken<'b> {
 /// Names mirror `vue-eslint-parser`'s `Token["type"]` strings: when the
 /// adapter on the toolkit side serialises tokens it can map these 1:1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 pub enum VTokenKind {
   // HTML Tokens, which produce by lexer
   /// e.g. <
@@ -67,23 +69,23 @@ pub enum VTokenKind {
 }
 
 impl VTokenKind {
-  fn as_str(&self) -> &str {
+  const fn as_str(&self) -> &str {
     match self {
-      VTokenKind::HTMLTagOpen => "HTMLTagOpen",
-      VTokenKind::HTMLTagClose => "HTMLTagClose",
-      VTokenKind::HTMLEndTagOpen => "HTMLEndTagOpen",
-      VTokenKind::HTMLSelfClosingTagClose => "HTMLSelfClosingTagClose",
-      VTokenKind::HTMLIdentifier => "HTMLIdentifier",
-      VTokenKind::HTMLAssociation => "HTMLAssociation",
-      VTokenKind::HTMLLiteral => "HTMLLiteral",
-      VTokenKind::HTMLText => "HTMLText",
-      VTokenKind::HTMLWhitespace => "HTMLWhitespace",
-      VTokenKind::HTMLRCDataText => "HTMLRCDataText",
-      VTokenKind::HTMLRawText => "HTMLRawText",
-      VTokenKind::HTMLCDataText => "HTMLCDataText",
-      VTokenKind::VExpressionStart => "VExpressionStart",
-      VTokenKind::VExpressionEnd => "VExpressionEnd",
-      VTokenKind::Punctuator => "Punctuator",
+      Self::HTMLTagOpen => "HTMLTagOpen",
+      Self::HTMLTagClose => "HTMLTagClose",
+      Self::HTMLEndTagOpen => "HTMLEndTagOpen",
+      Self::HTMLSelfClosingTagClose => "HTMLSelfClosingTagClose",
+      Self::HTMLIdentifier => "HTMLIdentifier",
+      Self::HTMLAssociation => "HTMLAssociation",
+      Self::HTMLLiteral => "HTMLLiteral",
+      Self::HTMLText => "HTMLText",
+      Self::HTMLWhitespace => "HTMLWhitespace",
+      Self::HTMLRCDataText => "HTMLRCDataText",
+      Self::HTMLRawText => "HTMLRawText",
+      Self::HTMLCDataText => "HTMLCDataText",
+      Self::VExpressionStart => "VExpressionStart",
+      Self::VExpressionEnd => "VExpressionEnd",
+      Self::Punctuator => "Punctuator",
     }
   }
 }

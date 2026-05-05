@@ -138,7 +138,7 @@ where
       );
 
       let tokens = self.vue_allocator.alloc_str(&tokens[1..tokens.len() - 1]);
-      Some((ret.program.directives, ret.program.body, ret.module_record, &tokens))
+      Some((ret.program.directives, ret.program.body, ret.module_record, tokens))
     }
   }
 
