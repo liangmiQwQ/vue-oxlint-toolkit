@@ -2,66 +2,79 @@ use std::ptr;
 
 use memchr::memmem::{find, rfind};
 use oxc_allocator::{Allocator, CloneIn, TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::{Directive, Expression, Statement};
+use oxc_ast::ast::{Directive, Expression, Program, Statement};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
 use oxc_parser::config::TokensParserConfig;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::Span;
 use oxc_syntax::module_record::ModuleRecord;
 
-use crate::VueParser;
+use crate::{VueParser, ast::Reference};
 
-#[allow(dead_code)]
-impl<'a, 'b, 'c> VueParser<'a, 'b>
+pub(super) struct OxcParseReturn<'a, 'b> {
+  pub(super) directives: ArenaVec<'b, Directive<'b>>,
+  pub(super) statements: ArenaVec<'b, Statement<'b>>,
+  pub(super) module_record: ModuleRecord<'b>,
+  pub(super) references: ArenaVec<'a, Reference<'a>>,
+  pub(super) tokens: &'a str,
+}
+
+impl<'a, 'b> VueParser<'a, 'b>
 where
   'b: 'a,
-  'a: 'c,
 {
-  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &str)> {
+  pub(super) fn parse_pure_expression(
+    &mut self,
+    span: Span,
+  ) -> Option<(Expression<'b>, ArenaVec<'a, Reference<'a>>, &'a str)> {
     let allocator = Allocator::new();
-    // SAFETY: use `()` as wrap
-    let (expr, tokens) = unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
-    Some((expr.clone_in(self.js_allocator), tokens))
+    // SAFETY: the wrappers form a parenthesized expression.
+    let (expr, references, tokens) =
+      unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
+    Some((expr.clone_in(self.js_allocator), references, tokens))
   }
 
-  /// Parse expression with [`oxc_parser`]
-  /// The reason we don't wrap the expression with `(` and `)` is to avoid unnecessary copy
-  /// `b"(("` and `b"))=>{})"` is much more efficient than passing `b"("` `b")=>{}"` and copy it in a [`Vec`] and push and slice
+  /// Parse expression with [`oxc_parser`].
   ///
   /// ## Safety
-  /// - `start_wrap` must start with `(`
-  /// - `end_wrap` must end with `)`
-  pub(crate) unsafe fn parse_expression(
+  /// - `start_wrap` must start with `(`.
+  /// - `end_wrap` must end with `)`.
+  pub(super) unsafe fn parse_expression<'c>(
     &mut self,
     span: Span,
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: &'c Allocator,
-  ) -> Option<(Expression<'c>, &'a str)> {
-    // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it
-    let (_, mut body, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
+  ) -> Option<(Expression<'c>, ArenaVec<'a, Reference<'a>>, &'a str)>
+  where
+    'b: 'c,
+  {
+    let OxcParseReturn { mut statements, references, tokens, .. } =
+      self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
-    let Some(Statement::ExpressionStatement(stmt)) = body.get_mut(0) else {
-      // SAFETY: We always wrap the source in parentheses, so it should always be an expression statement.
-      unreachable!()
+    let Some(Statement::ExpressionStatement(stmt)) = statements.get_mut(0) else {
+      unreachable!("wrapped expressions parse as expression statements")
     };
     let Expression::ParenthesizedExpression(expression) = &mut stmt.expression else {
-      // SAFETY: We always wrap the source in parentheses, so it should always be a parenthesized expression
-      unreachable!()
+      unreachable!("wrapped expressions parse as parenthesized expressions")
     };
 
-    // it mustn't be the first or last element in the whole array.
     let tokens = tokens.as_bytes();
-    // SAFETY: we add "start_wrap" and "end_wrap", so there must be a token which contains corresponding "end" field
     let start_needle = format!(r#""end":{}}},"#, span.start - 1);
-    let start = find(tokens, start_needle.as_bytes()).unwrap() + start_needle.len();
     let end_needle = format!(r#""end":{}}}"#, span.end);
-    let end = rfind(tokens, end_needle.as_bytes()).unwrap() + end_needle.len();
-
-    Some((expression.expression.take_in(self.js_allocator), unsafe {
-      // SAFETY: it is sliced from a &str
-      str::from_utf8_unchecked(&tokens[start..end])
-    }))
+    let tokens = if let Some(start) = find(tokens, start_needle.as_bytes())
+      && let Some(end) = rfind(tokens, end_needle.as_bytes())
+    {
+      let start = start + start_needle.len();
+      let end = end + end_needle.len();
+      // SAFETY: the token slice comes from a JSON string produced by oxc.
+      let tokens = unsafe { str::from_utf8_unchecked(&tokens[start..end]) };
+      tokens.strip_prefix(',').unwrap_or(tokens)
+    } else {
+      ""
+    };
+    Some((expression.expression.take_in(allocator), references, tokens))
   }
 
   /// Call [`oxc_parser::Parser::parse`] with a custom wrap
@@ -69,13 +82,15 @@ where
   ///
   /// If you need to parse with any wrapper, it will produce unused AST nodes
   /// `allocator` param in `'c` lifetime should provided and drop unused AST nodes as a temporary Arena
-  pub(crate) fn oxc_parse(
+  pub(super) fn oxc_parse<'c>(
     &mut self,
     span: Span,
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: Option<&'c Allocator>,
-  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>, &'a str)>
+  ) -> Option<OxcParseReturn<'a, 'c>>
+  where
+    'b: 'c,
   {
     let start = span.start as usize;
     let end = span.end as usize;
@@ -111,13 +126,12 @@ where
     result
   }
 
-  fn call_oxc_parse(
+  fn call_oxc_parse<'c>(
     &mut self,
-    source: &'a str,
+    source: &'c str,
     allocator: &'c Allocator,
-  ) -> Option<(ArenaVec<'c, Directive<'c>>, ArenaVec<'c, Statement<'c>>, ModuleRecord<'c>, &'a str)>
-  {
-    // SAFETY: all oxc_parse happens after <script> tag parsing
+  ) -> Option<OxcParseReturn<'a, 'c>> {
+    // SAFETY: all oxc_parse happens after the parser has resolved the script source type.
     let mut ret = oxc_parser::Parser::new(allocator, source, self.sfc.source_type.unwrap())
       .with_options(self.options)
       .with_config(TokensParserConfig)
@@ -127,6 +141,7 @@ where
     if ret.panicked {
       None
     } else {
+      let references = self.collect_semantic_references(&ret.program);
       let mut comments = ret.program.comments.clone_in(self.js_allocator);
       self.sfc.script_comments.append(&mut comments);
       let tokens = to_estree_tokens_json(
@@ -138,8 +153,34 @@ where
       );
 
       let tokens = self.vue_allocator.alloc_str(&tokens[1..tokens.len() - 1]);
-      Some((ret.program.directives, ret.program.body, ret.module_record, tokens))
+      Some(OxcParseReturn {
+        directives: ret.program.directives,
+        statements: ret.program.body,
+        module_record: ret.module_record,
+        references,
+        tokens,
+      })
     }
+  }
+
+  fn collect_semantic_references<'c>(&self, program: &Program<'c>) -> ArenaVec<'a, Reference<'a>> {
+    let semantic = SemanticBuilder::new().build(program).semantic;
+    let mut references = ArenaVec::new_in(self.vue_allocator);
+    for reference_id in semantic.scoping().root_unresolved_references_ids().flatten() {
+      let reference = semantic.scoping().get_reference(reference_id);
+      let Some(identifier) =
+        semantic.nodes().get_node(reference.node_id()).kind().as_identifier_reference()
+      else {
+        continue;
+      };
+      let name = self.vue_allocator.alloc_str(identifier.name.as_str());
+      references.push(Reference {
+        name,
+        span: identifier.span,
+        mode: reference_mode(reference.is_read(), reference.is_write()),
+      });
+    }
+    references
   }
 
   /// Reset the mutable source buffer to match the original source.
@@ -157,5 +198,13 @@ where
         self.origin_source_text.len(),
       );
     }
+  }
+}
+
+const fn reference_mode(is_read: bool, is_write: bool) -> &'static str {
+  match (is_read, is_write) {
+    (true, true) => "rw",
+    (false, true) => "w",
+    _ => "r",
   }
 }

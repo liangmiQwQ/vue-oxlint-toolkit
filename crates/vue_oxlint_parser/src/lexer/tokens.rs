@@ -15,10 +15,10 @@ impl ESTree for VToken<'_> {
     state.serialize_field("type", self.kind.as_str());
     state.serialize_field("value", &self.value);
     state.serialize_span(self.span);
+    state.end();
   }
 }
 
-#[allow(dead_code)]
 impl<'b> VToken<'b> {
   #[must_use]
   pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
@@ -31,7 +31,6 @@ impl<'b> VToken<'b> {
 /// Names mirror `vue-eslint-parser`'s `Token["type"]` strings: when the
 /// adapter on the toolkit side serialises tokens it can map these 1:1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[allow(dead_code)]
 pub enum VTokenKind {
   // HTML Tokens, which produce by lexer
   /// e.g. <
@@ -62,6 +61,10 @@ pub enum VTokenKind {
   VExpressionStart,
   /// }}
   VExpressionEnd,
+  /// `<!-- ... -->`
+  HTMLComment,
+  /// bogus declaration / comment text
+  HTMLBogusComment,
 
   // Directive Related
   /// e.g. `:`, `@`, `#` of (:class @click #default)
@@ -85,6 +88,8 @@ impl VTokenKind {
       Self::HTMLCDataText => "HTMLCDataText",
       Self::VExpressionStart => "VExpressionStart",
       Self::VExpressionEnd => "VExpressionEnd",
+      Self::HTMLComment => "HTMLComment",
+      Self::HTMLBogusComment => "HTMLBogusComment",
       Self::Punctuator => "Punctuator",
     }
   }

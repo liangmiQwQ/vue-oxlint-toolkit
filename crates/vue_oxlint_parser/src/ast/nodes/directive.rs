@@ -22,7 +22,7 @@ pub struct VDirective<'a, 'b> {
 #[derive(Debug)]
 pub struct VOnDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VOnExpression<'b>,
+  pub value: VOnExpression<'a, 'b>,
   pub span: Span,
 }
 
@@ -36,7 +36,7 @@ pub struct VSlotDirective<'a, 'b> {
 #[derive(Debug)]
 pub struct VForDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VForExpression<'b>,
+  pub value: VForExpression<'a, 'b>,
   pub span: Span,
 }
 

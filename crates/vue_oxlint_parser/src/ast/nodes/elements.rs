@@ -33,6 +33,7 @@ pub struct VElement<'a, 'b> {
 #[derive(Debug)]
 pub struct VStartTag<'a, 'b> {
   pub attributes: Vec<'a, VAttribute<'a, 'b>>,
+  pub variables: Vec<'a, Variable<'a>>,
   pub self_closing: bool,
   pub span: Span,
 }
@@ -89,6 +90,7 @@ impl ESTree for VStartTag<'_, '_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VStartTag"));
     state.serialize_field("attributes", &self.attributes);
+    state.serialize_field("variables", &self.variables);
     state.serialize_field("selfClosing", &self.self_closing);
     state.serialize_span(self.span);
     state.end();

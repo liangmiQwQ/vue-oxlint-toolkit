@@ -2,7 +2,7 @@ use std::ptr;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::ParseOptions;
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashSet;
 
@@ -33,7 +33,6 @@ pub struct VueParserReturn<'a, 'b> {
 /// - `'a` owns V-tree nodes (allocated in `allocator_a`).
 /// - `'b` owns nodes produced by `oxc_parser` (allocated in `allocator_b`).
 /// - `'b: 'a` — V-tree nodes may borrow from `oxc_parser` output, never the reverse.
-#[allow(dead_code)]
 pub struct VueParser<'a, 'b>
 where
   'b: 'a,
@@ -84,7 +83,7 @@ impl<'a, 'b: 'a> VueParser<'a, 'b> {
         template_tokens: ArenaVec::new_in(vue_allocator),
         children: ArenaVec::new_in(vue_allocator),
         span: Span::new(0, source_text.len() as u32),
-        source_type: None,
+        source_type: Some(SourceType::mjs().with_unambiguous(true)),
       },
       module_record: ModuleRecord::new(js_allocator),
 

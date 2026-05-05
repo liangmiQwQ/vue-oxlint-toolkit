@@ -15,6 +15,7 @@ oxc_allocator = { workspace = true, features = ["serialize"] }
 oxc_ast = { workspace = true, features = ["serialize"] }
 oxc_diagnostics = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
 oxc_span = { workspace = true, features = ["serialize"] }
 oxc_syntax = { workspace = true }
 oxc_estree = { workspace = true, features = ["serialize"] }

@@ -72,7 +72,16 @@ where
 
     state.serialize_field("scriptTokens", &self.script_tokens);
     state.serialize_field("templateTokens", &self.template_tokens);
-    state.serialize_field("source_type", &self.source_type.map(SourceType::module_kind));
+    let source_type = self.source_type.map_or("module", |source_type| {
+      if source_type.is_script() {
+        "script"
+      } else if source_type.is_commonjs() {
+        "commonjs"
+      } else {
+        "module"
+      }
+    });
+    state.serialize_field("source_type", &source_type);
     state.serialize_span(self.span);
     state.end();
   }
