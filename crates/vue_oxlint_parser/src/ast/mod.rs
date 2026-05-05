@@ -11,7 +11,7 @@ pub mod token;
 pub use bindings::*;
 pub use nodes::*;
 
-use crate::ast::comments::ESTreeComment;
+use crate::ast::{comments::ESTreeComment, token::SerializableToken};
 
 /// The parsed Vue SFC.
 ///
@@ -23,8 +23,8 @@ pub struct VueSingleFileComponent<'a, 'b> {
   pub source_text: &'b str,
   pub script_comments: ArenaVec<'a, Comment>,
   pub template_comments: ArenaVec<'a, VComment<'a>>,
-  pub script_tokens: ArenaVec<'b, oxc_parser::Token>,
-  pub template_tokens: ArenaVec<'a, crate::lexer::VToken>,
+  pub script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
+  pub template_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
   pub children: ArenaVec<'a, VNode<'a, 'b>>,
   pub source_type: Option<SourceType>,
   pub span: Span,
