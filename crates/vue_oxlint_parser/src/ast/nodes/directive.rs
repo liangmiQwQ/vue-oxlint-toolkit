@@ -15,7 +15,7 @@ use oxc_span::Span;
 #[derive(Debug)]
 pub struct VDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VDirectiveExpression<'a, 'b>,
+  pub value: Option<VDirectiveExpression<'a, 'b>>,
   pub span: Span,
 }
 

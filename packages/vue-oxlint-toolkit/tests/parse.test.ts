@@ -40,12 +40,7 @@ function listVueFixtures(dir: string): string[] {
 
 function shouldSkipFixture(fixture: string, source: string) {
   const relativeFixture = relative(root, fixture)
-  if (
-    relativeFixture.includes('/error/') ||
-    // Directive expression token parity is still being normalized separately.
-    relativeFixture.includes('/directive/') ||
-    basename(fixture).includes('error')
-  ) {
+  if (relativeFixture.includes('/error/') || basename(fixture).includes('error')) {
     return true
   }
 

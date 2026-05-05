@@ -24,13 +24,14 @@ where
 
     let allocator = Allocator::new();
     let left_trimmed = left_source.trim();
-    let mut expression = if left_trimmed.starts_with('(') && left_trimmed.ends_with(')') {
-      // SAFETY: this wrapper forms an arrow function with the v-for aliases as params.
-      unsafe { self.parser.parse_expression(left_span, b"(", b"=>0)", &allocator)? }.0
-    } else {
-      // SAFETY: this wrapper forms an arrow function with one v-for alias param.
-      unsafe { self.parser.parse_expression(left_span, b"((", b")=>0)", &allocator)? }.0
-    };
+    let (mut expression, _, left_tokens) =
+      if left_trimmed.starts_with('(') && left_trimmed.ends_with(')') {
+        // SAFETY: this wrapper forms an arrow function with the v-for aliases as params.
+        unsafe { self.parser.parse_expression(left_span, b"(", b"=>0)", &allocator)? }
+      } else {
+        // SAFETY: this wrapper forms an arrow function with one v-for alias param.
+        unsafe { self.parser.parse_expression(left_span, b"((", b")=>0)", &allocator)? }
+      };
 
     let Expression::ArrowFunctionExpression(arrow) = &mut expression else {
       return None;
@@ -38,6 +39,23 @@ where
 
     let params = arrow.params.clone_in(self.parser.js_allocator);
     let (right, references, tokens) = self.parser.parse_pure_expression(right_span)?;
+    if !left_tokens.is_empty() {
+      self.parser.sfc.template_tokens.push(left_tokens.into());
+    }
+    let operator_start = value_span.start + operator_index as u32 + 1;
+    let operator = &source[operator_index + 1..operator_index + 3];
+    let token_type = if operator == "in" {
+      "Keyword"
+    } else {
+      // vue-eslint-parser exposes `of` as an Identifier in v-for values.
+      "Identifier"
+    };
+    let operator_token = format!(
+      r#"{{"type":"{token_type}","value":"{operator}","start":{operator_start},"end":{}}}"#,
+      operator_start + operator.len() as u32,
+    );
+    let operator_token = self.alloc_value(&operator_token);
+    self.parser.sfc.template_tokens.push(operator_token.into());
     if !tokens.is_empty() {
       self.parser.sfc.template_tokens.push(tokens.into());
     }

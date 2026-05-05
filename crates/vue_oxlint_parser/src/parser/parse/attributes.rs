@@ -32,13 +32,20 @@ where
     let mut raw_end = first.span.end;
     let mut raw_name_end = first.span.end;
     let mut value_span = None;
-    let name = if first.kind == VTokenKind::Punctuator
-      && let Some(next) = self.next_non_ws()
-    {
-      self.parser.sfc.template_tokens.push(next.into());
-      raw_end = next.span.end;
-      raw_name_end = next.span.end;
-      &self.parser.source_text[raw_start as usize..raw_name_end as usize]
+    let name = if first.kind == VTokenKind::Punctuator {
+      if let Some(next) = self.next_non_ws() {
+        if next.kind == VTokenKind::HTMLIdentifier {
+          self.parser.sfc.template_tokens.push(next.into());
+          raw_end = next.span.end;
+          raw_name_end = next.span.end;
+          &self.parser.source_text[raw_start as usize..raw_name_end as usize]
+        } else {
+          self.peeked = Some(next);
+          first.value.unwrap_or_default()
+        }
+      } else {
+        first.value.unwrap_or_default()
+      }
     } else {
       first.value.unwrap_or_default()
     };
@@ -83,14 +90,21 @@ where
 
     let raw_name = &self.parser.source_text[raw_start as usize..raw_name_end as usize];
     if is_directive_name(raw_name)
-      && let Some(value_span) = value_span
+      && !is_plain_value_attribute(raw_name, value_span)
+      && (value_span.is_some() || !raw_name.starts_with(':'))
       && let Some(ast) =
         self.parse_directive_attribute(raw_name, Span::new(raw_start, raw_end), value_span)
     {
       return ParsedAttribute { ast: Some(ast), name, value };
     }
 
-    let key_name = self.alloc_value(name.trim_start_matches([':', '@', '#']));
+    let key_name_source =
+      if is_plain_value_attribute(raw_name, value_span) || matches!(raw_name, ":" | "#") {
+        raw_name
+      } else {
+        name.trim_start_matches([':', '@', '#'])
+      };
+    let key_name = self.alloc_value(key_name_source);
     let raw_name = self.alloc_value(raw_name);
     let value_node = value.map(|value| {
       let value = self.alloc_value(value);
@@ -113,12 +127,13 @@ where
     &mut self,
     raw_name: &'b str,
     attr_span: Span,
-    value_span: Span,
+    value_span: Option<Span>,
   ) -> Option<VAttribute<'a, 'b>> {
     let (name, argument, modifiers) = self.parse_directive_key(raw_name, attr_span)?;
     let directive_name = name.name;
 
     if directive_name == "for"
+      && let Some(value_span) = value_span
       && let Some(value) = self.parse_v_for_expression(value_span)
     {
       let directive = VForDirective {
@@ -139,6 +154,7 @@ where
     }
 
     if directive_name == "slot"
+      && let Some(value_span) = value_span
       && let Some(value) = self.parse_v_slot_expression(value_span)
     {
       let directive = VSlotDirective {
@@ -159,6 +175,7 @@ where
     }
 
     if directive_name == "on"
+      && let Some(value_span) = value_span
       && let Some(value) = self.parse_v_on_expression(value_span)
     {
       let directive = VOnDirective {
@@ -178,10 +195,15 @@ where
       )));
     }
 
-    let (expression, references, tokens) = self.parser.parse_pure_expression(value_span)?;
-    if !tokens.is_empty() {
-      self.parser.sfc.template_tokens.push(tokens.into());
-    }
+    let value = if let Some(value_span) = value_span {
+      let (expression, references, tokens) = self.parser.parse_pure_expression(value_span)?;
+      if !tokens.is_empty() {
+        self.parser.sfc.template_tokens.push(tokens.into());
+      }
+      Some(VDirectiveExpression { expression, references, span: value_span })
+    } else {
+      None
+    };
 
     let directive = VDirective {
       key: VDirectiveKey {
@@ -190,7 +212,7 @@ where
         modifiers,
         span: Span::sized(attr_span.start, raw_name.len() as u32),
       },
-      value: VDirectiveExpression { expression, references, span: value_span },
+      value,
       span: attr_span,
     };
 
@@ -299,6 +321,10 @@ impl<'b> ParsedDirectiveName<'b> {
       name_span: Span::sized(attr_span.start, split as u32 + 2),
     })
   }
+}
+
+fn is_plain_value_attribute(raw_name: &str, value_span: Option<Span>) -> bool {
+  value_span.is_some() && matches!(raw_name, ":" | "#" | "v-slot:")
 }
 
 trait TokenValueSpan {

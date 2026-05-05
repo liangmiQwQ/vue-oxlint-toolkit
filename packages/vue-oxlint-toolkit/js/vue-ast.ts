@@ -237,6 +237,9 @@ function normalizeCurrentNode(
   if (node.type === 'VStartTag' && isEmptyArray(node.variables)) {
     delete node.variables
   }
+  if (node.type === 'VStartTag') {
+    node.attributes = mergeBareBindAssociationAttributes(getNodeArray(node.attributes))
+  }
 
   if (node.type === 'VDirectiveKey') {
     node.type = 'VDirectiveKey'
@@ -255,14 +258,26 @@ function normalizeCurrentNode(
 
   if (node.type === 'VExpressionContainer') {
     includeDirectiveValueQuotes(node, source)
-    if (!Array.isArray(node.references) || node.references.length === 0) {
+    const expression = getNode(node.expression)
+    if (expression?.type === 'VForExpression') {
+      node.references = collectExpressionReferences(expression)
+    } else if (!hasVariableReference(node.references)) {
+      const references = collectExpressionReferences(expression)
+      if (references.length > 0) {
+        node.references = references
+      } else if (!Array.isArray(node.references) || node.references.length === 0) {
+        node.references = getArray(node.reference)
+      }
+    } else if (!Array.isArray(node.references) || node.references.length === 0) {
       node.references = getArray(node.reference).length
         ? node.reference
         : collectExpressionReferences(node.expression)
     }
     for (const reference of getNodeArray(node.references)) {
-      reference.isValueReference = undefined
-      reference.isTypeReference = undefined
+      if (!('variable' in reference)) {
+        reference.isValueReference = undefined
+        reference.isTypeReference = undefined
+      }
     }
     delete node.reference
   }
@@ -305,6 +320,25 @@ function normalizeTemplateTokens(tokens: AstNode[], source: string): AstNode[] {
       continue
     }
 
+    if (
+      token.type === 'HTMLIdentifier' &&
+      token.value === 'v-slot' &&
+      getNode(tokens[index + 1])?.type === 'Punctuator' &&
+      getNode(tokens[index + 1])?.value === ':' &&
+      getNode(tokens[index + 2])?.type === 'HTMLAssociation'
+    ) {
+      const colon = getNode(tokens[index + 1])
+      normalized.push({
+        type: 'HTMLIdentifier',
+        value: 'v-slot:',
+        start: token.start,
+        end: colon?.end,
+        range: [token.start ?? 0, colon?.end ?? token.end ?? 0],
+      })
+      index += 1
+      continue
+    }
+
     if (token.type === 'VExpressionStart') {
       normalized.push({ ...token, value: '{{' })
       const expressionText = getNode(tokens[index + 1])
@@ -336,6 +370,15 @@ function normalizeTemplateTokens(tokens: AstNode[], source: string): AstNode[] {
       token.value.endsWith(']')
     ) {
       normalized.push(...tokensForDynamicArgument(token))
+      continue
+    }
+
+    if (
+      token.type === 'Punctuator' &&
+      (token.value === ':' || token.value === '#') &&
+      getNode(tokens[index + 1])?.type === 'HTMLAssociation'
+    ) {
+      normalized.push({ ...token, type: 'HTMLIdentifier' })
       continue
     }
 
@@ -685,23 +728,48 @@ function tokensFromExpressionText(token: AstNode, source: string): AstNode[] {
     return []
   }
 
-  const raw = source.slice(token.start, token.end)
-  const leading = raw.length - raw.trimStart().length
-  const value = raw.trim()
-  if (!/^[A-Za-z_$][\w$]*$/.test(value)) {
+  const tokens: AstNode[] = []
+  let index = token.start
+
+  while (index < token.end) {
+    const character = source[index]
+    if (/\s/u.test(character)) {
+      index += 1
+      continue
+    }
+
+    if (character === '.') {
+      tokens.push({
+        type: 'Punctuator',
+        value: '.',
+        start: index,
+        end: index + 1,
+        range: [index, index + 1],
+      })
+      index += 1
+      continue
+    }
+
+    if (/[A-Za-z_$]/u.test(character)) {
+      const start = index
+      index += 1
+      while (index < token.end && /[\w$]/u.test(source[index])) {
+        index += 1
+      }
+      tokens.push({
+        type: 'Identifier',
+        value: source.slice(start, index),
+        start,
+        end: index,
+        range: [start, index],
+      })
+      continue
+    }
+
     return []
   }
 
-  const start = token.start + leading
-  return [
-    {
-      type: 'Identifier',
-      value,
-      start,
-      end: start + value.length,
-      range: [start, start + value.length],
-    },
-  ]
+  return tokens
 }
 
 function isDynamicArgument(argument: AstNode) {
@@ -714,12 +782,93 @@ function isDynamicArgument(argument: AstNode) {
   )
 }
 
+function mergeBareBindAssociationAttributes(attributes: AstNode[]) {
+  const merged: AstNode[] = []
+
+  for (let index = 0; index < attributes.length; index += 1) {
+    const attribute = attributes[index]
+    const next = attributes[index + 1]
+    if (isBareBindAssociationAttribute(attribute) && isLiteralAttributeName(next)) {
+      merged.push(createBareBindLiteralAttribute(attribute, next))
+      index += 1
+      continue
+    }
+
+    merged.push(attribute)
+  }
+
+  return merged
+}
+
+function isBareBindAssociationAttribute(attribute: AstNode | undefined) {
+  const key = getNode(attribute?.key)
+  return (
+    attribute?.type === 'VPureAttribute' &&
+    attribute.value === null &&
+    key?.type === 'VIdentifier' &&
+    key.rawName === ':='
+  )
+}
+
+function isLiteralAttributeName(attribute: AstNode | undefined) {
+  const key = getNode(attribute?.key)
+  return (
+    attribute?.type === 'VPureAttribute' &&
+    attribute.value === null &&
+    key?.type === 'VIdentifier' &&
+    typeof key.rawName === 'string' &&
+    isQuoted(key.rawName)
+  )
+}
+
+function createBareBindLiteralAttribute(attribute: AstNode, literalAttribute: AstNode): AstNode {
+  const key = getNode(attribute.key)
+  const literalKey = getNode(literalAttribute.key)
+  const start = attribute.start ?? key?.start ?? 0
+  const keyEnd = start + 1
+  const end = literalAttribute.end ?? literalKey?.end ?? keyEnd
+  const literalStart = literalAttribute.start ?? literalKey?.start ?? keyEnd
+  const literalEnd = literalAttribute.end ?? literalKey?.end ?? literalStart
+  const rawValue = typeof literalKey?.rawName === 'string' ? literalKey.rawName : ''
+
+  return {
+    type: 'VPureAttribute',
+    key: {
+      type: 'VIdentifier',
+      name: ':',
+      rawName: ':',
+      start,
+      end: keyEnd,
+      range: [start, keyEnd],
+    },
+    value: {
+      type: 'VLiteral',
+      value: rawValue.slice(1, -1),
+      start: literalStart,
+      end: literalEnd,
+      range: [literalStart, literalEnd],
+    },
+    start,
+    end,
+    range: [start, end],
+  }
+}
+
+function isQuoted(value: string) {
+  return (
+    value.length >= 2 &&
+    ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'")))
+  )
+}
+
 function isShorthandBindAttribute(node: AstNode) {
   const key = getNode(node.key)
   return (
     key?.type === 'VIdentifier' &&
     typeof key.rawName === 'string' &&
     key.rawName.startsWith(':') &&
+    key.rawName.length > 1 &&
     node.value === null
   )
 }
@@ -795,7 +944,7 @@ function createDynamicArgument(argument: AstNode): AstNode {
 }
 
 function createIdentifierExpression(name: string, start: number, end: number): AstNode {
-  return { type: 'Identifier', name, start, end, range: [start, end] }
+  return { type: 'Identifier', name, start, end: undefined, range: [start, end] }
 }
 
 function camelize(value: string) {
@@ -1019,6 +1168,19 @@ function collectPatternIdentifierInto(node: unknown, identifiers: AstNode[]) {
     return
   }
 
+  if (node.type === 'Property') {
+    const propertyValue = getNode(node.value)
+    const assignmentLeft = getNode(propertyValue?.left)
+    if (propertyValue?.type === 'AssignmentPattern' && assignmentLeft?.type === 'Identifier') {
+      identifiers.push(assignmentLeft)
+      return
+    }
+    if (propertyValue?.type === 'Identifier') {
+      identifiers.push(propertyValue)
+      return
+    }
+  }
+
   for (const child of Object.values(node)) {
     if (Array.isArray(child)) {
       for (const item of child) {
@@ -1032,6 +1194,10 @@ function collectPatternIdentifierInto(node: unknown, identifiers: AstNode[]) {
 
 function isLocalReference(name: string, localStack: Array<Set<string>>) {
   return localStack.some((locals) => locals.has(name))
+}
+
+function hasVariableReference(references: unknown) {
+  return getNodeArray(references).some((reference) => 'variable' in reference)
 }
 
 function currentLocals(localStack: Array<Set<string>>) {
@@ -1056,9 +1222,14 @@ function attachMetadata(value: unknown, parent: AstNode | null, locator: Locator
     })
   }
 
-  if (typeof value.start === 'number' && typeof value.end === 'number') {
-    const start = value.start
-    const end = value.end
+  if (
+    (typeof value.start === 'number' && typeof value.end === 'number') ||
+    (Array.isArray(value.range) &&
+      typeof value.range[0] === 'number' &&
+      typeof value.range[1] === 'number')
+  ) {
+    const start = value.start ?? value.range?.[0] ?? 0
+    const end = value.end ?? value.range?.[1] ?? start
     value.range ??= [start, end]
     const [locationStart, locationEnd] = value.range
 
