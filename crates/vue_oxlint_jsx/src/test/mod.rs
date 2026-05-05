@@ -114,7 +114,7 @@ where
 }
 
 pub fn read_file(file_path: &str) -> String {
-  std::fs::read_to_string(format!("fixtures/{file_path}")).expect("Failed to read test file")
+  std::fs::read_to_string(format!("../../fixtures/{file_path}")).expect("Failed to read test file")
 }
 
 pub fn snapshot_name(file_path: &str) -> String {
