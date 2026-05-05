@@ -10,6 +10,7 @@ use crate::ast::VueSingleFileComponent;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 pub mod ast;
+mod error;
 mod lexer;
 pub mod parser;
 
