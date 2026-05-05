@@ -114,10 +114,16 @@ impl ESTree for VDirectiveKey<'_, '_> {
 }
 
 impl ESTree for VDirectiveArgument<'_, '_> {
-  fn serialize<S: Serializer>(&self, serializer: S) {
+  fn serialize<S: Serializer>(&self, mut serializer: S) {
     match self {
       VDirectiveArgument::VDirectiveArgument(expr) => expr.serialize(serializer),
-      VDirectiveArgument::VIdentifier(ident) => ident.serialize(serializer),
+      VDirectiveArgument::VIdentifier(ident) => {
+        if ident.name.is_empty() {
+          serializer.buffer_mut().print_str("null");
+        } else {
+          ident.serialize(serializer);
+        }
+      }
     }
   }
 }

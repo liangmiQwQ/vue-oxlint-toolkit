@@ -181,6 +181,7 @@ where
         name,
         span: identifier.span,
         mode: reference_mode(reference.is_read(), reference.is_write()),
+        has_variable: false,
       });
     }
     references

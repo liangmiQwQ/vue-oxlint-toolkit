@@ -35,6 +35,9 @@ pub struct VDirectiveExpression<'a, 'b> {
   pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
+  /// When `true`, the expression is a shorthand-bind identifier and should
+  /// serialize without `end` to match vue-eslint-parser's behavior.
+  pub is_shorthand_bind: bool,
 }
 
 #[derive(Debug)]
@@ -88,10 +91,31 @@ impl ESTree for VDirectiveExpression<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &self.expression);
+    state.serialize_field("expression", &ShorthandBindExpression(&self.expression, self.is_shorthand_bind));
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
+  }
+}
+
+/// Wrapper around `Expression` that omits `end` for shorthand-bind identifiers
+/// to match vue-eslint-parser's custom AST shape.
+struct ShorthandBindExpression<'b>(&'b Expression<'b>, bool);
+
+impl ESTree for ShorthandBindExpression<'_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    if self.1 {
+      if let Expression::Identifier(ident) = self.0 {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("name", &ident.name);
+        state.serialize_field("start", &ident.span.start);
+        state.serialize_field("range", &[ident.span.start, ident.span.end]);
+        state.end();
+        return;
+      }
+    }
+    self.0.serialize(serializer);
   }
 }
 

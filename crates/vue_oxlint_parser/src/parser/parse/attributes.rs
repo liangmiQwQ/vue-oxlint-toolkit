@@ -1,9 +1,12 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_span::Span;
+use oxc_syntax::node::NodeId;
+use std::cell::Cell;
 
 use crate::ast::{
-  VAttribute, VDirective, VDirectiveArgument, VDirectiveExpression, VDirectiveKey, VForDirective,
-  VIdentifier, VLiteral, VOnDirective, VPureAttribute, VSlotDirective,
+  Reference, VAttribute, VDirective, VDirectiveArgument, VDirectiveExpression, VDirectiveKey,
+  VForDirective, VIdentifier, VLiteral, VOnDirective, VPureAttribute, VSlotDirective,
 };
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::parse::TemplateParser;
@@ -91,7 +94,6 @@ where
     let raw_name = &self.parser.source_text[raw_start as usize..raw_name_end as usize];
     if is_directive_name(raw_name)
       && !is_plain_value_attribute(raw_name, value_span)
-      && (value_span.is_some() || !raw_name.starts_with(':'))
       && let Some(ast) =
         self.parse_directive_attribute(raw_name, Span::new(raw_start, raw_end), value_span)
     {
@@ -200,7 +202,9 @@ where
       if !tokens.is_empty() {
         self.parser.sfc.template_tokens.push(tokens.into());
       }
-      Some(VDirectiveExpression { expression, references, span: value_span })
+      Some(VDirectiveExpression { expression, references, span: value_span, is_shorthand_bind: false })
+    } else if directive_name == "bind" {
+      self.parse_shorthand_bind_value(&argument, attr_span)
     } else {
       None
     };
@@ -220,7 +224,7 @@ where
   }
 
   fn parse_directive_key(
-    &self,
+    &mut self,
     raw_name: &'b str,
     attr_span: Span,
   ) -> Option<DirectiveKeyParts<'a, 'b>> {
@@ -233,29 +237,43 @@ where
 
     let mut modifiers = ArenaVec::new_in(self.parser.vue_allocator);
     let (argument_source, modifier_source) = split_directive_argument(parsed.rest);
-    let argument = argument_source.map_or_else(
-      || {
-        VDirectiveArgument::VIdentifier(ArenaBox::new_in(
-          VIdentifier {
-            name: "",
-            raw_name: "",
-            span: Span::new(parsed.rest_start, parsed.rest_start),
-          },
+    let argument = if let Some((argument_source, argument_offset)) = argument_source {
+      let arg_start = parsed.rest_start + argument_offset as u32;
+      let arg_span = Span::sized(arg_start, argument_source.len() as u32);
+      if argument_source.starts_with('[') && argument_source.ends_with(']') {
+        // Dynamic argument: parse the inner content as an expression
+        let inner_start = arg_start + 1;
+        let inner_end = arg_start + argument_source.len() as u32 - 1;
+        let inner_span = Span::new(inner_start, inner_end);
+        let arg_span = Span::new(arg_start, arg_start + argument_source.len() as u32);
+        let (expression, references, tokens) = self.parser.parse_pure_expression(inner_span)?;
+        if !tokens.is_empty() {
+          self.parser.sfc.template_tokens.push(tokens.into());
+        }
+        VDirectiveArgument::VDirectiveArgument(ArenaBox::new_in(
+          crate::ast::VDirectiveArgumentExpression { expression, references, span: arg_span },
           self.parser.vue_allocator,
         ))
-      },
-      |(argument_source, argument_offset)| {
-        let arg_start = parsed.rest_start + argument_offset as u32;
+      } else {
         VDirectiveArgument::VIdentifier(ArenaBox::new_in(
           VIdentifier {
             name: self.alloc_value(argument_source),
             raw_name: self.alloc_value(argument_source),
-            span: Span::sized(arg_start, argument_source.len() as u32),
+            span: arg_span,
           },
           self.parser.vue_allocator,
         ))
-      },
-    );
+      }
+    } else {
+      VDirectiveArgument::VIdentifier(ArenaBox::new_in(
+        VIdentifier {
+          name: "",
+          raw_name: "",
+          span: Span::new(parsed.rest_start, parsed.rest_start),
+        },
+        self.parser.vue_allocator,
+      ))
+    };
 
     for (modifier, modifier_offset) in modifier_source {
       let modifier_start = parsed.rest_start + modifier_offset as u32;
@@ -268,6 +286,51 @@ where
 
     Some((name, argument, modifiers))
   }
+
+  fn parse_shorthand_bind_value(
+    &mut self,
+    argument: &VDirectiveArgument<'a, 'b>,
+    _attr_span: Span,
+  ) -> Option<VDirectiveExpression<'a, 'b>> {
+    let ident = match argument {
+      VDirectiveArgument::VIdentifier(ident) => ident,
+      // Dynamic arguments without explicit value (e.g. :[foo]) are extremely
+      // rare; treat them as having no value for now.
+      VDirectiveArgument::VDirectiveArgument(_) => return None,
+    };
+
+    let arg_name = ident.name;
+    let arg_span = ident.span;
+    let camelized = camelize(arg_name);
+    let name = self.parser.js_allocator.alloc_str(&camelized);
+    let ident_ref = IdentifierReference {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: arg_span,
+      name: name.into(),
+      reference_id: Cell::new(None),
+    };
+    let expression = Expression::Identifier(ArenaBox::new_in(ident_ref, self.parser.js_allocator));
+    let name_ref = self.parser.vue_allocator.alloc_str(&camelized);
+    let mut references = ArenaVec::new_in(self.parser.vue_allocator);
+    references.push(Reference { name: name_ref, span: arg_span, mode: "r", has_variable: true });
+
+    Some(VDirectiveExpression { expression, references, span: arg_span, is_shorthand_bind: true })
+  }
+}
+
+fn camelize(value: &str) -> String {
+  let mut result = String::with_capacity(value.len());
+  let mut chars = value.chars().peekable();
+  while let Some(c) = chars.next() {
+    if c == '-' {
+      if let Some(next) = chars.next() {
+        result.push(next.to_ascii_uppercase());
+      }
+    } else {
+      result.push(c);
+    }
+  }
+  result
 }
 
 struct ParsedDirectiveName<'b> {
