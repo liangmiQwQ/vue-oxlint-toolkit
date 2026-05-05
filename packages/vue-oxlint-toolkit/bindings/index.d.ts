@@ -20,6 +20,12 @@ export interface NativeMapping {
   originalEnd: number
 }
 
+export interface NativeParseResult {
+  astJson: string
+  errors: Array<NativeDiagnostic>
+  panicked: boolean
+}
+
 export interface NativeRange {
   start: number
   end: number
@@ -33,5 +39,7 @@ export interface NativeTransformResult {
   errors: Array<NativeDiagnostic>
   mappings: Array<NativeMapping>
 }
+
+export declare function parseVue(source: string): NativeParseResult
 
 export declare function transformJsx(source: string): NativeTransformResult

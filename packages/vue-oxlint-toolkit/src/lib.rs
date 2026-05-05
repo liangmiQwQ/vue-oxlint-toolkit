@@ -1,7 +1,9 @@
 #![deny(clippy::all)]
 
 use oxc_ast::ast::CommentKind;
+use oxc_estree::{CompactTSSerializer, ESTree};
 use vue_oxlint_jsx::VueJsxCodegen;
+use vue_oxlint_parser::VueParser;
 
 use napi_derive::napi;
 
@@ -44,6 +46,44 @@ pub struct NativeTransformResult {
   pub irregular_whitespaces: Vec<NativeRange>,
   pub errors: Vec<NativeDiagnostic>,
   pub mappings: Vec<NativeMapping>,
+}
+
+#[napi(object)]
+pub struct NativeParseResult {
+  pub ast_json: String,
+  pub errors: Vec<NativeDiagnostic>,
+  pub panicked: bool,
+}
+
+#[napi]
+#[must_use]
+#[allow(clippy::needless_pass_by_value, reason = "N-API owns string arguments at the boundary.")]
+pub fn parse_vue(source: String) -> NativeParseResult {
+  let vue_allocator = oxc_allocator::Allocator::new();
+  let js_allocator = oxc_allocator::Allocator::new();
+  let ret = VueParser::new(&vue_allocator, &js_allocator, &source).parse();
+  let mut serializer = CompactTSSerializer::new(true);
+  ret.sfc.serialize(&mut serializer);
+  let ast_json = serializer.into_string();
+
+  NativeParseResult {
+    ast_json,
+    errors: ret
+      .errors
+      .iter()
+      .map(|error| {
+        let (start, end) =
+          error.labels.as_ref().and_then(|labels| labels.first()).map_or((0, 0), |label| {
+            let start = label.offset() as u32;
+            let end = start + label.len() as u32;
+            (start, end)
+          });
+
+        NativeDiagnostic { message: error.message.to_string(), start, end }
+      })
+      .collect(),
+    panicked: ret.panicked,
+  }
 }
 
 #[napi]
