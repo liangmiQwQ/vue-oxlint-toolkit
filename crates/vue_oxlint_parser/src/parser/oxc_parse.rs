@@ -17,7 +17,7 @@ where
   'b: 'a,
   'a: 'c,
 {
-  pub fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &str)> {
+  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &str)> {
     let allocator = Allocator::new();
     // SAFETY: use `()` as wrap
     let (expr, tokens) = unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
@@ -31,7 +31,7 @@ where
   /// ## Safety
   /// - `start_wrap` must start with `(`
   /// - `end_wrap` must end with `)`
-  pub unsafe fn parse_expression(
+  pub(crate) unsafe fn parse_expression(
     &mut self,
     span: Span,
     start_wrap: &[u8],
