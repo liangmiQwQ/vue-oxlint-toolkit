@@ -46,7 +46,10 @@ impl ESTree for Identifier<'_> {
 impl ESTree for Reference<'_> {
   fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
-    state.serialize_field("id", &Identifier { name: self.name, span: self.span, omit_end: self.has_variable });
+    state.serialize_field(
+      "id",
+      &Identifier { name: self.name, span: self.span, omit_end: self.has_variable },
+    );
     state.serialize_field("mode", &self.mode);
     if self.has_variable {
       state.serialize_field("variable", &None::<()>);

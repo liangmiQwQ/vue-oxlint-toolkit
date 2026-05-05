@@ -202,7 +202,12 @@ where
       if !tokens.is_empty() {
         self.parser.sfc.template_tokens.push(tokens.into());
       }
-      Some(VDirectiveExpression { expression, references, span: value_span, is_shorthand_bind: false })
+      Some(VDirectiveExpression {
+        expression,
+        references,
+        span: value_span,
+        is_shorthand_bind: false,
+      })
     } else if directive_name == "bind" {
       self.parse_shorthand_bind_value(&argument, attr_span)
     } else {

@@ -91,7 +91,10 @@ impl ESTree for VDirectiveExpression<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &ShorthandBindExpression(&self.expression, self.is_shorthand_bind));
+    state.serialize_field(
+      "expression",
+      &ShorthandBindExpression(&self.expression, self.is_shorthand_bind),
+    );
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
