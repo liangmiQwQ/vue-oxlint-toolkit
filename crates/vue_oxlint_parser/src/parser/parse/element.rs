@@ -22,7 +22,6 @@ where
 {
   pub(super) fn parse_element(&mut self) -> Option<VNode<'a, 'b>> {
     let open = self.next()?;
-    self.parser.sfc.template_tokens.push(open.into());
 
     let start = self.parse_start_tag(open.span.start)?;
     let is_raw_text = is_raw_text_tag(start.raw_name_source);
@@ -33,6 +32,10 @@ where
 
     if has_v_pre {
       self.lexer.enter_v_pre();
+    }
+
+    if is_script {
+      self.push_script_wrapper("<script>", start.span);
     }
 
     let mut children = if start.self_closing || is_void {
@@ -53,19 +56,22 @@ where
       self.consume_end_tag(start.raw_name_source)
     };
 
+    if is_script && let Some(end_tag) = &end_tag {
+      self.push_script_wrapper("</script>", end_tag.span);
+    }
+
     if has_v_pre {
       self.lexer.leave_v_pre();
     }
 
     let span_end = end_tag.as_ref().map_or(start.span.end, |tag| tag.span.end);
     let variables = self.collect_start_tag_variables(&start.attributes);
-    let start_tag_variables = self.clone_variables(&variables);
     let element = VElement {
       name: start.name,
       raw_name: start.raw_name,
       start_tag: VStartTag {
         attributes: start.attributes,
-        variables: start_tag_variables,
+        variables: ArenaVec::new_in(self.parser.vue_allocator),
         self_closing: start.self_closing,
         span: start.span,
       },
@@ -90,15 +96,13 @@ where
       return None;
     }
 
-    self.parser.sfc.template_tokens.push(name_token.into());
     let mut raw_name_end = name_token.span.end;
     while self
       .peek()
       .is_some_and(|token| token.kind == VTokenKind::Punctuator && token.value == Some("."))
     {
       // SAFETY: `peek()` proved the token exists and is the dot punctuator.
-      let dot = self.next().unwrap();
-      self.parser.sfc.template_tokens.push(dot.into());
+      self.next();
       let Some(part) = self.next() else {
         break;
       };
@@ -107,10 +111,14 @@ where
         break;
       }
       raw_name_end = part.span.end;
-      self.parser.sfc.template_tokens.push(part.into());
     }
     let raw_name_source =
       &self.parser.source_text[name_token.span.start as usize..raw_name_end as usize];
+    self.push_template_token_with_value(
+      VTokenKind::HTMLTagOpen,
+      Span::new(open_start, raw_name_end),
+      &raw_name_source.to_lowercase(),
+    );
     let name = self.alloc_value(raw_name_source);
     let raw_name = name;
     let mut attributes = ArenaVec::new_in(self.parser.vue_allocator);
@@ -132,13 +140,12 @@ where
           let token = self.next().unwrap();
           close_span = token.span;
           self_closing = token.kind == VTokenKind::HTMLSelfClosingTagClose;
-          self.parser.sfc.template_tokens.push(token.into());
+          self.push_template_token(token);
           break;
         }
         VTokenKind::HTMLWhitespace => {
           // SAFETY: the match arm is only reached for a whitespace token returned by `peek()`.
-          let token = self.next().unwrap();
-          self.parser.sfc.template_tokens.push(token.into());
+          self.next();
         }
         _ => {
           let attr = self.parse_attribute();

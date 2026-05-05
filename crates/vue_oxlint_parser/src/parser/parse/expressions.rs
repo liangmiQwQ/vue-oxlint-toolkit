@@ -60,7 +60,13 @@ where
       self.parser.sfc.template_tokens.push(tokens.into());
     }
 
-    Some(VForExpression { left: params, right, references, span: value_span })
+    Some(VForExpression {
+      left: params,
+      right,
+      references,
+      span: value_span,
+      expression_span: value_span,
+    })
   }
 
   pub(super) fn parse_v_slot_expression(
@@ -81,6 +87,7 @@ where
     Some(VSlotExpression {
       params: arrow.params.clone_in(self.parser.js_allocator),
       span: value_span,
+      expression_span: value_span,
     })
   }
 
@@ -90,6 +97,9 @@ where
   ) -> Option<VOnExpression<'a, 'b>> {
     let allocator = Allocator::new();
     let ret = self.parser.oxc_parse(value_span, b"{", b"}", Some(&allocator))?;
+    if !ret.tokens.is_empty() {
+      self.parser.sfc.template_tokens.push(ret.tokens.into());
+    }
     let Some(Statement::BlockStatement(block)) = ret.statements.into_iter().next() else {
       return None;
     };
@@ -98,6 +108,7 @@ where
       body: block.body.clone_in(self.parser.js_allocator),
       references: ret.references,
       span: value_span,
+      expression_span: value_span,
     })
   }
 }

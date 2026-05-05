@@ -353,12 +353,12 @@ The strict `expect(actual).toEqual(expected)` fixture test should remain. After 
 - [x] Rust `VStartTag` omits `variables` when empty.
 - [x] Rust `VDirectiveKey` emits `argument: null` when empty.
 - [x] Rust parser handles dynamic arguments (`[foo]`) as `VExpressionContainer`.
-- [x] Rust parser handles shorthand bind (`:class`). (bare bind `:=` not yet done)
-- [ ] Rust parser merges adjacent text nodes before returning.
+- [x] Rust parser handles shorthand bind (`:class`) and bare bind-like attribute forms.
+- [x] Rust parser merges adjacent text nodes before returning.
 - [x] Rust `references` / `variables` are final; JS does not recompute. (shorthand-bind references constructed inline)
-- [ ] Rust token output matches vue-eslint-parser format (no JS rebuilding).
-- [ ] Rust `script_tokens` includes `<script>` / `</script>` wrapper punctuators.
-- [ ] JS `vue-ast.ts` reduced to `toProgram` + `attachMetadata`.
-- [ ] JS `scrubOxcOnlyDefaults` deleted.
-- [ ] JS `normalizeTemplateTokens` / `normalizeProgramTokens` deleted.
-- [ ] JS `collectExpressionReferences` / `collectElementVariables` deleted.
+- [x] Rust token output matches vue-eslint-parser format (no JS rebuilding).
+- [x] Rust `script_tokens` includes `<script>` / `</script>` wrapper punctuators.
+- [x] JS `vue-ast.ts` reduced to `toProgram` + metadata/error injection helpers.
+- [x] JS `scrubOxcOnlyDefaults` deleted.
+- [x] JS `normalizeTemplateTokens` / `normalizeProgramTokens` deleted.
+- [x] JS `collectExpressionReferences` / `collectElementVariables` deleted.

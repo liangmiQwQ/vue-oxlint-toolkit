@@ -1,7 +1,7 @@
 #![deny(clippy::all)]
 
-use oxc_ast::ast::CommentKind;
-use oxc_estree::{CompactTSSerializer, ESTree};
+use oxc_ast::ast::{CommentKind, SourceType};
+use oxc_estree::{CompactJSSerializer, CompactTSSerializer, ESTree};
 use vue_oxlint_jsx::VueJsxCodegen;
 use vue_oxlint_parser::VueParser;
 
@@ -62,9 +62,16 @@ pub fn parse_vue(source: String) -> NativeParseResult {
   let vue_allocator = oxc_allocator::Allocator::new();
   let js_allocator = oxc_allocator::Allocator::new();
   let ret = VueParser::new(&vue_allocator, &js_allocator, &source).parse();
-  let mut serializer = CompactTSSerializer::new(true);
-  ret.sfc.serialize(&mut serializer);
-  let ast_json = serializer.into_string();
+  let ast_json = if ret.sfc.source_type.is_some_and(SourceType::is_typescript) {
+    let mut serializer = CompactTSSerializer::new(true);
+    ret.sfc.serialize(&mut serializer);
+    serializer.into_string()
+  } else {
+    let mut serializer = CompactJSSerializer::new(true);
+    ret.sfc.serialize(&mut serializer);
+    serializer.into_string()
+  };
+  let ast_json = ast_json.replace(r#","phase":null"#, "");
 
   NativeParseResult {
     ast_json,

@@ -12,6 +12,7 @@ where
 {
   pub(super) fn parse_children(&mut self, until: Option<&str>) -> ArenaVec<'a, VNode<'a, 'b>> {
     let mut children = ArenaVec::new_in(self.parser.vue_allocator);
+    let mut can_merge_text = false;
 
     while let Some(token) = self.peek() {
       match token.kind {
@@ -20,16 +21,19 @@ where
             break;
           }
           self.consume_unmatched_end_tag();
+          can_merge_text = false;
         }
         VTokenKind::HTMLTagOpen => {
           if let Some(node) = self.parse_element() {
             children.push(node);
           }
+          can_merge_text = false;
         }
         VTokenKind::VExpressionStart => {
           if let Some(node) = self.parse_interpolation() {
             children.push(node);
           }
+          can_merge_text = false;
         }
         VTokenKind::HTMLComment | VTokenKind::HTMLBogusComment => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
@@ -40,6 +44,7 @@ where
             value,
             span: token.span,
           });
+          can_merge_text = false;
         }
         VTokenKind::HTMLText
         | VTokenKind::HTMLWhitespace
@@ -48,14 +53,14 @@ where
         | VTokenKind::HTMLCDataText => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
           let token = self.next().unwrap();
-          if let Some(node) = self.text_node(token) {
-            children.push(node);
-          }
+          self.push_text_child(&mut children, token, can_merge_text);
+          can_merge_text = true;
         }
         _ => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
           let token = self.next().unwrap();
-          self.parser.sfc.template_tokens.push(token.into());
+          self.push_template_token(token);
+          can_merge_text = false;
         }
       }
     }
@@ -75,7 +80,7 @@ where
 
       // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
       let token = self.next().unwrap();
-      self.parser.sfc.template_tokens.push(token.into());
+      self.push_template_token(token);
       raw_start.get_or_insert(token.span.start);
       raw_end = Some(token.span.end);
     }
@@ -120,19 +125,21 @@ where
 
   fn parse_interpolation(&mut self) -> Option<VNode<'a, 'b>> {
     let start = self.next()?;
-    self.parser.sfc.template_tokens.push(start.into());
     let expression = self.next()?;
-    self.parser.sfc.template_tokens.push(expression.into());
     let end = self.next()?;
-    self.parser.sfc.template_tokens.push(end.into());
+    self.push_template_token(start);
 
     if expression.kind != VTokenKind::HTMLText || end.kind != VTokenKind::VExpressionEnd {
       self.parser.errors.push(error::unexpected_token(expression.span, "interpolation expression"));
+      self.push_template_token(expression);
+      self.push_template_token(end);
       return None;
     }
 
     let span = Span::new(expression.span.start, expression.span.end);
     let Some((expression, references, tokens)) = self.parser.parse_pure_expression(span) else {
+      self.push_template_token(expression);
+      self.push_template_token(end);
       return self.text_node(VToken::new(
         VTokenKind::HTMLText,
         Span::new(start.span.start, end.span.end),
@@ -143,6 +150,7 @@ where
     if !tokens.is_empty() {
       self.parser.sfc.template_tokens.push(tokens.into());
     }
+    self.push_template_token(end);
     let interpolation =
       VInterpolation { expression, references, span: Span::new(start.span.start, end.span.end) };
     Some(VNode::Interpolation(ArenaBox::new_in(interpolation, self.parser.vue_allocator)))
@@ -155,9 +163,13 @@ where
 
     // SAFETY: the guard above proves the next token is an end-tag opener.
     let open = self.next().unwrap();
-    self.parser.sfc.template_tokens.push(open.into());
     let name_token = self.next_non_ws()?;
-    self.parser.sfc.template_tokens.push(name_token.into());
+    let raw_name = name_token.value.unwrap_or_default();
+    self.push_template_token_with_value(
+      VTokenKind::HTMLEndTagOpen,
+      Span::new(open.span.start, name_token.span.end),
+      &raw_name.to_lowercase(),
+    );
     if !name_token.value.unwrap_or_default().eq_ignore_ascii_case(name) {
       self.parser.errors.push(error::unexpected_closing_tag(name_token.span));
     }
@@ -166,7 +178,9 @@ where
     while let Some(token) = self.next() {
       end = token.span.end;
       let should_break = token.kind == VTokenKind::HTMLTagClose;
-      self.parser.sfc.template_tokens.push(token.into());
+      if token.kind != VTokenKind::HTMLWhitespace {
+        self.push_template_token(token);
+      }
       if should_break {
         break;
       }
@@ -178,14 +192,26 @@ where
   fn consume_unmatched_end_tag(&mut self) {
     // SAFETY: callers only enter this path after seeing `HTMLEndTagOpen`.
     let start = self.next().unwrap();
-    self.parser.sfc.template_tokens.push(start.into());
     let mut unexpected_span = start.span;
+    let mut pushed_open = false;
     while let Some(token) = self.next() {
       let should_break = token.kind == VTokenKind::HTMLTagClose;
       if token.kind == VTokenKind::HTMLIdentifier {
         unexpected_span = Span::new(start.span.start, token.span.end);
+        self.push_template_token_with_value(
+          VTokenKind::HTMLEndTagOpen,
+          unexpected_span,
+          &token.value.unwrap_or_default().to_lowercase(),
+        );
+        pushed_open = true;
       }
-      self.parser.sfc.template_tokens.push(token.into());
+      if token.kind != VTokenKind::HTMLWhitespace && token.kind != VTokenKind::HTMLIdentifier {
+        if !pushed_open {
+          self.push_template_token(start);
+          pushed_open = true;
+        }
+        self.push_template_token(token);
+      }
       if should_break {
         break;
       }
@@ -215,10 +241,37 @@ where
   }
 
   fn text_node(&mut self, token: VToken<'b>) -> Option<VNode<'a, 'b>> {
-    self.parser.sfc.template_tokens.push(token.into());
+    self.push_template_token(token);
     let text = token.value?;
     let text = self.alloc_value(text);
     Some(VNode::Text(ArenaBox::new_in(VText { text, span: token.span }, self.parser.vue_allocator)))
+  }
+
+  fn push_text_child(
+    &mut self,
+    children: &mut ArenaVec<'a, VNode<'a, 'b>>,
+    token: VToken<'b>,
+    can_merge: bool,
+  ) {
+    self.push_template_token(token);
+    let Some(text) = token.value else {
+      return;
+    };
+
+    if can_merge && let Some(VNode::Text(previous)) = children.last_mut() {
+      let start = previous.span.start;
+      let end = token.span.end;
+      let value = &self.parser.source_text[start as usize..end as usize];
+      previous.text = self.alloc_value(value);
+      previous.span = Span::new(start, end);
+      return;
+    }
+
+    let text = self.alloc_value(text);
+    children.push(VNode::Text(ArenaBox::new_in(
+      VText { text, span: token.span },
+      self.parser.vue_allocator,
+    )));
   }
 }
 

@@ -64,12 +64,13 @@ where
 
     let tokens = tokens.as_bytes();
     let start_needle = format!(r#""end":{}}},"#, span.start);
-    let end_needle = format!(r#""end":{}}}"#, span.end);
+    let end_needle = format!(r#""start":{},"#, span.end);
     let tokens = if let Some(start) = find(tokens, start_needle.as_bytes())
       && let Some(end) = rfind(tokens, end_needle.as_bytes())
+      && let Some(end) = rfind(&tokens[..end], b"{")
     {
       let start = start + start_needle.len();
-      let end = end + end_needle.len();
+      let end = end.saturating_sub(1);
       // SAFETY: the token slice comes from a JSON string produced by oxc.
       let tokens = unsafe { str::from_utf8_unchecked(&tokens[start..end]) };
       tokens.strip_prefix(',').unwrap_or(tokens)
