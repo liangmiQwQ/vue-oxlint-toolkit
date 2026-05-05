@@ -33,13 +33,13 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 - **`crates/vue_oxlint_parser`** — in-progress Rust port of `vue-eslint-parser`.
   - `ast.rs` — canonical V-tree surface (`VueSingleFileComponent`, `VElement`, directive/value nodes, embedded-JS attachment points).
   - `lexer/` — first-party HTML/Vue template tokenizer, including raw-text/RCDATA/foreign-content/v-pre modes and vue-eslint-parser-compatible token kinds.
-  - `parser/mod.rs` — two-allocator `VueParser` scaffold and parse return surface.
-  - `parser/script.rs` — phase-3 script-side utilities: wrapped `oxc_parser` calls, script lang/source-type resolution, duplicate-script guards, module-record aggregation, comment/token collection, and clean-span tracking.
-  - `parser/template.rs` — reserved for the recursive-descent V-tree builder in phase 4.
+  - `parser/mod.rs` — two-allocator `VueParser` parse entry point and parse return surface.
+  - `parser/parse/` — token-stream-driven recursive parser for top-level SFC nodes, elements, attributes, raw-text/RCDATA children, comments, and script handoff.
+  - `parser/oxc_parse.rs` — wrapped `oxc_parser` calls for script bodies, script comment/token collection, diagnostics, and clean-span tracking.
 
 - **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
-  - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` which calls `VueJsxCodegen::build` and converts results to N-API types (`NativeTransformResult`).
-  - `js/index.ts` — JS wrapper that converts native UTF-8 byte offsets into JS UTF-16 indices and `{ line, column }` locations via a per-source `createLocator`. Returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects.
+  - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` and `parseVue(source)`, converting Rust parser/codegen results to N-API types.
+  - `js/index.ts` — JS wrapper that converts native UTF-8 byte offsets into JS UTF-16 indices and `{ line, column }` locations via a per-source `createLocator`. Returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
   - Built with `napi build` (`build:debug` also runs `vp pack` to produce the JS bundle).
 
 - **`benchmark/`** — Criterion benches over `small.vue`, `medium.vue`, `large.vue`.
