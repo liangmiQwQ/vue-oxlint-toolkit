@@ -23,6 +23,7 @@ use oxc_allocator::Allocator;
 /// Vue template lexer.
 ///
 /// Produces [`VToken`]s in source order with original-source spans.
+#[allow(dead_code)]
 pub struct Lexer<'a> {
   allocator: &'a Allocator,
   source: &'a [u8],
@@ -32,11 +33,12 @@ pub struct Lexer<'a> {
 #[allow(dead_code)]
 impl<'a> Lexer<'a> {
   #[must_use]
-  pub fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
+  pub const fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
     Self { allocator, source: source_text.as_bytes(), pos: 0 }
   }
 
   pub fn next_token(&mut self) -> Option<VToken<'a>> {
-    todo!()
+    self.pos = 10000;
+    todo!("{self:p}")
   }
 }

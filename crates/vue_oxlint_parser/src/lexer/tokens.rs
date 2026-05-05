@@ -1,22 +1,28 @@
-//! Tokens emitted by the Vue template lexer.
-//!
-//! The variant set mirrors `vue-eslint-parser`'s intermediate-tokenizer output
-//! so that the toolkit's `ESTree` adapter can include them in `Program.tokens`
-//! verbatim. Token spans are in original SFC byte-offset space.
-
+use oxc_estree::{ESTree, Serializer, StructSerializer};
 use oxc_span::Span;
 
 /// A single template-side token.
 #[derive(Debug, Clone, Copy)]
-pub struct VToken {
+pub struct VToken<'b> {
   pub kind: VTokenKind,
   pub span: Span,
+  pub value: Option<&'b str>,
 }
 
-impl VToken {
+impl ESTree for VToken<'_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", self.kind.as_str());
+    state.serialize_field("value", &self.value);
+    state.serialize_span(self.span);
+  }
+}
+
+#[allow(dead_code)]
+impl<'b> VToken<'b> {
   #[must_use]
-  pub const fn new(kind: VTokenKind, span: Span) -> Self {
-    Self { kind, span }
+  pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
+    Self { kind, span, value }
   }
 }
 
@@ -25,42 +31,61 @@ impl VToken {
 /// Names mirror `vue-eslint-parser`'s `Token["type"]` strings: when the
 /// adapter on the toolkit side serialises tokens it can map these 1:1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 pub enum VTokenKind {
-  /// `<` — opening of a start tag, immediately followed by an
-  /// [`HTMLIdentifier`](Self::HTMLIdentifier) for the tag name.
+  // HTML Tokens, which produce by lexer
+  /// e.g. <
   HTMLTagOpen,
-  /// `</` — opening of an end tag.
-  HTMLEndTagOpen,
-  /// `>` — closing of a start or end tag.
+  /// e.g. >
   HTMLTagClose,
-  /// `/>` — self-closing tag terminator.
+  /// e.g. </
+  HTMLEndTagOpen,
+  /// e.g. />
   HTMLSelfClosingTagClose,
-  /// A tag name or attribute / directive name.
+  /// e.g. div, button
   HTMLIdentifier,
-  /// `=` between an attribute name and value.
+  /// e.g. =
   HTMLAssociation,
-  /// A quoted or unquoted attribute value (content only, quotes excluded
-  /// — quote characters live as part of the surrounding span on the parser
-  /// side, matching `vue-eslint-parser`).
+  /// e.g. "hello", 'hello'
   HTMLLiteral,
-  /// Whitespace inside a tag (between attributes, around `=`, etc.).
-  HTMLWhitespace,
-  /// Plain text run in the data state.
+  /// Plain text
   HTMLText,
-  /// Body of an `<![CDATA[ ... ]]>` section (foreign content only).
-  HTMLCDataText,
-  /// Body of a `<script>` / `<style>` / `<xmp>` element — the raw text mode.
-  HTMLRawText,
-  /// Body of a `<textarea>` / `<title>` element — the RCDATA mode.
+  /// Whitespace in template
+  HTMLWhitespace,
+  /// RCDATA text (e.g. <title> internal)
   HTMLRCDataText,
-  /// `<!-- ... -->` — single token covering open, body, and close.
-  HTMLComment,
-  /// `<!foo>` / `</...>` malformed — single bogus-comment token.
-  HTMLBogusComment,
-  /// `{{` — opening of a Vue interpolation.
+  /// Raw text (e.g. <script>、<style> internal)
+  HTMLRawText,
+  /// Data in <![CDATA[...]]>
+  HTMLCDataText,
+  /// {{
   VExpressionStart,
-  /// `}}` — closing of a Vue interpolation.
+  /// }}
   VExpressionEnd,
-  /// `:`, `.`, `#`, `@`, `*` — directive shorthand / separator punctuation.
+
+  // Directive Related
+  /// e.g. `:`, `@`, `#` of (:class @click #default)
   Punctuator,
+}
+
+impl VTokenKind {
+  const fn as_str(&self) -> &str {
+    match self {
+      Self::HTMLTagOpen => "HTMLTagOpen",
+      Self::HTMLTagClose => "HTMLTagClose",
+      Self::HTMLEndTagOpen => "HTMLEndTagOpen",
+      Self::HTMLSelfClosingTagClose => "HTMLSelfClosingTagClose",
+      Self::HTMLIdentifier => "HTMLIdentifier",
+      Self::HTMLAssociation => "HTMLAssociation",
+      Self::HTMLLiteral => "HTMLLiteral",
+      Self::HTMLText => "HTMLText",
+      Self::HTMLWhitespace => "HTMLWhitespace",
+      Self::HTMLRCDataText => "HTMLRCDataText",
+      Self::HTMLRawText => "HTMLRawText",
+      Self::HTMLCDataText => "HTMLCDataText",
+      Self::VExpressionStart => "VExpressionStart",
+      Self::VExpressionEnd => "VExpressionEnd",
+      Self::Punctuator => "Punctuator",
+    }
+  }
 }
