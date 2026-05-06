@@ -1,11 +1,12 @@
 use crate::lexer::VToken;
 use oxc_estree::{ESTree, Serializer};
 
-/// `'a` is for the lifetime of the `vue_allocator`; serialized Oxc token
-/// fragments and synthesized Vue token values are both stored there.
+/// Two lifetime
+/// - `'a` is for the lifetime of the `vue_allocator`, we storage the serialized oxc tokens in it (to make `js_allocator` clean)
+/// - `'b` is for the lifetime of the `VToken`'s value reference (which is a slice of source text)
 #[derive(Debug)]
-pub(crate) enum SerializableToken<'a> {
-  VToken(VToken<'a>),
+pub(crate) enum SerializableToken<'a, 'b> {
+  VToken(VToken<'b>),
   /// It should be already serialized, it is a part of a JSON array
   /// e.g. `{"type":"Identifier","start": 12,"end":13}`
   ///
@@ -14,16 +15,13 @@ pub(crate) enum SerializableToken<'a> {
   OxcToken(&'a str),
 }
 
-impl<'a, 'b> From<VToken<'b>> for SerializableToken<'a>
-where
-  'b: 'a,
-{
+impl<'b> From<VToken<'b>> for SerializableToken<'_, 'b> {
   fn from(value: VToken<'b>) -> Self {
     Self::VToken(value)
   }
 }
 
-impl<'a> From<&'a str> for SerializableToken<'a> {
+impl<'a> From<&'a str> for SerializableToken<'a, '_> {
   fn from(value: &'a str) -> Self {
     Self::OxcToken(value)
   }
@@ -31,7 +29,7 @@ impl<'a> From<&'a str> for SerializableToken<'a> {
 
 /// For internal uses, usually we won't use this struct directly
 /// Only calls this in a `ArenaVec<'_, SerializableToken>`
-impl ESTree for SerializableToken<'_> {
+impl ESTree for SerializableToken<'_, '_> {
   fn serialize<S: Serializer>(&self, mut serializer: S) {
     #[allow(clippy::match_wildcard_for_single_variants)]
     match self {

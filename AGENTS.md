@@ -39,7 +39,7 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 
 - **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
   - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` and `parseVue(source)`, converting Rust parser/codegen results to N-API types.
-  - `js/` — JS wrapper split into public exports (`index.ts`), native parse/transform adapters, UTF-8 to UTF-16 location helpers, shared types, and the Vue AST adapter (`vue-ast.ts`). It returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`. Keep this adapter limited to script lifting, token/comment assignment, simple metadata/error injection, and `loc`/`parent` wiring; Rust should own AST and token shape compatibility.
+  - `js/` — JS wrapper split into public exports (`index.ts`), native parse/transform adapters, UTF-8 to UTF-16 location helpers, shared types, and the Vue AST adapter (`vue-ast.ts`). It returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
   - Built with `napi build` (`build:debug` also runs `vp pack` to produce the JS bundle).
 
 - **`benchmark/`** — Criterion benches over `small.vue`, `medium.vue`, `large.vue`.
@@ -54,7 +54,7 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 
 ## Vue/SFC parsing context
 
-`packages/vue-oxlint-toolkit` now uses the standalone `crates/vue_oxlint_parser` path for `parseVue(source)`: Rust should emit Vue AST and token JSON that is already compatible with `vue-eslint-parser`, while JS only assembles the final ESLint-style `Program` and injects runtime metadata. `crates/vue_oxlint_jsx` remains the active transform/codegen path for `transformJsx(source)` until that logic is migrated.
+The current parsing still happens in `vue_oxlint_jsx`, powered by `vue-compiler-core`. But we plan to move it to the standalone crate `crates/vue_oxlint_parser` for the united parsing logic in the future.
 
 ## Conventions
 

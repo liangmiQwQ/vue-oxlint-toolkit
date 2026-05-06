@@ -13,10 +13,7 @@ impl ESTree for VToken<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", self.kind.as_str());
-    state.serialize_field("value", &self.value());
-    if self.kind == VTokenKind::Punctuator {
-      state.serialize_field("__templatePunctuator", &true);
-    }
+    state.serialize_field("value", &self.value);
     state.serialize_span(self.span);
     state.end();
   }
@@ -26,20 +23,6 @@ impl<'b> VToken<'b> {
   #[must_use]
   pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
     Self { kind, span, value }
-  }
-
-  const fn value(&self) -> Option<&str> {
-    match (self.kind, self.value) {
-      (
-        VTokenKind::HTMLAssociation
-        | VTokenKind::HTMLTagClose
-        | VTokenKind::HTMLSelfClosingTagClose,
-        None,
-      ) => Some(""),
-      (VTokenKind::VExpressionStart, None) => Some("{{"),
-      (VTokenKind::VExpressionEnd, None) => Some("}}"),
-      _ => self.value,
-    }
   }
 }
 

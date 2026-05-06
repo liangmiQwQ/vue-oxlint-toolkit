@@ -105,7 +105,6 @@ impl ESTree for VForDirective<'_, '_> {
 impl ESTree for VDirectiveKey<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
-    state.serialize_field("type", &JsonSafeString("VDirectiveKey"));
     state.serialize_field("name", &self.name);
     state.serialize_field("argument", &self.argument);
     state.serialize_field("modifiers", &self.modifiers);
@@ -115,16 +114,10 @@ impl ESTree for VDirectiveKey<'_, '_> {
 }
 
 impl ESTree for VDirectiveArgument<'_, '_> {
-  fn serialize<S: Serializer>(&self, mut serializer: S) {
+  fn serialize<S: Serializer>(&self, serializer: S) {
     match self {
       VDirectiveArgument::VDirectiveArgument(expr) => expr.serialize(serializer),
-      VDirectiveArgument::VIdentifier(ident) => {
-        if ident.name.is_empty() {
-          serializer.buffer_mut().print_str("null");
-        } else {
-          ident.serialize(serializer);
-        }
-      }
+      VDirectiveArgument::VIdentifier(ident) => ident.serialize(serializer),
     }
   }
 }

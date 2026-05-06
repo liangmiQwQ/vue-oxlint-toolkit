@@ -20,7 +20,11 @@ where
           self.collect_formal_parameter_variables(&directive.value.left, "v-for", &mut variables);
         }
         VAttribute::VSlotDirective(directive) => {
-          self.collect_formal_parameter_variables(&directive.value.params, "scope", &mut variables);
+          self.collect_formal_parameter_variables(
+            &directive.value.params,
+            "v-slot",
+            &mut variables,
+          );
         }
         VAttribute::VPureAttribute(_) | VAttribute::VDirective(_) | VAttribute::VOnDirective(_) => {
         }
@@ -28,6 +32,17 @@ where
     }
 
     variables
+  }
+
+  pub(super) fn clone_variables(
+    &self,
+    variables: &ArenaVec<'a, Variable<'a>>,
+  ) -> ArenaVec<'a, Variable<'a>> {
+    let mut cloned = ArenaVec::new_in(self.parser.vue_allocator);
+    for variable in variables {
+      cloned.push(Variable { name: variable.name, span: variable.span, kind: variable.kind });
+    }
+    cloned
   }
 
   fn collect_formal_parameter_variables(

@@ -35,9 +35,6 @@ pub struct VDirectiveExpression<'a, 'b> {
   pub expression: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
-  /// When `true`, the expression is a shorthand-bind identifier and should
-  /// serialize without `end` to match vue-eslint-parser's behavior.
-  pub is_shorthand_bind: bool,
 }
 
 #[derive(Debug)]
@@ -52,7 +49,6 @@ pub struct VOnExpression<'a, 'b> {
   pub body: Vec<'b, Statement<'b>>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
-  pub expression_span: Span,
 }
 
 #[derive(Debug)]
@@ -61,7 +57,6 @@ pub struct VForExpression<'a, 'b> {
   pub right: Expression<'b>,
   pub references: Vec<'a, Reference<'a>>,
   pub span: Span,
-  pub expression_span: Span,
 }
 
 #[derive(Debug)]
@@ -69,7 +64,6 @@ pub struct VSlotExpression<'b> {
   pub params: Box<'b, FormalParameters<'b>>,
   // There shouldn't be references in slot expression
   pub span: Span,
-  pub expression_span: Span,
 }
 
 #[derive(Debug)]
@@ -94,34 +88,10 @@ impl ESTree for VDirectiveExpression<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field(
-      "expression",
-      &ShorthandBindExpression(&self.expression, self.is_shorthand_bind),
-    );
+    state.serialize_field("expression", &self.expression);
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
-  }
-}
-
-/// Wrapper around `Expression` that omits `end` for shorthand-bind identifiers
-/// to match vue-eslint-parser's custom AST shape.
-struct ShorthandBindExpression<'b>(&'b Expression<'b>, bool);
-
-impl ESTree for ShorthandBindExpression<'_> {
-  fn serialize<S: Serializer>(&self, serializer: S) {
-    if self.1
-      && let Expression::Identifier(ident) = self.0
-    {
-      let mut state = serializer.serialize_struct();
-      state.serialize_field("type", &JsonSafeString("Identifier"));
-      state.serialize_field("name", &ident.name);
-      state.serialize_field("start", &ident.span.start);
-      state.serialize_field("range", &[ident.span.start, ident.span.end]);
-      state.end();
-      return;
-    }
-    self.0.serialize(serializer);
   }
 }
 
@@ -141,24 +111,21 @@ impl ESTree for VOnExpression<'_, '_> {
     // Define a temporary struct to hold the expression
     struct VOnExpression<'b> {
       body: &'b Vec<'b, Statement<'b>>,
-      expression_span: Span,
+      span: Span,
     }
     impl ESTree for VOnExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VOnExpression"));
         state.serialize_field("body", self.body);
-        state.serialize_span(self.expression_span);
+        state.serialize_span(self.span);
         state.end();
       }
     }
 
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field(
-      "expression",
-      &VOnExpression { body: &self.body, expression_span: self.expression_span },
-    );
+    state.serialize_field("expression", &VOnExpression { body: &self.body, span: self.span });
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
@@ -171,7 +138,7 @@ impl ESTree for VForExpression<'_, '_> {
     struct VForExpression<'b> {
       left: &'b FormalParameters<'b>,
       right: &'b Expression<'b>,
-      expression_span: Span,
+      span: Span,
     }
     impl ESTree for VForExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
@@ -179,7 +146,7 @@ impl ESTree for VForExpression<'_, '_> {
         state.serialize_field("type", &JsonSafeString("VForExpression"));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
-        state.serialize_span(self.expression_span);
+        state.serialize_span(self.span);
         state.end();
       }
     }
@@ -188,11 +155,7 @@ impl ESTree for VForExpression<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field(
       "expression",
-      &VForExpression {
-        left: &self.left,
-        right: &self.right,
-        expression_span: self.expression_span,
-      },
+      &VForExpression { left: &self.left, right: &self.right, span: self.span },
     );
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
@@ -205,24 +168,21 @@ impl ESTree for VSlotExpression<'_> {
     // Define a temporary struct to hold the expression
     struct VSlotExpression<'b> {
       params: &'b FormalParameters<'b>,
-      expression_span: Span,
+      span: Span,
     }
     impl ESTree for VSlotExpression<'_> {
       fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VSlotScopeExpression"));
         state.serialize_field("params", &self.params);
-        state.serialize_span(self.expression_span);
+        state.serialize_span(self.span);
         state.end();
       }
     }
 
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field(
-      "expression",
-      &VSlotExpression { params: &self.params, expression_span: self.expression_span },
-    );
+    state.serialize_field("expression", &VSlotExpression { params: &self.params, span: self.span });
     state.serialize_field("references", &[(); 0]);
     state.serialize_span(self.span);
     state.end();
