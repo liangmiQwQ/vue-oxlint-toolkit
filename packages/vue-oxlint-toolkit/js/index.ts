@@ -1,3 +1,4 @@
 export { parse } from './parse'
 export { transformJsx } from './transform-jsx'
-export type { Mapping, ParseResult, ToolkitTransformResult } from './types'
+export type { ParseResult } from './parse-result'
+export type { Mapping, ToolkitTransformResult } from './transform-result'

@@ -1,5 +1,14 @@
 import type { NativeRange } from '../bindings'
-import type { Locator } from './types'
+
+export interface SourceLocation {
+  line: number
+  column: number
+}
+
+export interface Locator {
+  (offset: number): SourceLocation
+  toIndex: (offset: number) => number
+}
 
 export function createLocator(source: string): Locator {
   const lineStarts = [{ byte: 0, index: 0 }]

@@ -1,7 +1,8 @@
 import type { NativeMapping, NativeTransformResult } from '../bindings'
 import { transformJsx as nativeTransformJsx } from '../bindings'
 import { createLocator, toLocation, toRange } from './locator'
-import type { Locator, Mapping, ToolkitTransformResult } from './types'
+import type { Locator } from './locator'
+import type { Mapping, ToolkitTransformResult } from './transform-result'
 
 export function transformJsx(source: string): ToolkitTransformResult {
   const result: NativeTransformResult = nativeTransformJsx(source)
