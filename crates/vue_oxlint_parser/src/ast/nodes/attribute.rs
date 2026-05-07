@@ -49,8 +49,7 @@ impl ESTree for VAttribute<'_, '_> {
 impl ESTree for VPureAttribute<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
-    state.serialize_field("type", &JsonSafeString("VAttribute"));
-    state.serialize_field("directive", &false);
+    state.serialize_field("type", &JsonSafeString("VPureAttribute"));
     state.serialize_field("key", &self.key);
     state.serialize_field("value", &self.value);
     state.serialize_span(self.span);

@@ -50,7 +50,6 @@ pub struct VDirectiveKey<'a, 'b> {
 
 #[derive(Debug)]
 pub enum VDirectiveArgument<'a, 'b> {
-  None,
   VDirectiveArgument(Box<'a, VDirectiveArgumentExpression<'a, 'b>>),
   VIdentifier(Box<'a, VIdentifier<'a>>),
 }
@@ -106,7 +105,6 @@ impl ESTree for VForDirective<'_, '_> {
 impl ESTree for VDirectiveKey<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
-    state.serialize_field("type", &JsonSafeString("VDirectiveKey"));
     state.serialize_field("name", &self.name);
     state.serialize_field("argument", &self.argument);
     state.serialize_field("modifiers", &self.modifiers);
@@ -118,7 +116,6 @@ impl ESTree for VDirectiveKey<'_, '_> {
 impl ESTree for VDirectiveArgument<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     match self {
-      VDirectiveArgument::None => ().serialize(serializer),
       VDirectiveArgument::VDirectiveArgument(expr) => expr.serialize(serializer),
       VDirectiveArgument::VIdentifier(ident) => ident.serialize(serializer),
     }

@@ -20,7 +20,11 @@ where
           self.collect_formal_parameter_variables(&directive.value.left, "v-for", &mut variables);
         }
         VAttribute::VSlotDirective(directive) => {
-          self.collect_formal_parameter_variables(&directive.value.params, "scope", &mut variables);
+          self.collect_formal_parameter_variables(
+            &directive.value.params,
+            "v-slot",
+            &mut variables,
+          );
         }
         VAttribute::VPureAttribute(_) | VAttribute::VDirective(_) | VAttribute::VOnDirective(_) => {
         }

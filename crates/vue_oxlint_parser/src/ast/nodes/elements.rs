@@ -76,14 +76,10 @@ impl ESTree for VElement<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VElement"));
     state.serialize_field("name", &self.name);
     state.serialize_field("rawName", &self.raw_name);
-    state.serialize_field("namespace", &JsonSafeString("http://www.w3.org/1999/xhtml"));
     state.serialize_field("startTag", &self.start_tag);
     state.serialize_field("children", &self.children);
     state.serialize_field("endTag", &self.end_tag);
     state.serialize_field("variables", &self.variables);
-    if self.name.eq_ignore_ascii_case("style") {
-      state.serialize_field("style", &true);
-    }
     state.serialize_span(self.span);
     state.end();
   }
@@ -94,6 +90,7 @@ impl ESTree for VStartTag<'_, '_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VStartTag"));
     state.serialize_field("attributes", &self.attributes);
+    state.serialize_field("variables", &self.variables);
     state.serialize_field("selfClosing", &self.self_closing);
     state.serialize_span(self.span);
     state.end();
@@ -113,7 +110,7 @@ impl ESTree for VText<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VText"));
-    state.serialize_field("value", &self.text);
+    state.serialize_field("text", &self.text);
     state.serialize_span(self.span);
     state.end();
   }

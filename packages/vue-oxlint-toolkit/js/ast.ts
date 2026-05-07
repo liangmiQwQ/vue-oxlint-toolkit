@@ -18,7 +18,7 @@ export interface VueSingleFileComponent {
 }
 
 export interface VScriptElement extends Omit<AST.VElement, 'parent' | 'loc' | 'children'> {
-  children: (AST.VText | VPureScript)[]
+  children: VPureScript[]
 }
 
 export interface VPureScript {

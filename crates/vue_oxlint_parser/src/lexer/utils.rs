@@ -20,10 +20,7 @@ impl<'s> Lexer<'s> {
     VToken::new(
       kind,
       Span::new(start, end),
-      value_span.map_or_else(
-        || kind.default_value(),
-        |(start, end)| &self.source_text[start as usize..end as usize],
-      ),
+      value_span.map(|(start, end)| &self.source_text[start as usize..end as usize]),
     )
   }
 }

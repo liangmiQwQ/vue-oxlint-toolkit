@@ -36,9 +36,9 @@ impl<'s> Lexer<'s> {
 
     if starts_with_ignore_ascii_case(bytes, close.as_bytes()) {
       self.mode = LexerMode::Data;
-      self.pos += close.len() as u32;
+      self.pos += 2;
       self.in_tag = true;
-      return self.token(VTokenKind::HTMLEndTagOpen, start, self.pos, Some((start + 2, self.pos)));
+      return self.token(VTokenKind::HTMLEndTagOpen, start, self.pos, None);
     }
 
     if is_html_whitespace(bytes[0]) {

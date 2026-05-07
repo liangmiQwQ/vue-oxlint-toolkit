@@ -60,13 +60,7 @@ where
       self.parser.sfc.template_tokens.push(tokens.into());
     }
 
-    Some(VForExpression {
-      left: params,
-      right,
-      references,
-      span: value_span,
-      expression_span: value_span,
-    })
+    Some(VForExpression { left: params, right, references, span: value_span })
   }
 
   pub(super) fn parse_v_slot_expression(
@@ -87,7 +81,6 @@ where
     Some(VSlotExpression {
       params: arrow.params.clone_in(self.parser.js_allocator),
       span: value_span,
-      expression_span: value_span,
     })
   }
 
