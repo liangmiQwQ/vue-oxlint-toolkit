@@ -1,13 +1,30 @@
 import type { NativeMapping, NativeTransformResult } from '../bindings'
 import { transformJsx as nativeTransformJsx } from '../bindings'
-import { createLocator, toLocation, toRange } from './locator'
-import type { Locator } from './locator'
-import type { Mapping, ToolkitTransformResult } from './transform-result'
+import { createSourceOffsetMap, toIndex, toLocation, toRange } from './parse'
+import type { SourceOffsetMap } from './parse'
+
+import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
+
+export interface Mapping {
+  virtualStart: number
+  virtualEnd: number
+  originalStart: number
+  originalEnd: number
+}
+
+export interface ToolkitTransformResult {
+  sourceText: string
+  scriptKind: 'jsx' | 'tsx'
+  comments: Comment[]
+  irregularWhitespaces: Range[]
+  errors: Diagnostic[]
+  mappings: Mapping[]
+}
 
 export function transformJsx(source: string): ToolkitTransformResult {
   const result: NativeTransformResult = nativeTransformJsx(source)
-  const locator = createLocator(source)
-  const virtualLocator = createLocator(result.sourceText)
+  const offsetMap = createSourceOffsetMap(source)
+  const virtualOffsetMap = createSourceOffsetMap(result.sourceText)
 
   return {
     sourceText: result.sourceText,
@@ -15,25 +32,29 @@ export function transformJsx(source: string): ToolkitTransformResult {
     comments: result.comments.map((comment) => ({
       type: comment.type,
       value: comment.value,
-      start: locator.toIndex(comment.start),
-      end: locator.toIndex(comment.end),
-      range: toRange(comment, locator),
-      loc: toLocation(comment, locator),
+      start: toIndex(offsetMap, comment.start),
+      end: toIndex(offsetMap, comment.end),
+      range: toRange(offsetMap, comment),
+      loc: toLocation(offsetMap, comment),
     })),
-    irregularWhitespaces: result.irregularWhitespaces.map((range) => toRange(range, locator)),
+    irregularWhitespaces: result.irregularWhitespaces.map((range) => toRange(offsetMap, range)),
     errors: result.errors.map((error) => ({
       message: error.message,
-      loc: toLocation(error, locator),
+      loc: toLocation(offsetMap, error),
     })),
-    mappings: result.mappings.map((mapping) => toMapping(mapping, locator, virtualLocator)),
+    mappings: result.mappings.map((mapping) => toMapping(mapping, offsetMap, virtualOffsetMap)),
   }
 }
 
-function toMapping(mapping: NativeMapping, locator: Locator, virtualLocator: Locator): Mapping {
+function toMapping(
+  mapping: NativeMapping,
+  offsetMap: SourceOffsetMap,
+  virtualOffsetMap: SourceOffsetMap,
+): Mapping {
   return {
-    virtualStart: virtualLocator.toIndex(mapping.virtualStart),
-    virtualEnd: virtualLocator.toIndex(mapping.virtualEnd),
-    originalStart: locator.toIndex(mapping.originalStart),
-    originalEnd: locator.toIndex(mapping.originalEnd),
+    virtualStart: toIndex(virtualOffsetMap, mapping.virtualStart),
+    virtualEnd: toIndex(virtualOffsetMap, mapping.virtualEnd),
+    originalStart: toIndex(offsetMap, mapping.originalStart),
+    originalEnd: toIndex(offsetMap, mapping.originalEnd),
   }
 }

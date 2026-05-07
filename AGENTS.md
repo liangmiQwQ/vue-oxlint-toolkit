@@ -39,7 +39,7 @@ Cargo workspace members live in `crates/*`, `packages/*`, and `benchmark/`.
 
 - **`packages/vue-oxlint-toolkit`** — published npm package `vue-oxlint-toolkit`.
   - `src/lib.rs` — napi-rs cdylib exposing `transformJsx(source)` and `parseVue(source)`, converting Rust parser/codegen results to N-API types.
-  - `js/` — JS wrapper split into public exports (`index.ts`), native parse/transform adapters, UTF-8 to UTF-16 location helpers, shared types, and the Vue AST adapter (`vue-ast.ts`). It returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
+  - `js/` — JS wrapper split into public exports (`index.ts`), native transform adapter (`transform-jsx.ts`), tiny shared AST boundary types (`ast.ts`), and the parse adapter (`parse.ts`). `parse.ts` owns the serialized Vue SFC AST adaptation and UTF-8 byte offset to UTF-16 location mapping. It returns `@oxlint/plugins`-shaped `Comment`/`Diagnostic`/`Range` objects and adapts serialized Vue SFC AST JSON into an ESLint-style `Program`.
   - Built with `napi build` (`build:debug` also runs `vp pack` to produce the JS bundle).
 
 - **`benchmark/`** — Criterion benches over `small.vue`, `medium.vue`, `large.vue`.
