@@ -36,14 +36,18 @@ impl<'s> Lexer<'s> {
 
     if bytes.starts_with(b"</") {
       self.pos += 2;
+      let name_start = self.pos;
+      self.consume_tag_name();
       self.in_tag = true;
-      return self.token(VTokenKind::HTMLEndTagOpen, start, self.pos, None);
+      return self.token(VTokenKind::HTMLEndTagOpen, start, self.pos, Some((name_start, self.pos)));
     }
 
     if bytes[0] == b'<' {
       self.pos += 1;
+      let name_start = self.pos;
+      self.consume_tag_name();
       self.in_tag = true;
-      return self.token(VTokenKind::HTMLTagOpen, start, self.pos, None);
+      return self.token(VTokenKind::HTMLTagOpen, start, self.pos, Some((name_start, self.pos)));
     }
 
     if self.v_pre_depth == 0 && bytes.starts_with(b"{{") {
@@ -70,5 +74,15 @@ impl<'s> Lexer<'s> {
     }
     self.pos = end as u32;
     self.token(VTokenKind::HTMLText, start, self.pos, Some((start, self.pos)))
+  }
+
+  fn consume_tag_name(&mut self) {
+    while (self.pos as usize) < self.source.len() {
+      let byte = self.source[self.pos as usize];
+      if is_html_whitespace(byte) || matches!(byte, b'=' | b'>' | b'/' | b'\'' | b'"') {
+        break;
+      }
+      self.pos += char_len(byte) as u32;
+    }
   }
 }

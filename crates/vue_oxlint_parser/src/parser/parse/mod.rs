@@ -37,7 +37,6 @@ where
       if token.kind != VTokenKind::HTMLWhitespace {
         return Some(token);
       }
-      self.parser.sfc.template_tokens.push(token.into());
     }
   }
 

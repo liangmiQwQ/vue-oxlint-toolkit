@@ -1,9 +1,11 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::Span;
 
+use crate::ast::token::SerializableToken;
 use crate::ast::{
-  VAttribute, VDirective, VDirectiveArgument, VDirectiveExpression, VDirectiveKey, VForDirective,
-  VIdentifier, VLiteral, VOnDirective, VPureAttribute, VSlotDirective,
+  VAttribute, VDirective, VDirectiveArgument, VDirectiveArgumentExpression, VDirectiveExpression,
+  VDirectiveKey, VForDirective, VIdentifier, VLiteral, VOnDirective, VPureAttribute,
+  VSlotDirective,
 };
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::parse::TemplateParser;
@@ -23,6 +25,7 @@ where
   'b: 'a,
 {
   pub(super) fn parse_attribute(&mut self) -> ParsedAttribute<'a, 'b> {
+    let token_start = self.parser.sfc.template_tokens.len();
     let Some(first) = self.next() else {
       return ParsedAttribute { ast: None, name: "", value: None };
     };
@@ -32,6 +35,8 @@ where
     let mut raw_end = first.span.end;
     let mut raw_name_end = first.span.end;
     let mut value_span = None;
+    let mut literal_span = None;
+    let mut association_span = None;
     let name = if first.kind == VTokenKind::Punctuator {
       if let Some(next) = self.next_non_ws() {
         if next.kind == VTokenKind::HTMLIdentifier {
@@ -41,13 +46,13 @@ where
           &self.parser.source_text[raw_start as usize..raw_name_end as usize]
         } else {
           self.peeked = Some(next);
-          first.value.unwrap_or_default()
+          first.value
         }
       } else {
-        first.value.unwrap_or_default()
+        first.value
       }
     } else {
-      first.value.unwrap_or_default()
+      first.value
     };
 
     while let Some(token) = self.peek() {
@@ -75,12 +80,14 @@ where
     let value = if self.peek().is_some_and(|token| token.kind == VTokenKind::HTMLAssociation) {
       // SAFETY: the guard above proves the next token is the association token.
       let eq = self.next().unwrap();
+      association_span = Some(eq.span);
       self.parser.sfc.template_tokens.push(eq.into());
       if let Some(value_token) = self.next_non_ws() {
         raw_end = value_token.span.end;
+        literal_span = Some(value_token.span);
         value_span = Some(value_token.value_span());
         self.parser.sfc.template_tokens.push(value_token.into());
-        value_token.value
+        Some(value_token.value)
       } else {
         None
       }
@@ -89,11 +96,30 @@ where
     };
 
     let raw_name = &self.parser.source_text[raw_start as usize..raw_name_end as usize];
+    if is_plain_value_attribute(raw_name, value_span) {
+      if matches!(raw_name, ":" | "#") && token_start < self.parser.sfc.template_tokens.len() {
+        self.parser.sfc.template_tokens[token_start] =
+          VToken::new(VTokenKind::HTMLIdentifier, Span::new(raw_start, raw_name_end), raw_name)
+            .into();
+      } else if raw_name == "v-slot:" && token_start + 1 < self.parser.sfc.template_tokens.len() {
+        self.parser.sfc.template_tokens[token_start] =
+          VToken::new(VTokenKind::HTMLIdentifier, Span::new(raw_start, raw_name_end), raw_name)
+            .into();
+        self.parser.sfc.template_tokens.remove(token_start + 1);
+      }
+    }
     if is_directive_name(raw_name)
       && !is_plain_value_attribute(raw_name, value_span)
-      && (value_span.is_some() || !raw_name.starts_with(':'))
-      && let Some(ast) =
-        self.parse_directive_attribute(raw_name, Span::new(raw_start, raw_end), value_span)
+      && let Some(ast) = {
+        self.parser.sfc.template_tokens.truncate(token_start);
+        self.parse_directive_attribute(
+          raw_name,
+          Span::new(raw_start, raw_end),
+          value_span,
+          literal_span,
+          association_span,
+        )
+      }
     {
       return ParsedAttribute { ast: Some(ast), name, value };
     }
@@ -108,7 +134,7 @@ where
     let raw_name = self.alloc_value(raw_name);
     let value_node = value.map(|value| {
       let value = self.alloc_value(value);
-      VLiteral { value, span: Span::new(raw_name_end, raw_end) }
+      VLiteral { value, span: literal_span.unwrap_or_else(|| Span::new(raw_name_end, raw_end)) }
     });
     let attr = VPureAttribute {
       key: VIdentifier { name: key_name, raw_name, span: Span::new(raw_start, raw_name_end) },
@@ -128,14 +154,27 @@ where
     raw_name: &'b str,
     attr_span: Span,
     value_span: Option<Span>,
+    value_container_span: Option<Span>,
+    association_span: Option<Span>,
   ) -> Option<VAttribute<'a, 'b>> {
     let (name, argument, modifiers) = self.parse_directive_key(raw_name, attr_span)?;
     let directive_name = name.name;
+    if let Some(association_span) = association_span {
+      self
+        .parser
+        .sfc
+        .template_tokens
+        .push(VToken::new(VTokenKind::HTMLAssociation, association_span, "").into());
+    }
 
     if directive_name == "for"
       && let Some(value_span) = value_span
-      && let Some(value) = self.parse_v_for_expression(value_span)
     {
+      self.push_opening_quote_token(value_container_span, value_span);
+      let value = self.parse_v_for_expression(value_span)?;
+      self.push_closing_quote_token(value_container_span, value_span);
+      let mut value = value;
+      value.span = value_container_span.unwrap_or(value_span);
       let directive = VForDirective {
         key: VDirectiveKey {
           name,
@@ -155,8 +194,12 @@ where
 
     if directive_name == "slot"
       && let Some(value_span) = value_span
-      && let Some(value) = self.parse_v_slot_expression(value_span)
     {
+      self.push_opening_quote_token(value_container_span, value_span);
+      let value = self.parse_v_slot_expression(value_span)?;
+      self.push_closing_quote_token(value_container_span, value_span);
+      let mut value = value;
+      value.span = value_container_span.unwrap_or(value_span);
       let directive = VSlotDirective {
         key: VDirectiveKey {
           name,
@@ -176,8 +219,12 @@ where
 
     if directive_name == "on"
       && let Some(value_span) = value_span
-      && let Some(value) = self.parse_v_on_expression(value_span)
     {
+      self.push_opening_quote_token(value_container_span, value_span);
+      let value = self.parse_v_on_expression(value_span)?;
+      self.push_closing_quote_token(value_container_span, value_span);
+      let mut value = value;
+      value.span = value_container_span.unwrap_or(value_span);
       let directive = VOnDirective {
         key: VDirectiveKey {
           name,
@@ -196,11 +243,17 @@ where
     }
 
     let value = if let Some(value_span) = value_span {
+      self.push_opening_quote_token(value_container_span, value_span);
       let (expression, references, tokens) = self.parser.parse_pure_expression(value_span)?;
       if !tokens.is_empty() {
         self.parser.sfc.template_tokens.push(tokens.into());
       }
-      Some(VDirectiveExpression { expression, references, span: value_span })
+      self.push_closing_quote_token(value_container_span, value_span);
+      Some(VDirectiveExpression {
+        expression,
+        references,
+        span: value_container_span.unwrap_or(value_span),
+      })
     } else {
       None
     };
@@ -219,12 +272,46 @@ where
     Some(VAttribute::VDirective(ArenaBox::new_in(directive, self.parser.vue_allocator)))
   }
 
+  fn push_opening_quote_token(&mut self, container_span: Option<Span>, value_span: Span) {
+    let Some(container_span) = container_span else {
+      return;
+    };
+    if container_span.start == value_span.start {
+      return;
+    }
+    let quote = &self.parser.source_text[container_span.start as usize..value_span.start as usize];
+    if quote == "\"" {
+      self.parser.sfc.template_tokens.push(SerializableToken::punctuator(
+        Span::new(container_span.start, value_span.start),
+        "\"",
+      ));
+    }
+  }
+
+  fn push_closing_quote_token(&mut self, container_span: Option<Span>, value_span: Span) {
+    let Some(container_span) = container_span else {
+      return;
+    };
+    if container_span.end == value_span.end {
+      return;
+    }
+    let quote = &self.parser.source_text[value_span.end as usize..container_span.end as usize];
+    if quote == "\"" {
+      self
+        .parser
+        .sfc
+        .template_tokens
+        .push(SerializableToken::punctuator(Span::new(value_span.end, container_span.end), "\""));
+    }
+  }
+
   fn parse_directive_key(
-    &self,
+    &mut self,
     raw_name: &'b str,
     attr_span: Span,
   ) -> Option<DirectiveKeyParts<'a, 'b>> {
     let parsed = ParsedDirectiveName::new(raw_name, attr_span)?;
+    self.push_directive_name_token(&parsed);
     let name = self.parser.vue_allocator.alloc(VIdentifier {
       name: self.alloc_value(parsed.name),
       raw_name: self.alloc_value(parsed.raw_name),
@@ -234,18 +321,56 @@ where
     let mut modifiers = ArenaVec::new_in(self.parser.vue_allocator);
     let (argument_source, modifier_source) = split_directive_argument(parsed.rest);
     let argument = argument_source.map_or_else(
-      || {
-        VDirectiveArgument::VIdentifier(ArenaBox::new_in(
-          VIdentifier {
-            name: "",
-            raw_name: "",
-            span: Span::new(parsed.rest_start, parsed.rest_start),
-          },
-          self.parser.vue_allocator,
-        ))
-      },
+      || VDirectiveArgument::None,
       |(argument_source, argument_offset)| {
         let arg_start = parsed.rest_start + argument_offset as u32;
+        if argument_offset > 0 {
+          self
+            .parser
+            .sfc
+            .template_tokens
+            .push(SerializableToken::punctuator(Span::new(parsed.rest_start, arg_start), ":"));
+        }
+        if argument_source.starts_with('[') && argument_source.ends_with(']') {
+          self
+            .parser
+            .sfc
+            .template_tokens
+            .push(SerializableToken::punctuator(Span::new(arg_start, arg_start + 1), "["));
+          let expression_span =
+            Span::new(arg_start + 1, arg_start + argument_source.len().saturating_sub(1) as u32);
+          if let Some((expression, references, tokens)) =
+            self.parser.parse_pure_expression(expression_span)
+          {
+            if !tokens.is_empty() {
+              self.parser.sfc.template_tokens.push(tokens.into());
+            }
+            self.parser.sfc.template_tokens.push(SerializableToken::punctuator(
+              Span::new(
+                arg_start + argument_source.len().saturating_sub(1) as u32,
+                arg_start + argument_source.len() as u32,
+              ),
+              "]",
+            ));
+            return VDirectiveArgument::VDirectiveArgument(ArenaBox::new_in(
+              VDirectiveArgumentExpression {
+                expression,
+                references,
+                span: Span::sized(arg_start, argument_source.len() as u32),
+              },
+              self.parser.vue_allocator,
+            ));
+          }
+        }
+
+        self.parser.sfc.template_tokens.push(
+          VToken::new(
+            VTokenKind::HTMLIdentifier,
+            Span::sized(arg_start, argument_source.len() as u32),
+            argument_source,
+          )
+          .into(),
+        );
         VDirectiveArgument::VIdentifier(ArenaBox::new_in(
           VIdentifier {
             name: self.alloc_value(argument_source),
@@ -259,6 +384,19 @@ where
 
     for (modifier, modifier_offset) in modifier_source {
       let modifier_start = parsed.rest_start + modifier_offset as u32;
+      self
+        .parser
+        .sfc
+        .template_tokens
+        .push(SerializableToken::punctuator(Span::new(modifier_start - 1, modifier_start), "."));
+      self.parser.sfc.template_tokens.push(
+        VToken::new(
+          VTokenKind::HTMLIdentifier,
+          Span::sized(modifier_start, modifier.len() as u32),
+          modifier,
+        )
+        .into(),
+      );
       modifiers.push(VIdentifier {
         name: self.alloc_value(modifier),
         raw_name: self.alloc_value(modifier),
@@ -267,6 +405,16 @@ where
     }
 
     Some((name, argument, modifiers))
+  }
+
+  fn push_directive_name_token(&mut self, parsed: &ParsedDirectiveName<'b>) {
+    let value = parsed.name_span.source_text(self.parser.source_text);
+    let kind = if matches!(parsed.raw_name, ":" | "@" | "#") {
+      VTokenKind::Punctuator
+    } else {
+      VTokenKind::HTMLIdentifier
+    };
+    self.parser.sfc.template_tokens.push(VToken::new(kind, parsed.name_span, value).into());
   }
 }
 

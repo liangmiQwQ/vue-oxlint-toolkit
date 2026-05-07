@@ -34,7 +34,7 @@ where
         VTokenKind::HTMLComment | VTokenKind::HTMLBogusComment => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
           let token = self.next().unwrap();
-          let value = self.alloc_value(token.value.unwrap_or_default());
+          let value = self.alloc_value(token.value);
           self.parser.sfc.template_comments.push(VComment {
             r#type: token.kind.comment_type(),
             value,
@@ -48,9 +48,7 @@ where
         | VTokenKind::HTMLCDataText => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
           let token = self.next().unwrap();
-          if let Some(node) = self.text_node(token) {
-            children.push(node);
-          }
+          self.push_text_child(&mut children, token);
         }
         _ => {
           // SAFETY: `peek()` proved the token exists and `next()` consumes that same token.
@@ -85,13 +83,11 @@ where
     };
     let span = Span::new(start, raw_end.unwrap_or(start));
 
-    if is_script && let Some(script) = self.parse_script(span) {
-      children.push(script);
-      return children;
-    }
-
     let text = self.alloc_value(span.source_text(self.parser.source_text));
     children.push(VNode::Text(ArenaBox::new_in(VText { text, span }, self.parser.vue_allocator)));
+    if is_script && let Some(script) = self.parse_script(span) {
+      children.push(script);
+    }
     children
   }
 
@@ -122,9 +118,7 @@ where
     let start = self.next()?;
     self.parser.sfc.template_tokens.push(start.into());
     let expression = self.next()?;
-    self.parser.sfc.template_tokens.push(expression.into());
     let end = self.next()?;
-    self.parser.sfc.template_tokens.push(end.into());
 
     if expression.kind != VTokenKind::HTMLText || end.kind != VTokenKind::VExpressionEnd {
       self.parser.errors.push(error::unexpected_token(expression.span, "interpolation expression"));
@@ -133,16 +127,17 @@ where
 
     let span = Span::new(expression.span.start, expression.span.end);
     let Some((expression, references, tokens)) = self.parser.parse_pure_expression(span) else {
-      return self.text_node(VToken::new(
+      return Some(self.text_node(VToken::new(
         VTokenKind::HTMLText,
         Span::new(start.span.start, end.span.end),
-        Some(&self.parser.source_text[start.span.start as usize..end.span.end as usize]),
-      ));
+        &self.parser.source_text[start.span.start as usize..end.span.end as usize],
+      )));
     };
 
     if !tokens.is_empty() {
       self.parser.sfc.template_tokens.push(tokens.into());
     }
+    self.parser.sfc.template_tokens.push(end.into());
     let interpolation =
       VInterpolation { expression, references, span: Span::new(start.span.start, end.span.end) };
     Some(VNode::Interpolation(ArenaBox::new_in(interpolation, self.parser.vue_allocator)))
@@ -156,17 +151,17 @@ where
     // SAFETY: the guard above proves the next token is an end-tag opener.
     let open = self.next().unwrap();
     self.parser.sfc.template_tokens.push(open.into());
-    let name_token = self.next_non_ws()?;
-    self.parser.sfc.template_tokens.push(name_token.into());
-    if !name_token.value.unwrap_or_default().eq_ignore_ascii_case(name) {
-      self.parser.errors.push(error::unexpected_closing_tag(name_token.span));
+    if !open.value.eq_ignore_ascii_case(name) {
+      self.parser.errors.push(error::unexpected_closing_tag(open.span));
     }
 
-    let mut end = name_token.span.end;
+    let mut end = open.span.end;
     while let Some(token) = self.next() {
       end = token.span.end;
       let should_break = token.kind == VTokenKind::HTMLTagClose;
-      self.parser.sfc.template_tokens.push(token.into());
+      if token.kind != VTokenKind::HTMLWhitespace {
+        self.parser.sfc.template_tokens.push(token.into());
+      }
       if should_break {
         break;
       }
@@ -182,10 +177,12 @@ where
     let mut unexpected_span = start.span;
     while let Some(token) = self.next() {
       let should_break = token.kind == VTokenKind::HTMLTagClose;
-      if token.kind == VTokenKind::HTMLIdentifier {
+      if token.kind == VTokenKind::HTMLEndTagOpen {
         unexpected_span = Span::new(start.span.start, token.span.end);
       }
-      self.parser.sfc.template_tokens.push(token.into());
+      if token.kind != VTokenKind::HTMLWhitespace {
+        self.parser.sfc.template_tokens.push(token.into());
+      }
       if should_break {
         break;
       }
@@ -198,27 +195,33 @@ where
     let mut lexer = self.lexer.clone();
     let mut next = || peeked.take().or_else(|| lexer.next_token());
 
-    if !next().is_some_and(|token| token.kind == VTokenKind::HTMLEndTagOpen) {
-      return false;
-    }
-
-    while let Some(token) = next() {
-      if token.kind == VTokenKind::HTMLWhitespace {
-        continue;
-      }
-
-      return token.kind == VTokenKind::HTMLIdentifier
-        && token.value.unwrap_or_default().eq_ignore_ascii_case(name);
-    }
-
-    false
+    next().is_some_and(|token| {
+      token.kind == VTokenKind::HTMLEndTagOpen && token.value.eq_ignore_ascii_case(name)
+    })
   }
 
-  fn text_node(&mut self, token: VToken<'b>) -> Option<VNode<'a, 'b>> {
+  fn text_node(&mut self, token: VToken<'b>) -> VNode<'a, 'b> {
     self.parser.sfc.template_tokens.push(token.into());
-    let text = token.value?;
-    let text = self.alloc_value(text);
-    Some(VNode::Text(ArenaBox::new_in(VText { text, span: token.span }, self.parser.vue_allocator)))
+    let text = self.alloc_value(token.value);
+    VNode::Text(ArenaBox::new_in(VText { text, span: token.span }, self.parser.vue_allocator))
+  }
+
+  fn push_text_child(&mut self, children: &mut ArenaVec<'a, VNode<'a, 'b>>, token: VToken<'b>) {
+    self.parser.sfc.template_tokens.push(token.into());
+    if let Some(VNode::Text(last)) = children.last_mut()
+      && last.span.end == token.span.start
+    {
+      let span = Span::new(last.span.start, token.span.end);
+      last.text = self.alloc_value(span.source_text(self.parser.source_text));
+      last.span = span;
+      return;
+    }
+
+    let text = self.alloc_value(token.value);
+    children.push(VNode::Text(ArenaBox::new_in(
+      VText { text, span: token.span },
+      self.parser.vue_allocator,
+    )));
   }
 }
 

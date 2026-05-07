@@ -6,14 +6,18 @@ use oxc_span::Span;
 pub struct VToken<'b> {
   pub kind: VTokenKind,
   pub span: Span,
-  pub value: Option<&'b str>,
+  pub value: &'b str,
 }
 
 impl ESTree for VToken<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", self.kind.as_str());
-    state.serialize_field("value", &self.value);
+    if matches!(self.kind, VTokenKind::HTMLTagOpen | VTokenKind::HTMLEndTagOpen) {
+      state.serialize_field("value", &self.value.to_ascii_lowercase());
+    } else {
+      state.serialize_field("value", &self.value);
+    }
     state.serialize_span(self.span);
     state.end();
   }
@@ -21,7 +25,7 @@ impl ESTree for VToken<'_> {
 
 impl<'b> VToken<'b> {
   #[must_use]
-  pub const fn new(kind: VTokenKind, span: Span, value: Option<&'b str>) -> Self {
+  pub const fn new(kind: VTokenKind, span: Span, value: &'b str) -> Self {
     Self { kind, span, value }
   }
 }
@@ -72,7 +76,15 @@ pub enum VTokenKind {
 }
 
 impl VTokenKind {
-  const fn as_str(&self) -> &str {
+  pub(super) const fn default_value(self) -> &'static str {
+    match self {
+      Self::VExpressionStart => "{{",
+      Self::VExpressionEnd => "}}",
+      _ => "",
+    }
+  }
+
+  const fn as_str(self) -> &'static str {
     match self {
       Self::HTMLTagOpen => "HTMLTagOpen",
       Self::HTMLTagClose => "HTMLTagClose",
