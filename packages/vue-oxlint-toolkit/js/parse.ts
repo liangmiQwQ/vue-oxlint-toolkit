@@ -1,48 +1,61 @@
-import { AST } from 'vue-eslint-parser'
 import type { NativeRange } from '../bindings'
-import { parseVue as nativeParseVue } from '../bindings'
-import type { Diagnostic } from '@oxlint/plugins'
-import type { OxlintProgram } from './ast'
+import { parseVue } from '../bindings'
+import type { OxlintProgram, VPureScript, VueSingleFileComponent } from './ast'
 import type { ToolkitTransformResult } from './transform-jsx'
 
-export interface SourceLocation {
-  line: number
-  column: number
-}
-
-export interface SourceOffsetMap {
-  lineStarts: readonly SourceOffset[]
-  byteToIndex: ReadonlyMap<number, number>
-}
+import type { Diagnostic } from '@oxlint/plugins'
+import type { AST } from 'vue-eslint-parser'
 
 export interface ParseResult {
   ast: OxlintProgram
   errors: Diagnostic[]
   panicked: boolean
-  transform: ToolkitTransformResult | null
+  transform?: ToolkitTransformResult | null
 }
 
+export interface SourceOffsetMap {
+  lineStarts: OffsetPoint[]
+  byteToIndex: Map<number, number>
+}
+
+interface OffsetPoint {
+  byte: number
+  index: number
+}
+
+export interface SourcePosition {
+  line: number
+  column: number
+}
+
+export interface SourceLocation {
+  start: SourcePosition
+  end: SourcePosition
+}
+
+type ParseDiagnostic = NativeRange & { loc?: SourceLocation; message: string }
+type TemplateBody = AST.VElement & Partial<AST.HasConcreteInfo>
+type ScriptNode = VPureScript & { body?: OxlintProgram['body'] }
+type NodeValue = Record<string, unknown>
+
 export function parse(_path: string, source: string, _options: object = {}): ParseResult {
-  const result = nativeParseVue(source)
+  const result = parseVue(source)
   const offsetMap = createSourceOffsetMap(source)
-  const sfc: VueSingleFileComponent = JSON.parse(result.astJson)
-  const program = toProgram(sfc, offsetMap)
+  const sfc = JSON.parse(result.astJson) as VueSingleFileComponent
+  const errors = result.errors.map(normalizeError)
 
   return {
-    ast: program,
-    errors: result.errors.map((error) => ({
-      message: error.message,
-      loc: toLocation(offsetMap, error),
-    })),
+    ast: buildProgram(sfc, errors, offsetMap),
+    errors: errors as unknown as Diagnostic[],
     panicked: result.panicked,
     transform: null,
   }
 }
 
 export function createSourceOffsetMap(source: string): SourceOffsetMap {
-  const lineStarts: SourceOffset[] = [{ byte: 0, index: 0 }]
+  const lineStarts: OffsetPoint[] = [{ byte: 0, index: 0 }]
   const byteToIndex = new Map<number, number>([[0, 0]])
-  let byteOffset = 0
+  let byte = 0
 
   for (let index = 0; index < source.length; ) {
     const codePoint = source.codePointAt(index)
@@ -50,22 +63,21 @@ export function createSourceOffsetMap(source: string): SourceOffsetMap {
       break
     }
 
-    const codeUnitLength = codePoint > 0xffff ? 2 : 1
-    byteOffset += utf8ByteLength(codePoint)
-    index += codeUnitLength
-    byteToIndex.set(byteOffset, index)
+    const width = codePoint > 0xffff ? 2 : 1
+    byte += utf8ByteLength(codePoint)
+    index += width
+    byteToIndex.set(byte, index)
 
     if (codePoint === 10) {
-      lineStarts.push({ byte: byteOffset, index })
+      lineStarts.push({ byte, index })
     }
   }
 
   return { lineStarts, byteToIndex }
 }
 
-export function toIndex(offsetMap: SourceOffsetMap, offset: number) {
+export function toIndex(offsetMap: SourceOffsetMap, offset: number): number {
   const index = offsetMap.byteToIndex.get(offset)
-
   if (index === undefined) {
     throw new RangeError(`Offset ${offset} is not on a UTF-8 character boundary.`)
   }
@@ -73,363 +85,242 @@ export function toIndex(offsetMap: SourceOffsetMap, offset: number) {
   return index
 }
 
-export function toRange(offsetMap: SourceOffsetMap, range: NativeRange): [number, number] {
+export function toRange(offsetMap: SourceOffsetMap, range: NativeRange): AST.OffsetRange {
   return [toIndex(offsetMap, range.start), toIndex(offsetMap, range.end)]
 }
 
-export function toLocation(offsetMap: SourceOffsetMap, range: NativeRange) {
+export function toLocation(offsetMap: SourceOffsetMap, range: NativeRange): SourceLocation {
   return {
     start: offsetToLocation(offsetMap, range.start),
     end: offsetToLocation(offsetMap, range.end),
   }
 }
 
-function toProgram(sfc: VueSingleFileComponent, offsetMap: SourceOffsetMap): OxlintProgram {
-  const children = sfc.children
-  const body = collectProgramBody(children)
-  const templateBody = findTemplateBody(children)
-  const templateComments = sfc.template_comments
-  const templateTokens = sfc.templateTokens
-  const fragment = createDocumentFragment(sfc, children, templateComments, templateTokens)
-  const programRange = getProgramRange(body, sfc.scriptTokens as AstNode[])
-  const program: AstNode = {
+function buildProgram(
+  sfc: VueSingleFileComponent,
+  parseErrors: ParseDiagnostic[],
+  offsetMap: SourceOffsetMap,
+): OxlintProgram {
+  const templateBody = sfc.children.find(isTemplateElement)
+  const programRange = scriptRange(sfc)
+  const program = {
     type: 'Program',
     sourceType: sfc.source_type ?? 'module',
-    body,
+    body: sfc.children
+      .filter(isScriptElement)
+      .flatMap((script) => script.children.flatMap(scriptBody)),
     comments: sfc.script_comments,
     tokens: sfc.scriptTokens,
-    templateBody: templateBody ?? undefined,
+    templateBody,
     start: programRange[0],
     end: programRange[1],
     range: programRange,
-  }
+  } as unknown as OxlintProgram
 
   if (templateBody) {
-    templateBody.comments = templateComments
-    templateBody.tokens = templateTokens
-    templateBody.errors = getArray(templateBody.errors)
+    templateBody.comments = sfc.template_comments as unknown as AST.Token[]
+    templateBody.tokens = sfc.templateTokens as unknown as AST.Token[]
+    templateBody.errors = (sfc.template_errors ?? []) as unknown as AST.ParseError[]
   }
 
-  attachAstMetadata(program, offsetMap)
-  attachAstMetadata(fragment, offsetMap, null)
-  attachListMetadata(getArray(program.comments), offsetMap)
-  attachListMetadata(getArray(program.tokens), offsetMap)
-  attachListMetadata(templateComments, offsetMap)
-  attachListMetadata(templateTokens, offsetMap)
+  const fragment = createDocumentFragment(sfc, parseErrors)
+  annotateAst(fragment, offsetMap)
+  annotateAst(program, offsetMap)
+  annotateList(parseErrors, program, offsetMap)
 
-  return program as OxlintProgram
-}
-
-function collectProgramBody(children: AstNode[]): AstNode[] {
-  const body: AstNode[] = []
-
-  for (const child of children) {
-    if (isPureScriptNode(child)) {
-      body.push(...child.body)
-      continue
-    }
-
-    if (isScriptElement(child)) {
-      for (const scriptChild of getNodeArray(child.children)) {
-        if (isPureScriptNode(scriptChild)) {
-          body.push(...scriptChild.body)
-        }
-      }
-    }
-  }
-
-  return body
-}
-
-function findTemplateBody(children: AstNode[]): VueElementNode | null {
-  return children.find(isTemplateElement) ?? null
+  return program
 }
 
 function createDocumentFragment(
   sfc: VueSingleFileComponent,
-  children: AstNode[],
-  comments: VueSingleFileComponent['template_comments'],
-  tokens: VueSingleFileComponent['templateTokens'],
-) {
+  errors: ParseDiagnostic[],
+): AST.VDocumentFragment {
   return {
     type: 'VDocumentFragment',
-    children,
-    comments,
-    errors: getArray(sfc.template_errors),
+    children: sfc.children,
+    comments: sfc.template_comments,
+    errors,
+    tokens: sfc.templateTokens,
     parent: null,
-    range: getRange(sfc) ?? [0, 0],
     start: sfc.start,
     end: sfc.end,
-    tokens,
-  }
+    range: sfc.range,
+  } as unknown as AST.VDocumentFragment
 }
 
-function getProgramRange(body: AstNode[], scriptTokens: AstNode[]): OffsetRange {
-  const firstBody = body[0]
-  const lastBody = body.at(-1)
-  const bodyStart = firstBody ? getStart(firstBody) : undefined
-  const bodyEnd = lastBody ? getEnd(lastBody) : undefined
-
-  if (typeof bodyStart === 'number' && typeof bodyEnd === 'number') {
-    return [bodyStart, bodyEnd]
-  }
-
-  const firstToken = scriptTokens[0]
-  const lastToken = scriptTokens.at(-1)
-  const tokenStart = firstToken ? getEnd(firstToken) : undefined
-  const tokenEnd = lastToken ? getStart(lastToken) : undefined
-
-  if (typeof tokenStart === 'number' && typeof tokenEnd === 'number') {
-    return [tokenStart, tokenEnd]
+function scriptRange(sfc: VueSingleFileComponent): AST.OffsetRange {
+  const bodies = sfc.children
+    .filter(isScriptElement)
+    .flatMap((script) => script.children.flatMap(scriptBody))
+  const firstBody = bodies[0]
+  const lastBody = bodies.at(-1)
+  const firstRange = firstBody ? byteOffsetRange(firstBody) : null
+  const lastRange = lastBody ? byteOffsetRange(lastBody) : null
+  if (firstRange && lastRange) {
+    return [firstRange[0], lastRange[1]]
   }
 
   return [0, 0]
 }
 
-const visitorKeys = new Proxy(
-  {
-    ...AST.KEYS,
-    VPureScript: [],
-  } as Record<string, readonly string[]>,
-  {
-    get(keys, type) {
-      if (typeof type !== 'string') {
-        return Reflect.get(keys, type)
-      }
-
-      return keys[type] ?? []
-    },
-  },
-)
-
-function attachAstMetadata(root: AstNode, offsetMap: SourceOffsetMap, rootParent?: AstNode | null) {
-  const hasRootParent = rootParent !== undefined
-
-  AST.traverseNodes(root as AST.Node, {
-    visitorKeys,
-    enterNode(node, parent) {
-      const astNode = node as AstNode
-      const actualParent =
-        astNode === root && hasRootParent ? rootParent : (parent as AstNode | null)
-      attachNodeMetadata(astNode, offsetMap, actualParent, astNode !== root || hasRootParent)
-      attachReferenceLikeMetadata(astNode, offsetMap)
-    },
-    leaveNode() {},
-  })
+function scriptBody(node: ScriptNode): OxlintProgram['body'] {
+  return node.body ?? []
 }
 
-function attachListMetadata(values: unknown[], offsetMap: SourceOffsetMap) {
-  for (const value of values) {
-    if (isAstNode(value)) {
-      attachLocationMetadata(value, offsetMap)
+function normalizeError(error: NativeRange & { message: string }): ParseDiagnostic {
+  return {
+    message: error.message,
+    start: error.start,
+    end: error.end,
+  }
+}
+
+function annotateAst(root: object, offsetMap: SourceOffsetMap): void {
+  const seen = new WeakSet<object>()
+  const visit = (value: unknown, parent: object | null): void => {
+    if (!isObject(value) || seen.has(value)) {
+      return
+    }
+
+    seen.add(value)
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        visit(child, parent)
+      }
+      return
+    }
+
+    if (value !== root && shouldAnnotate(value)) {
+      Object.defineProperty(value, 'parent', {
+        configurable: true,
+        enumerable: true,
+        value: parent,
+        writable: true,
+      })
+    }
+    attachLocation(value, offsetMap)
+
+    for (const [key, child] of Object.entries(value)) {
+      if (key !== 'parent' && key !== 'loc') {
+        visit(child, value)
+      }
     }
   }
+
+  visit(root, null)
 }
 
-function attachReferenceLikeMetadata(node: AstNode, offsetMap: SourceOffsetMap) {
-  for (const reference of getArray<ReferenceLike>(node.references)) {
-    attachDetachedIdMetadata(reference.id, node, offsetMap)
-  }
-  for (const variable of getArray<ReferenceLike>(node.variables)) {
-    attachDetachedIdMetadata(variable.id, node, offsetMap)
+function annotateList(values: unknown[], parent: object, offsetMap: SourceOffsetMap): void {
+  for (const value of values) {
+    if (!isObject(value)) {
+      continue
+    }
+
+    Object.defineProperty(value, 'parent', {
+      configurable: true,
+      enumerable: true,
+      value: parent,
+      writable: true,
+    })
+    attachLocation(value, offsetMap)
   }
 }
 
-function attachDetachedIdMetadata(id: unknown, owner: AstNode, offsetMap: SourceOffsetMap) {
-  if (!isAstNode(id)) {
+function attachLocation(value: object, offsetMap: SourceOffsetMap): void {
+  const node = value as NodeValue
+  const byteRange = byteOffsetRange(node)
+  if (!byteRange) {
     return
   }
 
-  if (!('parent' in id)) {
-    attachParentMetadata(id, owner)
-  }
-  attachLocationMetadata(id, offsetMap)
-}
+  const range = toRange(offsetMap, { start: byteRange[0], end: byteRange[1] })
+  node.start = range[0]
+  node.end = range[1]
+  node.range = range
 
-function attachNodeMetadata(
-  node: AstNode,
-  offsetMap: SourceOffsetMap,
-  parent: AstNode | null | undefined,
-  shouldAttachParent: boolean,
-) {
-  if (shouldAttachParent) {
-    attachParentMetadata(node, parent)
-  }
-
-  attachLocationMetadata(node, offsetMap)
-}
-
-function attachParentMetadata(node: AstNode, parent: AstNode | null | undefined) {
-  Object.defineProperty(node, 'parent', {
-    configurable: true,
-    enumerable: true,
-    value: parent,
-    writable: true,
-  })
-}
-
-function attachLocationMetadata(value: AstNode, offsetMap: SourceOffsetMap) {
-  const range = getRange(value)
-  if (!range) {
-    return
-  }
-
-  value.range ??= range
-  const [start, end] = value.range
-
-  Object.defineProperty(value, 'loc', {
+  Object.defineProperty(node, 'loc', {
     configurable: true,
     enumerable: true,
     get() {
       return {
-        start: offsetToLocation(offsetMap, start),
-        end: offsetToLocation(offsetMap, end),
+        start: offsetToLocation(offsetMap, byteRange[0]),
+        end: offsetToLocation(offsetMap, byteRange[1]),
       }
     },
   })
 }
 
-function offsetToLocation(offsetMap: SourceOffsetMap, offset: number): SourceLocation {
-  const lineIndex = findLineIndex(offsetMap.lineStarts, offset)
-  const index = toIndex(offsetMap, offset)
+function byteOffsetRange(value: object): AST.OffsetRange | null {
+  const node = value as NodeValue
+  if (typeof node.start === 'number' && typeof node.end === 'number') {
+    return [node.start, node.end]
+  }
 
+  if (
+    Array.isArray(node.range) &&
+    typeof node.range[0] === 'number' &&
+    typeof node.range[1] === 'number'
+  ) {
+    return [node.range[0], node.range[1]]
+  }
+
+  return null
+}
+
+function offsetToLocation(offsetMap: SourceOffsetMap, offset: number): SourcePosition {
+  const lineIndex = findLineIndex(offsetMap.lineStarts, offset)
   return {
     line: lineIndex + 1,
-    column: index - offsetMap.lineStarts[lineIndex].index,
+    column: toIndex(offsetMap, offset) - offsetMap.lineStarts[lineIndex].index,
   }
 }
 
-function findLineIndex(lineStarts: readonly SourceOffset[], offset: number) {
+function findLineIndex(lineStarts: OffsetPoint[], offset: number): number {
   let low = 0
   let high = lineStarts.length - 1
 
   while (low <= high) {
-    const mid = (low + high) >> 1
-
-    if (lineStarts[mid].byte <= offset) {
-      low = mid + 1
+    const middle = (low + high) >> 1
+    if (lineStarts[middle].byte <= offset) {
+      low = middle + 1
     } else {
-      high = mid - 1
+      high = middle - 1
     }
   }
 
   return Math.max(0, high)
 }
 
-function getArray<T = unknown>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : []
-}
-
-function getNodeArray(value: unknown): AstNode[] {
-  return getArray(value).filter(isAstNode)
-}
-
-function getRange(node: AstNode): OffsetRange | undefined {
-  if (
-    Array.isArray(node.range) &&
-    typeof node.range[0] === 'number' &&
-    typeof node.range[1] === 'number'
-  ) {
-    return node.range
-  }
-
-  const start = getStart(node)
-  const end = getEnd(node)
-  return typeof start === 'number' && typeof end === 'number' ? [start, end] : undefined
-}
-
-function getStart(node: AstNode) {
-  if (typeof node.start === 'number') {
-    return node.start
-  }
-
-  return Array.isArray(node.range) && typeof node.range[0] === 'number' ? node.range[0] : undefined
-}
-
-function getEnd(node: AstNode) {
-  if (typeof node.end === 'number') {
-    return node.end
-  }
-
-  return Array.isArray(node.range) && typeof node.range[1] === 'number' ? node.range[1] : undefined
-}
-
-function isAstNode(value: unknown): value is AstNode {
-  return isObject(value) && typeof value.type === 'string'
-}
-
-function isPureScriptNode(node: AstNode): node is VPureScript {
-  return node.type === 'VPureScript' && Array.isArray(node.body)
-}
-
-function isScriptElement(node: AstNode): node is VueElementNode {
+function isScriptElement(
+  node: VueSingleFileComponent['children'][number],
+): node is VueSingleFileComponent['children'][number] & {
+  name: 'script'
+  children: ScriptNode[]
+} {
   return node.type === 'VElement' && node.name === 'script'
 }
 
-function isTemplateElement(node: AstNode): node is VueElementNode {
+function isTemplateElement(node: VueSingleFileComponent['children'][number]): node is TemplateBody {
   return node.type === 'VElement' && node.name === 'template'
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
+function shouldAnnotate(value: NodeValue): boolean {
+  return typeof value.type === 'string' || typeof value.message === 'string'
+}
+
+function isObject(value: unknown): value is NodeValue {
   return value !== null && typeof value === 'object'
 }
 
-function utf8ByteLength(codePoint: number) {
+function utf8ByteLength(codePoint: number): number {
   if (codePoint <= 0x7f) {
     return 1
   }
-
   if (codePoint <= 0x7ff) {
     return 2
   }
-
   if (codePoint <= 0xffff) {
     return 3
   }
-
   return 4
-}
-
-interface SourceOffset {
-  byte: number
-  index: number
-}
-
-type OffsetRange = AST.OffsetRange
-
-type AstNode = Record<string, unknown> & {
-  type: string
-  start?: number
-  end?: number
-  range?: OffsetRange
-  loc?: AST.LocationRange
-}
-
-type ReferenceLike = {
-  id: AstNode
-}
-
-type VPureScript = AstNode & {
-  type: 'VPureScript'
-  body: AstNode[]
-}
-
-type VueElementNode = AstNode & {
-  type: 'VElement'
-  name: string
-  children?: AstNode[]
-  comments?: AstNode[]
-  tokens?: AstNode[]
-  errors?: unknown[]
-}
-
-type VueSingleFileComponent = AstNode & {
-  type: 'VueSingleFileComponent'
-  children: AstNode[]
-  script_comments: AstNode[]
-  template_comments: AstNode[]
-  scriptTokens: AstNode[]
-  templateTokens: AstNode[]
-  source_type?: 'script' | 'commonjs' | 'module'
-  template_errors?: unknown[]
 }
