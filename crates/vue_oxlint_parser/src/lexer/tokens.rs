@@ -58,6 +58,11 @@ pub enum VTokenKind {
   HTMLRawText,
   /// Data in <![CDATA[...]]>
   HTMLCDataText,
+  /// `<!-- ... -->`
+  HTMLComment,
+  /// `<! ... >`
+  HTMLBogusComment,
+
   /// {{
   VExpressionStart,
   /// }}
@@ -83,6 +88,8 @@ impl VTokenKind {
       Self::HTMLRCDataText => "HTMLRCDataText",
       Self::HTMLRawText => "HTMLRawText",
       Self::HTMLCDataText => "HTMLCDataText",
+      Self::HTMLComment => "HTMLComment",
+      Self::HTMLBogusComment => "HTMLBogusComment",
       Self::VExpressionStart => "VExpressionStart",
       Self::VExpressionEnd => "VExpressionEnd",
       Self::Punctuator => "Punctuator",
