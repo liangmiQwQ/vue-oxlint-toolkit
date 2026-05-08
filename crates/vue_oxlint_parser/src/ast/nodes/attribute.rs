@@ -49,10 +49,11 @@ impl ESTree for VAttribute<'_, '_> {
 impl ESTree for VPureAttribute<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
-    state.serialize_field("type", &JsonSafeString("VPureAttribute"));
+    state.serialize_field("type", &JsonSafeString("VAttribute"));
+    state.serialize_field("directive", &false);
     state.serialize_field("key", &self.key);
     state.serialize_field("value", &self.value);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -63,7 +64,7 @@ impl ESTree for VIdentifier<'_> {
     state.serialize_field("type", &JsonSafeString("VIdentifier"));
     state.serialize_field("name", &self.name);
     state.serialize_field("rawName", &self.raw_name);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -73,7 +74,7 @@ impl ESTree for VLiteral<'_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VLiteral"));
     state.serialize_field("value", &self.value);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }

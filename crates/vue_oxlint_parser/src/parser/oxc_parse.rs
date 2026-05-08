@@ -1,6 +1,5 @@
 use std::ptr;
 
-use memchr::memmem::{find, rfind};
 use oxc_allocator::{Allocator, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::{Directive, Expression, Program, Statement};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
@@ -62,20 +61,7 @@ where
       unreachable!("wrapped expressions parse as parenthesized expressions")
     };
 
-    let tokens = tokens.as_bytes();
-    let start_needle = format!(r#""end":{}}},"#, span.start);
-    let end_needle = format!(r#""end":{}}}"#, span.end);
-    let tokens = if let Some(start) = find(tokens, start_needle.as_bytes())
-      && let Some(end) = rfind(tokens, end_needle.as_bytes())
-    {
-      let start = start + start_needle.len();
-      let end = end + end_needle.len();
-      // SAFETY: the token slice comes from a JSON string produced by oxc.
-      let tokens = unsafe { str::from_utf8_unchecked(&tokens[start..end]) };
-      tokens.strip_prefix(',').unwrap_or(tokens)
-    } else {
-      ""
-    };
+    let tokens = self.filter_tokens_in_span(tokens, span);
     Some((expression.expression.take_in(allocator), references, tokens))
   }
 
@@ -155,7 +141,7 @@ where
         ESTreeTokenOptions::new(ret.program.source_type.is_typescript()),
       );
 
-      let tokens = self.vue_allocator.alloc_str(&tokens[1..tokens.len() - 1]);
+      let tokens = self.add_token_ranges(&tokens[1..tokens.len() - 1]);
       Some(OxcParseReturn {
         directives: ret.program.directives,
         statements: ret.program.body,
@@ -186,6 +172,53 @@ where
     references
   }
 
+  fn add_token_ranges(&self, tokens: &str) -> &'a str {
+    let mut with_ranges = String::new();
+    for token in JsonTokenObjects::new(tokens) {
+      let Some(start) = json_number_field(token, "start") else {
+        continue;
+      };
+      let Some(end) = json_number_field(token, "end") else {
+        continue;
+      };
+      if !with_ranges.is_empty() {
+        with_ranges.push(',');
+      }
+      let Some(prefix) = token.strip_suffix('}') else {
+        continue;
+      };
+      with_ranges.push_str(prefix);
+      with_ranges.push_str(r#","range":["#);
+      with_ranges.push_str(&start.to_string());
+      with_ranges.push(',');
+      with_ranges.push_str(&end.to_string());
+      with_ranges.push_str("]}");
+    }
+
+    self.vue_allocator.alloc_str(&with_ranges)
+  }
+
+  fn filter_tokens_in_span(&self, tokens: &str, span: Span) -> &'a str {
+    let mut filtered = String::new();
+    for token in JsonTokenObjects::new(tokens) {
+      let Some(start) = json_number_field(token, "start") else {
+        continue;
+      };
+      let Some(end) = json_number_field(token, "end") else {
+        continue;
+      };
+      if start < span.start || end > span.end {
+        continue;
+      }
+      if !filtered.is_empty() {
+        filtered.push(',');
+      }
+      filtered.push_str(token);
+    }
+
+    self.vue_allocator.alloc_str(&filtered)
+  }
+
   /// Reset the mutable source buffer to match the original source.
   ///
   /// Called after each in-place wrap-and-parse cycle (see the RFC's
@@ -202,6 +235,74 @@ where
       );
     }
   }
+}
+
+struct JsonTokenObjects<'s> {
+  source: &'s str,
+  index: usize,
+}
+
+impl<'s> JsonTokenObjects<'s> {
+  const fn new(source: &'s str) -> Self {
+    Self { source, index: 0 }
+  }
+}
+
+impl<'s> Iterator for JsonTokenObjects<'s> {
+  type Item = &'s str;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let bytes = self.source.as_bytes();
+    while self.index < bytes.len() && bytes[self.index] != b'{' {
+      self.index += 1;
+    }
+
+    let start = self.index;
+    let mut depth = 0_u32;
+    let mut in_string = false;
+    let mut escaped = false;
+
+    while self.index < bytes.len() {
+      let byte = bytes[self.index];
+      if in_string {
+        if escaped {
+          escaped = false;
+        } else if byte == b'\\' {
+          escaped = true;
+        } else if byte == b'"' {
+          in_string = false;
+        }
+        self.index += 1;
+        continue;
+      }
+
+      match byte {
+        b'"' => in_string = true,
+        b'{' => depth += 1,
+        b'}' => {
+          depth = depth.saturating_sub(1);
+          if depth == 0 {
+            self.index += 1;
+            return Some(&self.source[start..self.index]);
+          }
+        }
+        _ => {}
+      }
+      self.index += 1;
+    }
+
+    None
+  }
+}
+
+fn json_number_field(source: &str, key: &str) -> Option<u32> {
+  let needle = format!(r#""{key}":"#);
+  let start = source.find(&needle)? + needle.len();
+  let end = source[start..]
+    .bytes()
+    .position(|byte| !byte.is_ascii_digit())
+    .map_or(source.len(), |offset| start + offset);
+  source[start..end].parse().ok()
 }
 
 const fn reference_mode(is_read: bool, is_write: bool) -> &'static str {

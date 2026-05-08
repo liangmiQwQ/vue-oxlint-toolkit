@@ -1,6 +1,6 @@
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::Comment;
-use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_ast::{Comment, ast::Statement};
+use oxc_estree::{ESTree, JsonSafeString, SequenceSerializer, Serializer, StructSerializer};
 use oxc_span::{SourceType, Span};
 
 mod bindings;
@@ -32,6 +32,8 @@ pub struct VueSingleFileComponent<'a, 'b> {
   /// This field should be filled while calling `oxc_parse` function while parse `<script>` tag
   /// `<script setup>` and `<script>` tokens are also added before or after this.
   pub(crate) script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
+  pub(crate) script_body: ArenaVec<'a, VPureScript<'b>>,
+  pub(crate) script_span: Option<Span>,
   /// Only for serialization use
   /// Corresponding: `ReturnValue<typeof await('vue-eslint-parser')>['templateBody']['tokens']`
   ///
@@ -71,6 +73,9 @@ where
     state.serialize_field("template_comments", &template_comments);
 
     state.serialize_field("scriptTokens", &self.script_tokens);
+    state.serialize_field("body", &ScriptBody(&self.script_body));
+    let script_range = self.script_span.map_or([0, 0], |span| [span.start, span.end]);
+    state.serialize_field("scriptRange", &script_range);
     state.serialize_field("templateTokens", &self.template_tokens);
     let source_type = self.source_type.map_or("module", |source_type| {
       if source_type.is_script() {
@@ -82,7 +87,25 @@ where
       }
     });
     state.serialize_field("source_type", &source_type);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
+  }
+}
+
+struct ScriptBody<'a, 'b>(&'a ArenaVec<'a, VPureScript<'b>>);
+
+impl ESTree for ScriptBody<'_, '_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut seq = serializer.serialize_sequence();
+    for script in self.0 {
+      for directive in &script.directives {
+        seq.serialize_element(directive);
+      }
+      for statement in &script.statements {
+        let statement: &Statement<'_> = statement;
+        seq.serialize_element(statement);
+      }
+    }
+    seq.end();
   }
 }

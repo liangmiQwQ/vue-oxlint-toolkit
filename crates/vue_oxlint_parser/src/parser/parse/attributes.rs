@@ -32,6 +32,7 @@ where
     let mut raw_end = first.span.end;
     let mut raw_name_end = first.span.end;
     let mut value_span = None;
+    let mut literal_span = None;
     let name = if first.kind == VTokenKind::Punctuator {
       if let Some(next) = self.next_non_ws() {
         if next.kind == VTokenKind::HTMLIdentifier {
@@ -41,13 +42,13 @@ where
           &self.parser.source_text[raw_start as usize..raw_name_end as usize]
         } else {
           self.peeked = Some(next);
-          first.value.unwrap_or_default()
+          first.value
         }
       } else {
-        first.value.unwrap_or_default()
+        first.value
       }
     } else {
-      first.value.unwrap_or_default()
+      first.value
     };
 
     while let Some(token) = self.peek() {
@@ -78,9 +79,10 @@ where
       self.parser.sfc.template_tokens.push(eq.into());
       if let Some(value_token) = self.next_non_ws() {
         raw_end = value_token.span.end;
+        literal_span = Some(value_token.span);
         value_span = Some(value_token.value_span());
         self.parser.sfc.template_tokens.push(value_token.into());
-        value_token.value
+        Some(value_token.value)
       } else {
         None
       }
@@ -108,7 +110,7 @@ where
     let raw_name = self.alloc_value(raw_name);
     let value_node = value.map(|value| {
       let value = self.alloc_value(value);
-      VLiteral { value, span: Span::new(raw_name_end, raw_end) }
+      VLiteral { value, span: literal_span.unwrap_or_else(|| Span::new(raw_name_end, raw_end)) }
     });
     let attr = VPureAttribute {
       key: VIdentifier { name: key_name, raw_name, span: Span::new(raw_start, raw_name_end) },
@@ -234,16 +236,7 @@ where
     let mut modifiers = ArenaVec::new_in(self.parser.vue_allocator);
     let (argument_source, modifier_source) = split_directive_argument(parsed.rest);
     let argument = argument_source.map_or_else(
-      || {
-        VDirectiveArgument::VIdentifier(ArenaBox::new_in(
-          VIdentifier {
-            name: "",
-            raw_name: "",
-            span: Span::new(parsed.rest_start, parsed.rest_start),
-          },
-          self.parser.vue_allocator,
-        ))
-      },
+      || VDirectiveArgument::None,
       |(argument_source, argument_offset)| {
         let arg_start = parsed.rest_start + argument_offset as u32;
         VDirectiveArgument::VIdentifier(ArenaBox::new_in(

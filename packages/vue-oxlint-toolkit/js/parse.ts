@@ -1,6 +1,6 @@
 import type { NativeRange } from '../bindings'
 import { parseVue } from '../bindings'
-import type { OxlintProgram, VPureScript, VueSingleFileComponent } from './ast'
+import type { OxlintProgram, VueSingleFileComponent } from './ast'
 import type { ToolkitTransformResult } from './transform-jsx'
 
 import type { Diagnostic } from '@oxlint/plugins'
@@ -35,7 +35,6 @@ export interface SourceLocation {
 
 type ParseDiagnostic = NativeRange & { loc?: SourceLocation; message: string }
 type TemplateBody = AST.VElement & Partial<AST.HasConcreteInfo>
-type ScriptNode = VPureScript & { body?: OxlintProgram['body'] }
 type NodeValue = Record<string, unknown>
 
 export function parse(_path: string, source: string, _options: object = {}): ParseResult {
@@ -102,19 +101,17 @@ function buildProgram(
   offsetMap: SourceOffsetMap,
 ): OxlintProgram {
   const templateBody = sfc.children.find(isTemplateElement)
-  const programRange = scriptRange(sfc)
   const program = {
     type: 'Program',
     sourceType: sfc.source_type ?? 'module',
-    body: sfc.children
-      .filter(isScriptElement)
-      .flatMap((script) => script.children.flatMap(scriptBody)),
+    body: sfc.body,
     comments: sfc.script_comments,
     tokens: sfc.scriptTokens,
     templateBody,
-    start: programRange[0],
-    end: programRange[1],
-    range: programRange,
+    parent: null,
+    start: sfc.scriptRange[0],
+    end: sfc.scriptRange[1],
+    range: sfc.scriptRange,
   } as unknown as OxlintProgram
 
   if (templateBody) {
@@ -125,8 +122,8 @@ function buildProgram(
 
   const fragment = createDocumentFragment(sfc, parseErrors)
   annotateAst(fragment, offsetMap)
-  annotateAst(program, offsetMap)
-  annotateList(parseErrors, program, offsetMap)
+  annotateAst(program, offsetMap, new Set(['templateBody']))
+  annotateList(parseErrors, offsetMap)
 
   return program
 }
@@ -142,29 +139,8 @@ function createDocumentFragment(
     errors,
     tokens: sfc.templateTokens,
     parent: null,
-    start: sfc.start,
-    end: sfc.end,
     range: sfc.range,
   } as unknown as AST.VDocumentFragment
-}
-
-function scriptRange(sfc: VueSingleFileComponent): AST.OffsetRange {
-  const bodies = sfc.children
-    .filter(isScriptElement)
-    .flatMap((script) => script.children.flatMap(scriptBody))
-  const firstBody = bodies[0]
-  const lastBody = bodies.at(-1)
-  const firstRange = firstBody ? byteOffsetRange(firstBody) : null
-  const lastRange = lastBody ? byteOffsetRange(lastBody) : null
-  if (firstRange && lastRange) {
-    return [firstRange[0], lastRange[1]]
-  }
-
-  return [0, 0]
-}
-
-function scriptBody(node: ScriptNode): OxlintProgram['body'] {
-  return node.body ?? []
 }
 
 function normalizeError(error: NativeRange & { message: string }): ParseDiagnostic {
@@ -175,7 +151,7 @@ function normalizeError(error: NativeRange & { message: string }): ParseDiagnost
   }
 }
 
-function annotateAst(root: object, offsetMap: SourceOffsetMap): void {
+function annotateAst(root: object, offsetMap: SourceOffsetMap, skipKeys = new Set<string>()): void {
   const seen = new WeakSet<object>()
   const visit = (value: unknown, parent: object | null): void => {
     if (!isObject(value) || seen.has(value)) {
@@ -201,6 +177,15 @@ function annotateAst(root: object, offsetMap: SourceOffsetMap): void {
     attachLocation(value, offsetMap)
 
     for (const [key, child] of Object.entries(value)) {
+      if (skipKeys.has(key)) {
+        continue
+      }
+      if (key === 'tokens' || key === 'comments' || key === 'errors') {
+        if (Array.isArray(child)) {
+          annotateList(child, offsetMap)
+        }
+        continue
+      }
       if (key !== 'parent' && key !== 'loc') {
         visit(child, value)
       }
@@ -210,18 +195,12 @@ function annotateAst(root: object, offsetMap: SourceOffsetMap): void {
   visit(root, null)
 }
 
-function annotateList(values: unknown[], parent: object, offsetMap: SourceOffsetMap): void {
+function annotateList(values: unknown[], offsetMap: SourceOffsetMap): void {
   for (const value of values) {
     if (!isObject(value)) {
       continue
     }
 
-    Object.defineProperty(value, 'parent', {
-      configurable: true,
-      enumerable: true,
-      value: parent,
-      writable: true,
-    })
     attachLocation(value, offsetMap)
   }
 }
@@ -232,11 +211,6 @@ function attachLocation(value: object, offsetMap: SourceOffsetMap): void {
   if (!byteRange) {
     return
   }
-
-  const range = toRange(offsetMap, { start: byteRange[0], end: byteRange[1] })
-  node.start = range[0]
-  node.end = range[1]
-  node.range = range
 
   Object.defineProperty(node, 'loc', {
     configurable: true,
@@ -289,15 +263,6 @@ function findLineIndex(lineStarts: OffsetPoint[], offset: number): number {
   }
 
   return Math.max(0, high)
-}
-
-function isScriptElement(
-  node: VueSingleFileComponent['children'][number],
-): node is VueSingleFileComponent['children'][number] & {
-  name: 'script'
-  children: ScriptNode[]
-} {
-  return node.type === 'VElement' && node.name === 'script'
 }
 
 function isTemplateElement(node: VueSingleFileComponent['children'][number]): node is TemplateBody {

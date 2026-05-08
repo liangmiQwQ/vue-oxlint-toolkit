@@ -79,7 +79,7 @@ impl ESTree for VInterpolation<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
     state.serialize_field("references", &self.references);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -90,7 +90,7 @@ impl ESTree for VDirectiveExpression<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
     state.serialize_field("references", &self.references);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -101,7 +101,7 @@ impl ESTree for VDirectiveArgumentExpression<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
     state.serialize_field("references", &self.references);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -118,7 +118,7 @@ impl ESTree for VOnExpression<'_, '_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VOnExpression"));
         state.serialize_field("body", self.body);
-        state.serialize_span(self.span);
+        state.serialize_field("range", &[self.span.start, self.span.end]);
         state.end();
       }
     }
@@ -127,7 +127,7 @@ impl ESTree for VOnExpression<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &VOnExpression { body: &self.body, span: self.span });
     state.serialize_field("references", &self.references);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -146,7 +146,7 @@ impl ESTree for VForExpression<'_, '_> {
         state.serialize_field("type", &JsonSafeString("VForExpression"));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
-        state.serialize_span(self.span);
+        state.serialize_field("range", &[self.span.start, self.span.end]);
         state.end();
       }
     }
@@ -158,7 +158,7 @@ impl ESTree for VForExpression<'_, '_> {
       &VForExpression { left: &self.left, right: &self.right, span: self.span },
     );
     state.serialize_field("references", &self.references);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
@@ -175,7 +175,7 @@ impl ESTree for VSlotExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VSlotScopeExpression"));
         state.serialize_field("params", &self.params);
-        state.serialize_span(self.span);
+        state.serialize_field("range", &[self.span.start, self.span.end]);
         state.end();
       }
     }
@@ -184,7 +184,7 @@ impl ESTree for VSlotExpression<'_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &VSlotExpression { params: &self.params, span: self.span });
     state.serialize_field("references", &[(); 0]);
-    state.serialize_span(self.span);
+    state.serialize_field("range", &[self.span.start, self.span.end]);
     state.end();
   }
 }
