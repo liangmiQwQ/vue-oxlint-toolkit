@@ -14,7 +14,7 @@
     "typescript": "catalog:types",
     "vite-plus": "catalog:devtools"
   },
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@11.0.8",
   "pnpm": {
     "overrides": {
       "vite": "npm:@voidzero-dev/vite-plus-core@latest",
