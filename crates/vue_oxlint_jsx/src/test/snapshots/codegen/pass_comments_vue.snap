@@ -1,6 +1,5 @@
 ---
 source: crates/vue_oxlint_jsx/src/test/codegen.rs
-assertion_line: 29
 expression: "format!(\"=============== Source Text ===============\\n\\n{}\\n\\n=============== Mappings ===============\\n\\n{:#?}\",\nret.source_text, ret.mappings)"
 ---
 =============== Source Text ===============

@@ -136,11 +136,3 @@ impl<'b> VForWrapper<'_, 'b> {
     self.params = Some(params);
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::test_ast;
-
-  test_ast!(v_for_vue, "directive/v-for.vue");
-  test_ast!(v_for_error_vue, "directive/v-for-error.vue", true, false);
-}

@@ -109,11 +109,3 @@ impl<'a, 'b> VIfManager<'a, 'b> {
     )
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::test_ast;
-
-  test_ast!(v_if_vue, "directive/v-if.vue");
-  test_ast!(v_if_error_vue, "directive/v-if-error.vue", true, false);
-}

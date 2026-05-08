@@ -6,37 +6,12 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::ParseOptions;
 use oxc_span::{GetSpan, Span};
-use std::fmt::Write;
+use std::{fmt::Write, path::Path};
 
 mod codegen;
 
 pub use codegen::format_program_codegen;
 pub use codegen::run_codegen_test;
-
-#[macro_export]
-macro_rules! test_ast {
-  ($test_name:ident, $file_path:expr) => {
-    mod $test_name {
-      #[test]
-      fn ast() {
-        $crate::test::run_ast_test($file_path, false, false);
-      }
-
-      #[test]
-      fn codegen() {
-        $crate::test::run_codegen_test($file_path);
-      }
-    }
-  };
-  ($test_name:ident, $file_path:expr, $should_errors:expr, $allow_panic:expr) => {
-    mod $test_name {
-      #[test]
-      fn ast() {
-        $crate::test::run_ast_test($file_path, $should_errors, $allow_panic);
-      }
-    }
-  };
-}
 
 #[macro_export]
 macro_rules! test_module_record {
@@ -47,11 +22,59 @@ macro_rules! test_module_record {
   }};
 }
 
+const FIXTURES_DIR: &str = "../../fixtures";
+
+#[derive(Clone, Copy)]
+enum FixtureKind {
+  Pass,
+  Error,
+  Panic,
+}
+
+impl FixtureKind {
+  const fn directory(self) -> &'static str {
+    match self {
+      Self::Pass => "pass",
+      Self::Error => "error",
+      Self::Panic => "panic",
+    }
+  }
+
+  const fn should_errors(self) -> bool {
+    match self {
+      Self::Pass => false,
+      Self::Error | Self::Panic => true,
+    }
+  }
+
+  const fn allow_panic(self) -> bool {
+    match self {
+      Self::Pass | Self::Error => false,
+      Self::Panic => true,
+    }
+  }
+}
+
+struct Fixture {
+  path: String,
+  kind: FixtureKind,
+}
+
 pub struct TestResult<'a> {
   pub program: &'a Program<'a>,
   pub errors: &'a Vec<OxcDiagnostic>,
   pub codegen: String,
   pub spans: String,
+}
+
+pub fn run_fixture_tests() {
+  for fixture in collect_fixtures() {
+    run_ast_test(&fixture.path, fixture.kind.should_errors(), fixture.kind.allow_panic());
+
+    if matches!(fixture.kind, FixtureKind::Pass) {
+      run_codegen_test(&fixture.path);
+    }
+  }
 }
 
 pub fn run_ast_test(file_path: &str, should_errors: bool, allow_panic: bool) {
@@ -114,11 +137,46 @@ where
 }
 
 pub fn read_file(file_path: &str) -> String {
-  std::fs::read_to_string(format!("../../fixtures/{file_path}")).expect("Failed to read test file")
+  std::fs::read_to_string(Path::new(FIXTURES_DIR).join(file_path))
+    .expect("Failed to read test file")
 }
 
 pub fn snapshot_name(file_path: &str) -> String {
   file_path.replace(['/', '\\', '.'], "_")
+}
+
+fn collect_fixtures() -> Vec<Fixture> {
+  let mut fixtures = Vec::new();
+  for kind in [FixtureKind::Pass, FixtureKind::Error, FixtureKind::Panic] {
+    collect_fixture_kind(kind, &mut fixtures);
+  }
+  fixtures.sort_by(|a, b| a.path.cmp(&b.path));
+  fixtures
+}
+
+fn collect_fixture_kind(kind: FixtureKind, fixtures: &mut Vec<Fixture>) {
+  let root = Path::new(FIXTURES_DIR).join(kind.directory());
+  collect_fixture_files(kind, &root, fixtures);
+}
+
+fn collect_fixture_files(kind: FixtureKind, directory: &Path, fixtures: &mut Vec<Fixture>) {
+  let entries = std::fs::read_dir(directory).expect("Failed to read fixture directory");
+
+  for entry in entries {
+    let path = entry.expect("Failed to read fixture directory entry").path();
+    if path.is_dir() {
+      collect_fixture_files(kind, &path, fixtures);
+      continue;
+    }
+
+    if path.extension().is_none_or(|extension| extension != "vue") {
+      continue;
+    }
+
+    let relative_path =
+      path.strip_prefix(FIXTURES_DIR).expect("Failed to strip fixture directory prefix");
+    fixtures.push(Fixture { path: relative_path.to_string_lossy().replace('\\', "/"), kind });
+  }
 }
 
 fn format_string_slice(s: &str) -> String {

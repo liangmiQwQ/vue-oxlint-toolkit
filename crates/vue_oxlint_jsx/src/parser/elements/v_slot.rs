@@ -165,10 +165,3 @@ impl<'b> VSlotWrapper<'_, 'b> {
     self.is_computed = Some(is_computed);
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::test_ast;
-
-  test_ast!(v_slot_vue, "directive/v-slot.vue");
-}
