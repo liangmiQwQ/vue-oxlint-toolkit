@@ -224,3 +224,11 @@ trait ResParseExt<T> {
 }
 
 impl<T> ResParseExt<T> for ResParse<T> {}
+
+#[cfg(test)]
+mod tests {
+  #[test]
+  fn fixtures() {
+    crate::test::run_fixture_tests();
+  }
+}

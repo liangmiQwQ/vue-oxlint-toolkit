@@ -68,10 +68,3 @@ impl<'a> ParserImpl<'a> {
     )
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::test_ast;
-
-  test_ast!(directive_basic_vue, "directive/basic.vue");
-}

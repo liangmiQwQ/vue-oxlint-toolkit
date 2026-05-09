@@ -57,13 +57,13 @@ mod tests {
 
   #[test]
   fn basic() {
-    test_module_record!("modules/basic.vue");
-    test_module_record!("modules/import.vue");
-    test_module_record!("modules/no-imports.vue");
+    test_module_record!("pass/modules/basic.vue");
+    test_module_record!("pass/modules/import.vue");
+    test_module_record!("pass/modules/no-imports.vue");
   }
 
   #[test]
   fn setup() {
-    test_module_record!("modules/setup.vue");
+    test_module_record!("pass/modules/setup.vue");
   }
 }
