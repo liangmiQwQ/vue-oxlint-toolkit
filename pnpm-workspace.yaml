@@ -21,3 +21,4 @@ catalogs:
 
   eslint:
     vue-eslint-parser: ^10.4.0
+    '@typescript-eslint/parser': '^8.59.2'
