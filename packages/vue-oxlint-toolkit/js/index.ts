@@ -1,7 +1,6 @@
-import type { Comment, Diagnostic, Location, Range } from '@oxlint/plugins'
-import type { NativeTransformResult } from '../bindings'
+import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import { transformJsx as nativeTransformJsx } from '../bindings'
-import { createLocationGetter, type LocationGetter } from './location'
+import { withLoc } from './location'
 
 export interface Mapping {
   virtualStart: number
@@ -30,35 +29,14 @@ export interface ParseResult {
 export declare function parse(path: string, source: string, options?: {}): ParseResult
 
 export function transformJsx(source: string): ToolkitTransformResult {
-  const result = nativeTransformJsx(source) as NativeTransformResult
-  const sourceLocations = createLocationGetter(source)
+  const result = nativeTransformJsx(source)
 
   return {
     sourceText: result.sourceText,
     scriptKind: result.scriptKind,
-    comments: result.comments.map((comment) => createComment(comment, sourceLocations)),
+    comments: result.comments.map((comment) => withLoc(source, comment)),
     irregularWhitespaces: result.irregularWhitespaces,
-    errors: result.errors.map((error) => ({
-      message: error.message,
-      loc: sourceLocations.loc(error.start, error.end),
-    })),
+    errors: result.errors.map((error) => withLoc(source, error)),
     mappings: result.mappings,
-  }
-}
-
-type NativeComment = NativeTransformResult['comments'][number]
-
-function createComment(comment: NativeComment, locations: LocationGetter): Comment {
-  let loc: Location | undefined
-
-  return {
-    type: comment.type,
-    value: comment.value,
-    start: comment.start,
-    end: comment.end,
-    range: comment.range,
-    get loc() {
-      return (loc ??= locations.loc(comment.start, comment.end))
-    },
   }
 }
