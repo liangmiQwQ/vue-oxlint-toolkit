@@ -1,11 +1,9 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::source_text::SourceOffsets;
-
 use crate::transform::NativeDiagnostic;
 
-pub fn native_diagnostic(offsets: &SourceOffsets, error: &OxcDiagnostic) -> NativeDiagnostic {
+pub fn native_diagnostic(error: &OxcDiagnostic) -> NativeDiagnostic {
   let span =
     error.labels.as_ref().and_then(|labels| labels.first()).map_or_else(Span::default, |label| {
       let start = label.offset() as u32;
@@ -14,7 +12,9 @@ pub fn native_diagnostic(offsets: &SourceOffsets, error: &OxcDiagnostic) -> Nati
 
   NativeDiagnostic {
     message: error.message.to_string(),
-    start: offsets.offset(span.start),
-    end: offsets.offset(span.end),
+    // We do not process utf8 and utf16 converting on Rust side
+    // It is to avoid modifying ast, as we need to reuse the generated ast on jsx crate.
+    start: span.start,
+    end: span.end,
   }
 }

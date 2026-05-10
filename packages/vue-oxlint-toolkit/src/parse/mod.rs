@@ -3,9 +3,7 @@ use oxc_allocator::Allocator;
 use oxc_estree::{CompactTSSerializer, ESTree};
 use vue_oxlint_parser::VueParser;
 
-use crate::{
-  diagnostics::native_diagnostic, source_text::SourceOffsets, transform::NativeDiagnostic,
-};
+use crate::{diagnostics::native_diagnostic, transform::NativeDiagnostic};
 
 #[napi]
 #[must_use]
@@ -14,7 +12,6 @@ pub fn native_parse(source: String) -> NativeParseResult {
   let vue_allocator = Allocator::default();
   let js_allocator = Allocator::default();
   let ret = VueParser::new(&vue_allocator, &js_allocator, &source).parse();
-  let source_offsets = SourceOffsets::new(&source);
 
   let mut serializer = CompactTSSerializer::new(true);
   ret.sfc.serialize(&mut serializer);
@@ -24,9 +21,9 @@ pub fn native_parse(source: String) -> NativeParseResult {
     irregular_whitespaces: ret
       .irregular_whitespaces
       .iter()
-      .map(|span| source_offsets.range(*span))
+      .map(|span| (span.start, span.end))
       .collect(),
-    errors: ret.errors.iter().map(|error| native_diagnostic(&source_offsets, error)).collect(),
+    errors: ret.errors.iter().map(native_diagnostic).collect(),
     panicked: ret.panicked,
   }
 }
