@@ -7,6 +7,8 @@ const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu
 
 interface LocationConvertor {
   sourceText: string
+  // For ASCII chars, utf-8 and utf-16 have the same span, so we only record non utf-8 chars' checkpoints.
+  // So that `toUtf16` can directly find the neariest checkpoint and calculate offset.
   checkPoints: CheckPoint[]
   fix: <T extends Ranged | { start: number; end: number }>(node: T) => T & Span
   toUtf16: ({ start, end }: { start: number; end: number }) => {
