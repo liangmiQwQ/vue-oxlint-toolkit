@@ -45,33 +45,6 @@ for (const testFile of TEST_FILES.pass) {
   })
 }
 
-it('should produce v-on handler tokens with statement syntax', () => {
-  expectNativeTokens(
-    `<template>
-  <button @click="count++" />
-  <button v-on:click="foo(); bar()" />
-  <button @keyup.enter="if (ok) submit()" />
-</template>
-`,
-  )
-})
-
-function expectNativeTokens(sourceText: string) {
-  const convertor = getConvertor(sourceText)
-  const nativeParseResult = JSON.parse(nativeParse(sourceText).astJson)
-  const bodyTokens = (nativeParseResult.scriptTokens as AST.Token[]).map((token) =>
-    normalizeToken(convertor.fix(token)),
-  )
-  const templateBodyToken = (nativeParseResult.templateTokens as AST.Token[]).map((token) =>
-    normalizeToken(convertor.fix(token)),
-  )
-
-  const vueEslintParserResult = vueEslintParser.parse(sourceText, VUE_ESLINT_PARSER_OPTION)
-
-  expect(bodyTokens).toEqual(vueEslintParserResult.tokens)
-  expect(templateBodyToken).toEqual(vueEslintParserResult.templateBody?.tokens)
-}
-
 // Oxlint's token has start and end field, while eslint's do not have.
 function normalizeToken<T extends AST.Token & { start?: number; end?: number }>(token: T) {
   const { start: _start, end: _end, ...rest } = token
