@@ -1,12 +1,10 @@
 mod comments;
-mod diagnostics;
 
 use napi_derive::napi;
 use vue_oxlint_jsx::VueJsxCodegen;
 
 use crate::{
-  source_text::SourceOffsets,
-  transform::{comments::native_comment, diagnostics::native_diagnostic},
+  diagnostics::native_diagnostic, source_text::SourceOffsets, transform::comments::native_comment,
 };
 
 #[napi]

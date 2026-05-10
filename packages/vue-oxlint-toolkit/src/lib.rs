@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 
+mod diagnostics;
 mod source_text;
 mod transform;
 
