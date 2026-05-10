@@ -14,11 +14,23 @@
 //!
 //! Spans are all in original SFC byte-offset space.
 
+mod cursor;
+mod scan;
 mod tokens;
 
 pub use tokens::{VToken, VTokenKind};
 
 use oxc_allocator::Allocator;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum LexerMode {
+  Data,
+  RcData,
+  RawText,
+  ForeignContent,
+  VPre,
+}
 
 /// Vue template lexer.
 ///
@@ -28,31 +40,42 @@ pub struct Lexer<'a> {
   allocator: &'a Allocator,
   source: &'a [u8],
   pos: u32,
+  mode: LexerMode,
+  in_tag: bool,
 }
 
 #[allow(dead_code)]
 impl<'a> Lexer<'a> {
   #[must_use]
   pub const fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
-    Self { allocator, source: source_text.as_bytes(), pos: 0 }
+    Self { allocator, source: source_text.as_bytes(), pos: 0, mode: LexerMode::Data, in_tag: false }
+  }
+
+  pub const fn set_mode(&mut self, mode: LexerMode) {
+    self.mode = mode;
   }
 
   pub fn next_token(&mut self) -> Option<VToken<'a>> {
-    while self.pos < self.source.len() as u32 && self.starts_with("<!--") {
-      self.pos = self.find_after("-->").unwrap_or(self.source.len() as u32);
-    }
-
     if self.pos >= self.source.len() as u32 {
       return None;
     }
 
+    if let Some(token) = self.scan_mode_text() {
+      return Some(token);
+    }
+
     let start = self.pos;
     let token = match self.current_byte() {
+      b'<' if self.starts_with("<!--") => self.scan_html_comment(),
       b'<' if self.starts_with("</") => self.scan_tag_like(VTokenKind::HTMLEndTagOpen, 2),
-      b'<' if self.starts_with("<!--") => unreachable!(),
+      b'<' if self.starts_with("<![CDATA[") && self.mode == LexerMode::ForeignContent => {
+        self.scan_cdata_text()
+      }
+      b'<' if self.starts_with("<!") => self.scan_bogus_comment(),
       b'<' => self.scan_tag_like(VTokenKind::HTMLTagOpen, 1),
       b'/' if self.starts_with("/>") => {
         self.pos += 2;
+        self.in_tag = false;
         VToken::new(
           VTokenKind::HTMLSelfClosingTagClose,
           oxc_span::Span::new(start, self.pos),
@@ -61,6 +84,7 @@ impl<'a> Lexer<'a> {
       }
       b'>' => {
         self.pos += 1;
+        self.in_tag = false;
         VToken::new(VTokenKind::HTMLTagClose, oxc_span::Span::new(start, self.pos), Some(""))
       }
       b'=' => {
@@ -68,11 +92,11 @@ impl<'a> Lexer<'a> {
         VToken::new(VTokenKind::HTMLAssociation, oxc_span::Span::new(start, self.pos), Some(""))
       }
       b'\'' | b'"' => self.scan_quoted_literal(),
-      b'{' if self.starts_with("{{") => {
+      b'{' if !self.in_tag && self.mode != LexerMode::VPre && self.starts_with("{{") => {
         self.pos += 2;
         VToken::new(VTokenKind::VExpressionStart, oxc_span::Span::new(start, self.pos), Some("{{"))
       }
-      b'}' if self.starts_with("}}") => {
+      b'}' if !self.in_tag && self.mode != LexerMode::VPre && self.starts_with("}}") => {
         self.pos += 2;
         VToken::new(VTokenKind::VExpressionEnd, oxc_span::Span::new(start, self.pos), Some("}}"))
       }
@@ -92,89 +116,45 @@ impl<'a> Lexer<'a> {
 
     Some(token)
   }
+}
 
-  fn scan_tag_like(&mut self, kind: VTokenKind, prefix_len: u32) -> VToken<'a> {
-    let start = self.pos;
-    self.pos += prefix_len;
-    let name_start = self.pos;
-    while self.pos < self.source.len() as u32 {
-      let b = self.current_byte();
-      if !(b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.')) {
-        break;
-      }
-      self.pos += 1;
-    }
-    VToken::new(kind, oxc_span::Span::new(start, self.pos), Some(self.slice(name_start, self.pos)))
+#[cfg(test)]
+mod test {
+  use oxc_allocator::Allocator;
+
+  use super::{Lexer, LexerMode, VTokenKind};
+
+  #[test]
+  fn emits_comment_and_bogus_comment_tokens() {
+    let allocator = Allocator::new();
+    let mut lexer = Lexer::new(&allocator, "<!-- hi --><!bogus>");
+
+    let comment = lexer.next_token().unwrap();
+    assert_eq!(comment.kind, VTokenKind::HTMLComment);
+    assert_eq!(comment.value, Some(" hi "));
+
+    let bogus = lexer.next_token().unwrap();
+    assert_eq!(bogus.kind, VTokenKind::HTMLBogusComment);
+    assert_eq!(bogus.value, Some("bogus"));
   }
 
-  fn scan_quoted_literal(&mut self) -> VToken<'a> {
-    let start = self.pos;
-    let quote = self.current_byte();
-    self.pos += 1;
-    let value_start = self.pos;
-    while self.pos < self.source.len() as u32 && self.current_byte() != quote {
-      self.pos += 1;
-    }
-    let value_end = self.pos;
-    if self.pos < self.source.len() as u32 {
-      self.pos += 1;
-    }
-    VToken::new(
-      VTokenKind::HTMLLiteral,
-      oxc_span::Span::new(start, self.pos),
-      Some(self.slice(value_start, value_end)),
-    )
-  }
+  #[test]
+  fn emits_cdata_and_rcdata_tokens() {
+    let allocator = Allocator::new();
+    let mut cdata_lexer = Lexer::new(&allocator, "<![CDATA[ hello ]]>");
+    cdata_lexer.set_mode(LexerMode::ForeignContent);
 
-  fn scan_text_or_identifier(&mut self) -> VToken<'a> {
-    let start = self.pos;
-    while self.pos < self.source.len() as u32 {
-      let b = self.current_byte();
-      if b.is_ascii_whitespace()
-        || matches!(
-          b,
-          b'<' | b'>' | b'/' | b'=' | b'\'' | b'"' | b':' | b'@' | b'#' | b'.' | b'[' | b']'
-        )
-        || self.starts_with("{{")
-        || self.starts_with("}}")
-      {
-        break;
-      }
-      self.pos += 1;
-    }
-    VToken::new(
-      VTokenKind::HTMLIdentifier,
-      oxc_span::Span::new(start, self.pos),
-      Some(self.slice(start, self.pos)),
-    )
-  }
+    let cdata = cdata_lexer.next_token().unwrap();
+    assert_eq!(cdata.kind, VTokenKind::HTMLCDataText);
+    assert_eq!(cdata.value, Some(" hello "));
 
-  fn scan_run(&mut self, kind: VTokenKind, predicate: fn(&u8) -> bool) -> VToken<'a> {
-    let start = self.pos;
-    while self.pos < self.source.len() as u32 && predicate(&self.current_byte()) {
-      self.pos += 1;
-    }
-    VToken::new(kind, oxc_span::Span::new(start, self.pos), Some(self.slice(start, self.pos)))
-  }
+    let mut rcdata_lexer = Lexer::new(&allocator, "a &amp; b");
+    rcdata_lexer.set_mode(LexerMode::RcData);
 
-  fn starts_with(&self, needle: &str) -> bool {
-    self.source[self.pos as usize..].starts_with(needle.as_bytes())
-  }
-
-  fn find_after(&self, needle: &str) -> Option<u32> {
-    let haystack = &self.source[self.pos as usize..];
-    haystack
-      .windows(needle.len())
-      .position(|window| window == needle.as_bytes())
-      .map(|index| self.pos + index as u32 + needle.len() as u32)
-  }
-
-  fn current_byte(&self) -> u8 {
-    self.source[self.pos as usize]
-  }
-
-  fn slice(&self, start: u32, end: u32) -> &'a str {
-    let bytes = &self.source[start as usize..end as usize];
-    self.allocator.alloc_str(str::from_utf8(bytes).unwrap_or_default())
+    assert_eq!(rcdata_lexer.next_token().unwrap().kind, VTokenKind::HTMLRCDataText);
+    assert_eq!(rcdata_lexer.next_token().unwrap().kind, VTokenKind::HTMLWhitespace);
+    let amp = rcdata_lexer.next_token().unwrap();
+    assert_eq!(amp.kind, VTokenKind::HTMLRCDataText);
+    assert_eq!(amp.value, Some("&"));
   }
 }

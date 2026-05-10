@@ -2,6 +2,7 @@ mod irregular_whitespaces;
 mod module_record;
 mod oxc_parse;
 
+use crate::ast::VComment;
 use crate::ast::token::SerializableToken;
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::irregular_whitespaces::collect_irregular_whitespaces;
@@ -68,10 +69,25 @@ where
     let len = self.source_text.len();
     let mut seen_script = false;
     let mut seen_setup = false;
+    let mut element_stack = Vec::new();
 
     while pos < len {
       if self.starts_with(pos, "<!--") {
-        pos = self.find_from(pos + 4, "-->").map_or(len, |end| end + 3);
+        pos = self.emit_html_comment(pos);
+        continue;
+      }
+
+      if self.starts_with(pos, "<![CDATA[") {
+        if is_foreign_content(&element_stack) {
+          pos = self.emit_cdata_text(pos);
+        } else {
+          pos = self.emit_bogus_comment(pos);
+        }
+        continue;
+      }
+
+      if self.starts_with(pos, "<!") {
+        pos = self.emit_bogus_comment(pos);
         continue;
       }
 
@@ -81,11 +97,17 @@ where
         self.emit_tag(&tag);
         pos = tag.tag_end + 1;
 
-        if !tag.is_end && !tag.is_self_closing {
-          let name = self.lower_source(tag.name_start, tag.name_end);
-          if matches!(name.as_str(), "script" | "style") {
+        let name = self.lower_source(tag.name_start, tag.name_end);
+
+        if tag.is_end {
+          pop_element(&mut element_stack, &name);
+        } else if !tag.is_self_closing {
+          if is_raw_text_element(&name) {
             pos = self.parse_raw_element_body(pos, &name, &mut seen_script, &mut seen_setup);
+          } else if is_rcdata_element(&name) {
+            pos = self.parse_rcdata_element_body(pos, &name);
           }
+          element_stack.push(name);
         }
         continue;
       }
@@ -94,6 +116,17 @@ where
       self.emit_data(pos, next);
       pos = next;
     }
+  }
+
+  fn parse_rcdata_element_body(&mut self, body_start: usize, name: &str) -> usize {
+    let close = format!("</{name}");
+    let Some(close_start) = self.find_ascii_case_insensitive(body_start, &close) else {
+      self.emit_rcdata_text_chunks(body_start, self.source_text.len());
+      return self.source_text.len();
+    };
+
+    self.emit_rcdata_text_chunks(body_start, close_start);
+    close_start
   }
 
   fn parse_raw_element_body(
@@ -393,6 +426,48 @@ where
     }
   }
 
+  fn emit_rcdata_text_chunks(&mut self, start: usize, end: usize) {
+    let mut pos = start;
+    while pos < end {
+      let chunk_start = pos;
+      if self.byte(pos).is_ascii_whitespace() {
+        while pos < end && self.byte(pos).is_ascii_whitespace() {
+          pos += 1;
+        }
+        self.push_template_token(
+          VTokenKind::HTMLWhitespace,
+          chunk_start,
+          pos,
+          Some(&self.source_text[chunk_start..pos]),
+        );
+        continue;
+      }
+
+      if self.byte(pos) == b'&'
+        && let Some((reference_end, value)) = self.read_character_reference(pos, end)
+      {
+        self.push_template_token(
+          VTokenKind::HTMLRCDataText,
+          chunk_start,
+          reference_end,
+          Some(value),
+        );
+        pos = reference_end;
+        continue;
+      }
+
+      while pos < end && !self.byte(pos).is_ascii_whitespace() && self.byte(pos) != b'&' {
+        pos += 1;
+      }
+      self.push_template_token(
+        VTokenKind::HTMLRCDataText,
+        chunk_start,
+        pos,
+        Some(&self.source_text[chunk_start..pos]),
+      );
+    }
+  }
+
   fn emit_raw_text_chunks(&mut self, start: usize, end: usize) {
     let mut pos = start;
     while pos < end {
@@ -404,6 +479,50 @@ where
       let kind = if is_ws { VTokenKind::HTMLWhitespace } else { VTokenKind::HTMLRawText };
       self.push_template_token(kind, chunk_start, pos, Some(&self.source_text[chunk_start..pos]));
     }
+  }
+
+  fn emit_html_comment(&mut self, start: usize) -> usize {
+    let (end, value_end) = if let Some(end) = self.find_from(start + 4, "-->") {
+      (end + 3, end)
+    } else {
+      (self.source_text.len(), self.source_text.len())
+    };
+    self.sfc.template_comments.push(VComment {
+      r#type: "HTMLComment",
+      value: &self.source_text[start + 4..value_end],
+      span: Span::new(start as u32, end as u32),
+    });
+    end
+  }
+
+  fn emit_bogus_comment(&mut self, start: usize) -> usize {
+    let (end, value_end) = if let Some(end) = self.find_from(start + 2, ">") {
+      (end + 1, end)
+    } else {
+      (self.source_text.len(), self.source_text.len())
+    };
+    self.sfc.template_comments.push(VComment {
+      r#type: "HTMLBogusComment",
+      value: &self.source_text[start + 2..value_end],
+      span: Span::new(start as u32, end as u32),
+    });
+    end
+  }
+
+  fn emit_cdata_text(&mut self, start: usize) -> usize {
+    let value_start = start + "<![CDATA[".len();
+    let (end, value_end) = if let Some(end) = self.find_from(value_start, "]]>") {
+      (end + 3, end)
+    } else {
+      (self.source_text.len(), self.source_text.len())
+    };
+    self.push_template_token(
+      VTokenKind::HTMLCDataText,
+      start,
+      end,
+      Some(&self.source_text[value_start..value_end]),
+    );
+    end
   }
 
   fn emit_expression_tokens(&mut self, start: usize, end: usize) {
@@ -714,6 +833,28 @@ where
     self.source_text[start..].find(needle).map(|i| start + i)
   }
 
+  fn read_character_reference(&self, start: usize, end: usize) -> Option<(usize, &'b str)> {
+    let name_start = start + 1;
+    let mut name_end = name_start;
+    while name_end < end && self.byte(name_end).is_ascii_alphanumeric() {
+      name_end += 1;
+    }
+    if name_end >= end || self.byte(name_end) != b';' {
+      return None;
+    }
+
+    let value = match &self.source_text[name_start..name_end] {
+      "amp" => "&",
+      "lt" => "<",
+      "gt" => ">",
+      "quot" => "\"",
+      "apos" => "'",
+      _ => return None,
+    };
+
+    Some((name_end + 1, self.alloc_str(value)))
+  }
+
   fn starts_with(&self, pos: usize, needle: &str) -> bool {
     self.source_text[pos..].starts_with(needle)
   }
@@ -764,4 +905,25 @@ fn attr_value_kind(attr_name: &str) -> AttrValueKind {
   }
 
   AttrValueKind::Literal
+}
+
+fn is_raw_text_element(name: &str) -> bool {
+  matches!(
+    name,
+    "script" | "style" | "xmp" | "iframe" | "noembed" | "noframes" | "noscript" | "plaintext"
+  )
+}
+
+fn is_rcdata_element(name: &str) -> bool {
+  matches!(name, "textarea" | "title")
+}
+
+fn is_foreign_content(element_stack: &[String]) -> bool {
+  element_stack.iter().rev().any(|name| matches!(name.as_str(), "svg" | "math"))
+}
+
+fn pop_element(element_stack: &mut Vec<String>, name: &str) {
+  if let Some(index) = element_stack.iter().rposition(|current| current == name) {
+    element_stack.truncate(index);
+  }
 }
