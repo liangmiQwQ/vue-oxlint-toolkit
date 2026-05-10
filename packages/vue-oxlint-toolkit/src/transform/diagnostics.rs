@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::source_text::SourceOffsets;
 
-use super::types::NativeDiagnostic;
+use super::NativeDiagnostic;
 
 pub fn native_diagnostic(offsets: &SourceOffsets, error: &OxcDiagnostic) -> NativeDiagnostic {
   let span =

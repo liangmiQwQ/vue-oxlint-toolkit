@@ -4,7 +4,7 @@ use oxc_span::Span;
 
 use crate::source_text::SourceOffsets;
 
-use super::types::NativeComment;
+use crate::transform::NativeComment;
 
 pub fn native_comment(
   source_text: &str,

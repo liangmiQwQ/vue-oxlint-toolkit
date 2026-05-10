@@ -20,7 +20,7 @@ impl SourceOffsets {
     offset
   }
 
-  pub fn range(&self, span: Span) -> Vec<u32> {
-    vec![self.offset(span.start), self.offset(span.end)]
+  pub fn range(&self, span: Span) -> (u32, u32) {
+    (self.offset(span.start), self.offset(span.end))
   }
 }
