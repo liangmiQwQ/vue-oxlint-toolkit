@@ -45,6 +45,7 @@ for (const testFile of TEST_FILES.pass) {
   })
 }
 
+// Oxlint's token has start and end field, while eslint's do not have.
 function normalizeToken<T extends AST.Token & { start?: number; end?: number }>(token: T) {
   const { start: _start, end: _end, ...rest } = token
 
