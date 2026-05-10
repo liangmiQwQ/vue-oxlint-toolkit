@@ -17,7 +17,7 @@ where
   'b: 'a,
   'a: 'c,
 {
-  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &str)> {
+  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &'a str)> {
     let allocator = Allocator::new();
     // SAFETY: use `()` as wrap
     let (expr, tokens) = unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
@@ -52,11 +52,10 @@ where
 
     // it mustn't be the first or last element in the whole array.
     let tokens = tokens.as_bytes();
-    // SAFETY: we add "start_wrap" and "end_wrap", so there must be a token which contains corresponding "end" field
     let start_needle = format!(r#""end":{}}},"#, span.start - 1);
-    let start = find(tokens, start_needle.as_bytes()).unwrap() + start_needle.len();
+    let start = find(tokens, start_needle.as_bytes())? + start_needle.len();
     let end_needle = format!(r#""end":{}}}"#, span.end);
-    let end = rfind(tokens, end_needle.as_bytes()).unwrap() + end_needle.len();
+    let end = rfind(tokens, end_needle.as_bytes())? + end_needle.len();
 
     Some((expression.expression.take_in(self.js_allocator), unsafe {
       // SAFETY: it is sliced from a &str

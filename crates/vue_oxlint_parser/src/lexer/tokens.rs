@@ -15,6 +15,7 @@ impl ESTree for VToken<'_> {
     state.serialize_field("type", self.kind.as_str());
     state.serialize_field("value", &self.value);
     state.serialize_span(self.span);
+    state.end();
   }
 }
 
@@ -63,6 +64,15 @@ pub enum VTokenKind {
   /// `<! ... >`
   HTMLBogusComment,
 
+  /// JavaScript identifier in template expressions.
+  Identifier,
+  /// JavaScript keyword in template expressions.
+  Keyword,
+  /// JavaScript string literal in template expressions.
+  String,
+  /// JavaScript numeric literal in template expressions.
+  Numeric,
+
   /// {{
   VExpressionStart,
   /// }}
@@ -90,6 +100,10 @@ impl VTokenKind {
       Self::HTMLCDataText => "HTMLCDataText",
       Self::HTMLComment => "HTMLComment",
       Self::HTMLBogusComment => "HTMLBogusComment",
+      Self::Identifier => "Identifier",
+      Self::Keyword => "Keyword",
+      Self::String => "String",
+      Self::Numeric => "Numeric",
       Self::VExpressionStart => "VExpressionStart",
       Self::VExpressionEnd => "VExpressionEnd",
       Self::Punctuator => "Punctuator",

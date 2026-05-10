@@ -9,6 +9,10 @@ import tsParser from '@typescript-eslint/parser'
 const TEST_FILES = readTestFiles()
 const VUE_ESLINT_PARSER_OPTION = {
   sourceType: 'module',
+  ecmaVersion: 'latest',
+  ecmaFeatures: {
+    jsx: true,
+  },
   parser: tsParser,
   parserOptions: {
     ecmaVersion: 'latest',

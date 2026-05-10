@@ -16,7 +16,7 @@
 
 mod tokens;
 
-pub use tokens::VToken;
+pub use tokens::{VToken, VTokenKind};
 
 use oxc_allocator::Allocator;
 
