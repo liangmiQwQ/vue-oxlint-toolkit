@@ -1,20 +1,125 @@
-import type { LineColumn, Location, Ranged } from '@oxlint/plugins'
+import type { LineColumn, Location, Ranged, Span } from '@oxlint/plugins'
+
+// JavaScript use UTF-16 for internal string representation, while Rust use UTF-8 for string representation.
+// We have to convert it when we get location metadata from Rust side.
 
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu
 
-type HasRange = Ranged | { start: number; end: number }
+interface LocationConvertor {
+  sourceText: string
+  checkPoints: CheckPoint[]
+  fix: <T extends Ranged | { start: number; end: number }>(node: T) => T & Span
+  toUtf16: ({ start, end }: { start: number; end: number }) => {
+    start: number
+    end: number
+  }
+}
 
-export function withLoc<T extends HasRange>(sourceText: string, node: T): T & { loc: Location } {
-  const [start, end] = 'range' in node ? node.range : [node.start, node.end]
+interface CheckPoint {
+  utf8: number
+  utf16: number
+}
 
-  let loc: Location | undefined
+export function getConvertor(sourceText: string): LocationConvertor {
+  const checkPoints = createCheckPoints(sourceText)
 
-  return {
-    ...node,
-    get loc() {
-      return (loc ??= createLocation(sourceText, start, end))
+  const convertor: LocationConvertor = {
+    sourceText,
+    checkPoints,
+    toUtf16: ({ start, end }) => ({
+      start: toUtf16Offset(sourceText, checkPoints, start),
+      end: toUtf16Offset(sourceText, checkPoints, end),
+    }),
+    fix: (node) => {
+      const [utf8Start, utf8End] = 'range' in node ? node.range : [node.start, node.end]
+      // We should use utf16 location for location creation.
+      const { start, end } = convertor.toUtf16({ start: utf8Start, end: utf8End })
+
+      let loc: Location | undefined
+
+      return {
+        ...node,
+        start,
+        end,
+        range: [start, end],
+        get loc() {
+          return (loc ??= createLocation(sourceText, start, end))
+        },
+      }
     },
   }
+
+  return convertor
+}
+
+function createCheckPoints(sourceText: string): CheckPoint[] {
+  const checkPoints: CheckPoint[] = [{ utf8: 0, utf16: 0 }]
+  let utf8 = 0
+  let utf16 = 0
+
+  while (utf16 < sourceText.length) {
+    const codePoint = sourceText.codePointAt(utf16)!
+    const utf16Length = codePoint > 0xffff ? 2 : 1
+    const utf8Length = getUtf8Length(codePoint)
+
+    if (codePoint > 0x7f) {
+      checkPoints.push({ utf8, utf16 })
+    }
+
+    utf8 += utf8Length
+    utf16 += utf16Length
+  }
+
+  return checkPoints
+}
+
+function toUtf16Offset(sourceText: string, checkPoints: CheckPoint[], offset: number): number {
+  let { utf8, utf16 } = findCheckPoint(checkPoints, offset)
+
+  while (utf8 < offset && utf16 < sourceText.length) {
+    const codePoint = sourceText.codePointAt(utf16)!
+    const utf16Length = codePoint > 0xffff ? 2 : 1
+    const utf8Length = getUtf8Length(codePoint)
+
+    if (utf8 + utf8Length > offset) {
+      break
+    }
+
+    utf8 += utf8Length
+    utf16 += utf16Length
+  }
+
+  return utf16
+}
+
+function findCheckPoint(checkPoints: CheckPoint[], offset: number): CheckPoint {
+  let low = 0
+  let high = checkPoints.length
+
+  while (low < high) {
+    const mid = (low + high) >> 1
+
+    if (checkPoints[mid].utf8 <= offset) {
+      low = mid + 1
+    } else {
+      high = mid
+    }
+  }
+
+  return checkPoints[low - 1]
+}
+
+function getUtf8Length(codePoint: number): number {
+  if (codePoint <= 0x7f) {
+    return 1
+  }
+  if (codePoint <= 0x7ff) {
+    return 2
+  }
+  if (codePoint <= 0xffff) {
+    return 3
+  }
+  return 4
 }
 
 function createLocation(sourceText: string, start: number, end: number): Location {
