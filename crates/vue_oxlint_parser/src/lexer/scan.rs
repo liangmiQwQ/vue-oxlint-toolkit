@@ -132,14 +132,17 @@ impl<'a> Lexer<'a> {
     if self.current_byte().is_ascii_whitespace() {
       return Some(self.scan_run(VTokenKind::HTMLWhitespace, u8::is_ascii_whitespace));
     }
-    if self.current_byte() == b'<' || self.starts_with("{{") || self.starts_with("}}") {
+    if self.current_byte() == b'<' && self.is_text_end() {
+      return None;
+    }
+    if self.mode != LexerMode::VPre && (self.starts_with("{{") || self.starts_with("}}")) {
       return None;
     }
 
     let start = self.pos;
     while self.pos < self.source_len() {
       if self.current_byte().is_ascii_whitespace()
-        || self.current_byte() == b'<'
+        || (self.current_byte() == b'<' && self.is_text_end())
         || (self.mode != LexerMode::VPre && (self.starts_with("{{") || self.starts_with("}}")))
       {
         break;
@@ -153,7 +156,7 @@ impl<'a> Lexer<'a> {
     if self.current_byte().is_ascii_whitespace() {
       return Some(self.scan_run(VTokenKind::HTMLWhitespace, u8::is_ascii_whitespace));
     }
-    if self.current_byte() == b'<' {
+    if self.current_byte() == b'<' && self.is_mode_end_tag() {
       return None;
     }
 
@@ -166,7 +169,10 @@ impl<'a> Lexer<'a> {
     }
 
     while self.pos < self.source_len() {
-      if self.current_byte().is_ascii_whitespace() || matches!(self.current_byte(), b'<' | b'&') {
+      if self.current_byte().is_ascii_whitespace()
+        || self.current_byte() == b'&'
+        || (self.current_byte() == b'<' && self.is_mode_end_tag())
+      {
         break;
       }
       self.pos += 1;
@@ -198,5 +204,23 @@ impl<'a> Lexer<'a> {
       _ => return None,
     };
     Some((end + 1, self.allocator.alloc_str(value)))
+  }
+
+  fn is_mode_end_tag(&self) -> bool {
+    let Some(end_tag) = self.mode_end_tag else {
+      return true;
+    };
+    self.starts_with_ascii_case_insensitive(end_tag)
+  }
+
+  fn is_text_end(&self) -> bool {
+    if self.mode_end_tag.is_some() {
+      return self.is_mode_end_tag();
+    }
+
+    self.starts_with("<!--")
+      || self.starts_with("<!")
+      || (self.starts_with("</") && self.is_tag_name_start(2))
+      || self.is_tag_name_start(1)
   }
 }

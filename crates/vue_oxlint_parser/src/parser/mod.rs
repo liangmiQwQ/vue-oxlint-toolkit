@@ -4,20 +4,58 @@ mod oxc_parse;
 
 use crate::ast::VComment;
 use crate::ast::token::SerializableToken;
-use crate::lexer::{VToken, VTokenKind};
+use crate::lexer::{Lexer, LexerMode, VToken, VTokenKind};
 use crate::parser::irregular_whitespaces::collect_irregular_whitespaces;
 use crate::{VueParser, VueParserReturn};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Expression;
 use oxc_span::{GetSpan, SourceType, Span};
 
-#[derive(Debug, Clone, Copy)]
-struct TagInfo {
-  name_start: usize,
-  name_end: usize,
-  tag_end: usize,
+#[derive(Debug, Default, Clone, Copy)]
+struct TagAttrs<'s> {
+  setup: bool,
+  v_pre: bool,
+  lang: Option<&'s str>,
+}
+
+#[derive(Debug)]
+struct CurrentTag<'s> {
+  name: &'s str,
+  normalized_name: String,
+  open_start: usize,
   is_end: bool,
-  is_self_closing: bool,
+  attrs: TagAttrs<'s>,
+  last_attr_name: Option<&'s str>,
+  attr_name_start: Option<usize>,
+  attr_name_end: usize,
+  flushed_attr_name: Option<&'s str>,
+  awaiting_attr_value: Option<&'s str>,
+}
+
+#[derive(Debug, Clone)]
+struct ElementState {
+  name: String,
+  v_pre: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ScriptInfo<'s> {
+  open_start: usize,
+  open_end: usize,
+  attrs: TagAttrs<'s>,
+}
+
+#[derive(Debug, Clone)]
+struct RawElement<'s> {
+  body_start: usize,
+  script: Option<ScriptInfo<'s>>,
+}
+
+#[derive(Debug, Clone)]
+struct PendingScript<'s> {
+  info: ScriptInfo<'s>,
+  body_start: usize,
+  body_end: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -65,222 +103,184 @@ where
   fn parse_tokens(&mut self) {
     self.sfc.source_type = Some(SourceType::mjs());
 
-    let mut pos = 0;
-    let len = self.source_text.len();
+    let mut lexer = Lexer::new(self.js_allocator, self.source_text);
+    let mut current_tag = None;
+    let mut element_stack = Vec::new();
+    let mut raw_element = None;
+    let mut pending_script = None;
+    let mut interpolation_start = None;
     let mut seen_script = false;
     let mut seen_setup = false;
-    let mut element_stack = Vec::new();
 
-    while pos < len {
-      if self.starts_with(pos, "<!--") {
-        pos = self.emit_html_comment(pos);
-        continue;
-      }
-
-      if self.starts_with(pos, "<![CDATA[") {
-        if is_foreign_content(&element_stack) {
-          pos = self.emit_cdata_text(pos);
-        } else {
-          pos = self.emit_bogus_comment(pos);
+    while let Some(token) = lexer.next_token() {
+      if let Some(start) = interpolation_start {
+        if token.kind == VTokenKind::VExpressionEnd {
+          self.emit_expression_tokens(start, token_start(token));
+          self.push_template_vtoken(token);
+          interpolation_start = None;
         }
         continue;
       }
 
-      if self.starts_with(pos, "<!") {
-        pos = self.emit_bogus_comment(pos);
-        continue;
-      }
-
-      if self.byte(pos) == b'<'
-        && let Some(tag) = self.read_tag(pos)
-      {
-        self.emit_tag(&tag);
-        pos = tag.tag_end + 1;
-
-        let name = self.lower_source(tag.name_start, tag.name_end);
-
-        if tag.is_end {
-          pop_element(&mut element_stack, &name);
-        } else if !tag.is_self_closing {
-          if is_raw_text_element(&name) {
-            pos = self.parse_raw_element_body(pos, &name, &mut seen_script, &mut seen_setup);
-          } else if is_rcdata_element(&name) {
-            pos = self.parse_rcdata_element_body(pos, &name);
+      match token.kind {
+        VTokenKind::HTMLComment | VTokenKind::HTMLBogusComment => {
+          self.push_template_comment(token);
+        }
+        VTokenKind::HTMLTagOpen | VTokenKind::HTMLEndTagOpen => {
+          self.handle_tag_open(token, &mut current_tag, &mut raw_element, &mut pending_script);
+        }
+        VTokenKind::HTMLTagClose | VTokenKind::HTMLSelfClosingTagClose => {
+          if let Some(tag) = &mut current_tag {
+            self.flush_attr_name(tag);
           }
-          element_stack.push(name);
+          self.push_template_vtoken(token);
+          self.finish_tag(
+            token,
+            &mut lexer,
+            &mut current_tag,
+            &mut element_stack,
+            &mut raw_element,
+            &mut pending_script,
+            &mut seen_script,
+            &mut seen_setup,
+          );
         }
-        continue;
+        VTokenKind::HTMLIdentifier => {
+          self.handle_identifier(token, &mut current_tag);
+        }
+        VTokenKind::Punctuator if current_tag.as_ref().is_some_and(|tag| !tag.is_end) => {
+          self.handle_attr_name_part(token, &mut current_tag);
+        }
+        VTokenKind::HTMLAssociation => {
+          if let Some(tag) = &mut current_tag {
+            self.flush_attr_name(tag);
+            tag.awaiting_attr_value = tag.flushed_attr_name.or(tag.last_attr_name);
+          }
+          self.push_template_vtoken(token);
+        }
+        VTokenKind::HTMLLiteral => {
+          self.handle_literal(token, &mut current_tag);
+        }
+        VTokenKind::VExpressionStart => {
+          self.push_template_vtoken(token);
+          interpolation_start = Some(token_end(token));
+        }
+        VTokenKind::HTMLWhitespace if current_tag.is_some() => {
+          if let Some(tag) = &mut current_tag
+            && tag.awaiting_attr_value.is_none()
+          {
+            self.flush_attr_name(tag);
+          }
+        }
+        _ => self.push_template_vtoken(token),
       }
-
-      let next = self.find_from(pos + 1, "<").unwrap_or(len);
-      self.emit_data(pos, next);
-      pos = next;
     }
   }
 
-  fn parse_rcdata_element_body(&mut self, body_start: usize, name: &str) -> usize {
-    let close = format!("</{name}");
-    let Some(close_start) = self.find_ascii_case_insensitive(body_start, &close) else {
-      self.emit_rcdata_text_chunks(body_start, self.source_text.len());
-      return self.source_text.len();
-    };
-
-    self.emit_rcdata_text_chunks(body_start, close_start);
-    close_start
-  }
-
-  fn parse_raw_element_body(
+  fn handle_tag_open(
     &mut self,
-    body_start: usize,
-    name: &str,
-    seen_script: &mut bool,
-    seen_setup: &mut bool,
-  ) -> usize {
-    let close = format!("</{name}");
-    let Some(close_start) = self.find_ascii_case_insensitive(body_start, &close) else {
-      self.emit_raw_text_chunks(body_start, self.source_text.len());
-      return self.source_text.len();
-    };
-
-    self.emit_raw_text_chunks(body_start, close_start);
-
-    if name == "script" {
-      self.emit_script_tokens(body_start, close_start, seen_script, seen_setup);
-    }
-
-    close_start
-  }
-
-  fn emit_script_tokens(
-    &mut self,
-    body_start: usize,
-    body_end: usize,
-    seen_script: &mut bool,
-    seen_setup: &mut bool,
+    token: VToken<'b>,
+    current_tag: &mut Option<CurrentTag<'b>>,
+    raw_element: &mut Option<RawElement<'b>>,
+    pending_script: &mut Option<PendingScript<'b>>,
   ) {
-    let Some(open_start) = self.source_text[..body_start].rfind("<script") else {
+    if let Some(raw) = raw_element.take() {
+      let body_end = token.span.start as usize;
+      if let Some(script) = raw.script {
+        *pending_script =
+          Some(PendingScript { info: script, body_start: raw.body_start, body_end });
+      }
+    }
+
+    let name = token.value.unwrap_or_default();
+    let normalized_name = name.to_ascii_lowercase();
+    let value = self.alloc_str(&normalized_name);
+    self.push_template_token(token.kind, token_start(token), token_end(token), Some(value));
+    *current_tag = Some(CurrentTag {
+      name,
+      normalized_name,
+      open_start: token_start(token),
+      is_end: token.kind == VTokenKind::HTMLEndTagOpen,
+      attrs: TagAttrs::default(),
+      last_attr_name: None,
+      attr_name_start: None,
+      attr_name_end: 0,
+      flushed_attr_name: None,
+      awaiting_attr_value: None,
+    });
+  }
+
+  fn handle_identifier(&mut self, token: VToken<'b>, current_tag: &mut Option<CurrentTag<'b>>) {
+    if let Some(tag) = current_tag
+      && !tag.is_end
+      && let Some(value) = token.value
+    {
+      if tag.awaiting_attr_value.is_none() {
+        if tag.attr_name_start.is_none() {
+          tag.attr_name_start = Some(token_start(token));
+        }
+        tag.attr_name_end = token_end(token);
+      }
+      tag.last_attr_name = Some(value);
+      if value.eq_ignore_ascii_case("setup") {
+        tag.attrs.setup = true;
+      } else if value.eq_ignore_ascii_case("v-pre") {
+        tag.attrs.v_pre = true;
+      }
+    }
+
+    if current_tag.is_none() {
+      self.push_template_vtoken(token);
+    }
+  }
+
+  fn handle_attr_name_part(&mut self, token: VToken<'b>, current_tag: &mut Option<CurrentTag<'b>>) {
+    if let Some(tag) = current_tag
+      && tag.awaiting_attr_value.is_none()
+    {
+      if tag.attr_name_start.is_none() {
+        tag.attr_name_start = Some(token_start(token));
+      }
+      tag.attr_name_end = token_end(token);
+    }
+
+    if current_tag.is_none() {
+      self.push_template_vtoken(token);
+    }
+  }
+
+  fn handle_literal(&mut self, token: VToken<'b>, current_tag: &mut Option<CurrentTag<'b>>) {
+    let literal_attr_name = if let Some(tag) = current_tag
+      && let Some(current_attr_name) = tag.awaiting_attr_value.take()
+    {
+      if current_attr_name.eq_ignore_ascii_case("lang") {
+        tag.attrs.lang = token.value;
+      }
+      tag.attr_name_start = None;
+      tag.attr_name_end = 0;
+      tag.last_attr_name = None;
+      tag.flushed_attr_name = None;
+      Some(current_attr_name)
+    } else {
+      None
+    };
+
+    if let Some(attr_name) = literal_attr_name {
+      self.emit_attr_value(attr_name, token);
+    } else {
+      self.push_template_vtoken(token);
+    }
+  }
+
+  fn flush_attr_name(&mut self, tag: &mut CurrentTag<'b>) {
+    let Some(start) = tag.attr_name_start.take() else {
       return;
     };
-    let open_end = body_start.saturating_sub(1);
-    let is_setup = self.source_text[open_start..open_end].contains("setup");
-    if is_setup {
-      if *seen_setup || body_start == body_end {
-        *seen_setup = true;
-        return;
-      }
-      *seen_setup = true;
-    } else {
-      if *seen_script || (*seen_setup && body_start == body_end) {
-        return;
-      }
-      *seen_script = true;
-    }
-
-    self.push_script_punctuator(open_start, open_end + 1, "<script>");
-
-    self.apply_script_source_type(open_start, open_end + 1);
-
-    if body_start < body_end {
-      let span = Span::new(body_start as u32, body_end as u32);
-      if let Some((_, _, _, tokens)) = self.oxc_parse(span, &[], &[], None)
-        && !tokens.is_empty()
-      {
-        self.sfc.script_tokens.push(tokens.into());
-      }
-    }
-
-    let close_end = self.find_from(body_end, ">").map_or(body_end, |end| end + 1);
-    self.push_script_punctuator(body_end, close_end, "</script>");
-  }
-
-  fn apply_script_source_type(&mut self, open_start: usize, open_end: usize) {
-    let mut source_type = SourceType::mjs();
-    let attrs = &self.source_text[open_start..open_end];
-    if let Some(lang) = attr_value(attrs, "lang")
-      && let Ok(parsed) = SourceType::from_extension(lang)
-    {
-      source_type = parsed.with_module(true);
-    }
-    self.sfc.source_type = Some(source_type);
-  }
-
-  fn emit_tag(&mut self, tag: &TagInfo) {
-    let name = self.lower_source(tag.name_start, tag.name_end);
-    let tag_start = if tag.is_end { tag.name_start - 2 } else { tag.name_start - 1 };
-    let kind = if tag.is_end { VTokenKind::HTMLEndTagOpen } else { VTokenKind::HTMLTagOpen };
-    self.push_template_token(kind, tag_start, tag.name_end, Some(self.alloc_str(&name)));
-
-    if !tag.is_end {
-      self.emit_attrs(tag.name_end, tag);
-    }
-
-    let close_start = if tag.is_self_closing {
-      let mut i = tag.tag_end;
-      while i > tag.name_end && self.byte(i - 1).is_ascii_whitespace() {
-        i -= 1;
-      }
-      i - 1
-    } else {
-      tag.tag_end
-    };
-    let close_kind = if tag.is_self_closing {
-      VTokenKind::HTMLSelfClosingTagClose
-    } else {
-      VTokenKind::HTMLTagClose
-    };
-    self.push_template_token(close_kind, close_start, tag.tag_end + 1, Some(""));
-  }
-
-  fn emit_attrs(&mut self, mut pos: usize, tag: &TagInfo) {
-    while pos < tag.tag_end {
-      pos = self.skip_ws(pos, tag.tag_end);
-      if pos >= tag.tag_end || self.byte(pos) == b'/' {
-        break;
-      }
-
-      let name_start = pos;
-      while pos < tag.tag_end {
-        let b = self.byte(pos);
-        if b.is_ascii_whitespace() || matches!(b, b'=' | b'/' | b'>') {
-          break;
-        }
-        pos += 1;
-      }
-      let name_end = pos;
-      if name_start == name_end {
-        pos += 1;
-        continue;
-      }
-
-      let attr_name = &self.source_text[name_start..name_end];
-      self.emit_attr_name(attr_name, name_start, name_end);
-
-      pos = self.skip_ws(pos, tag.tag_end);
-      if pos >= tag.tag_end || self.byte(pos) != b'=' {
-        continue;
-      }
-
-      self.push_template_token(VTokenKind::HTMLAssociation, pos, pos + 1, Some(""));
-      pos += 1;
-      pos = self.skip_ws(pos, tag.tag_end);
-      if pos >= tag.tag_end {
-        break;
-      }
-
-      let quote = self.byte(pos);
-      if matches!(quote, b'\'' | b'"') {
-        let value_start = pos + 1;
-        let value_end = self.find_byte(value_start, tag.tag_end, quote).unwrap_or(tag.tag_end);
-        self.emit_attr_value(attr_name, value_start, value_end, pos, value_end + 1);
-        pos = value_end + 1;
-      } else {
-        let value_start = pos;
-        while pos < tag.tag_end && !self.byte(pos).is_ascii_whitespace() {
-          pos += 1;
-        }
-        self.emit_attr_value(attr_name, value_start, pos, value_start, pos);
-      }
-    }
+    let end = tag.attr_name_end;
+    let name = &self.source_text[start..end];
+    self.emit_attr_name(name, start, end);
+    tag.flushed_attr_name = Some(name);
+    tag.attr_name_end = 0;
   }
 
   fn emit_attr_name(&mut self, name: &'b str, start: usize, end: usize) {
@@ -359,170 +359,123 @@ where
     }
   }
 
-  fn emit_attr_value(
+  #[allow(clippy::too_many_arguments)]
+  fn finish_tag(
     &mut self,
-    attr_name: &'b str,
-    value_start: usize,
-    value_end: usize,
-    token_start: usize,
-    token_end: usize,
+    token: VToken<'b>,
+    lexer: &mut Lexer<'b>,
+    current_tag: &mut Option<CurrentTag<'b>>,
+    element_stack: &mut Vec<ElementState>,
+    raw_element: &mut Option<RawElement<'b>>,
+    pending_script: &mut Option<PendingScript<'b>>,
+    seen_script: &mut bool,
+    seen_setup: &mut bool,
   ) {
-    let kind = attr_value_kind(attr_name);
-    if matches!(kind, AttrValueKind::Literal) {
-      self.push_template_token(
-        VTokenKind::HTMLLiteral,
-        token_start,
-        token_end,
-        Some(&self.source_text[value_start..value_end]),
-      );
-    } else {
-      if token_start < value_start {
-        let quote = &self.source_text[token_start..value_start];
-        self.push_template_token(VTokenKind::Punctuator, token_start, value_start, Some(quote));
-      }
-      match kind {
-        AttrValueKind::Expression => self.emit_expression_tokens(value_start, value_end),
-        AttrValueKind::Handler => self.emit_handler_tokens(value_start, value_end),
-        AttrValueKind::SlotParams => self.emit_slot_params_tokens(value_start, value_end),
-        AttrValueKind::VFor => self.emit_v_for_tokens(value_start, value_end),
-        AttrValueKind::Literal => {}
-      }
-      if value_end < token_end {
-        let quote = &self.source_text[value_end..token_end];
-        self.push_template_token(VTokenKind::Punctuator, value_end, token_end, Some(quote));
-      }
-    }
-  }
+    let Some(tag) = current_tag.take() else {
+      return;
+    };
 
-  fn emit_data(&mut self, start: usize, end: usize) {
-    let mut pos = start;
-    while pos < end {
-      if self.starts_with(pos, "{{")
-        && let Some(close) = self.find_from(pos + 2, "}}")
-      {
-        self.push_template_token(VTokenKind::VExpressionStart, pos, pos + 2, Some("{{"));
-        self.emit_expression_tokens(pos + 2, close);
-        self.push_template_token(VTokenKind::VExpressionEnd, close, close + 2, Some("}}"));
-        pos = close + 2;
-        continue;
-      }
-
-      let next_expr = self.find_from(pos + 1, "{{").unwrap_or(end).min(end);
-      self.emit_text_chunks(pos, next_expr);
-      pos = next_expr;
-    }
-  }
-
-  fn emit_text_chunks(&mut self, start: usize, end: usize) {
-    let mut pos = start;
-    while pos < end {
-      let chunk_start = pos;
-      let is_ws = self.byte(pos).is_ascii_whitespace();
-      while pos < end && self.byte(pos).is_ascii_whitespace() == is_ws {
-        pos += 1;
-      }
-      let kind = if is_ws { VTokenKind::HTMLWhitespace } else { VTokenKind::HTMLText };
-      self.push_template_token(kind, chunk_start, pos, Some(&self.source_text[chunk_start..pos]));
-    }
-  }
-
-  fn emit_rcdata_text_chunks(&mut self, start: usize, end: usize) {
-    let mut pos = start;
-    while pos < end {
-      let chunk_start = pos;
-      if self.byte(pos).is_ascii_whitespace() {
-        while pos < end && self.byte(pos).is_ascii_whitespace() {
-          pos += 1;
-        }
-        self.push_template_token(
-          VTokenKind::HTMLWhitespace,
-          chunk_start,
-          pos,
-          Some(&self.source_text[chunk_start..pos]),
+    let tag_end = token_end(token);
+    if tag.is_end {
+      pop_element(element_stack, &tag.normalized_name);
+      if let Some(script) = pending_script.take() {
+        self.emit_script_tokens(
+          script.info,
+          script.body_start,
+          script.body_end,
+          tag_end,
+          seen_script,
+          seen_setup,
         );
-        continue;
       }
+      update_lexer_mode(lexer, element_stack);
+      return;
+    }
 
-      if self.byte(pos) == b'&'
-        && let Some((reference_end, value)) = self.read_character_reference(pos, end)
+    if token.kind == VTokenKind::HTMLSelfClosingTagClose {
+      update_lexer_mode(lexer, element_stack);
+      return;
+    }
+
+    let state = ElementState { name: tag.normalized_name.clone(), v_pre: tag.attrs.v_pre };
+    element_stack.push(state);
+
+    if is_raw_text_element(&tag.normalized_name) || is_rcdata_element(&tag.normalized_name) {
+      let end_tag = self.alloc_str(&format!("</{}", tag.normalized_name));
+      let script = if tag.normalized_name == "script" {
+        Some(ScriptInfo { open_start: tag.open_start, open_end: tag_end, attrs: tag.attrs })
+      } else {
+        None
+      };
+      *raw_element = Some(RawElement { body_start: tag_end, script });
+      let mode = if is_raw_text_element(&tag.name.to_ascii_lowercase()) {
+        LexerMode::RawText
+      } else {
+        LexerMode::RcData
+      };
+      lexer.set_mode_until(mode, end_tag);
+      return;
+    }
+
+    update_lexer_mode(lexer, element_stack);
+  }
+
+  fn emit_script_tokens(
+    &mut self,
+    script: ScriptInfo<'b>,
+    body_start: usize,
+    body_end: usize,
+    close_end: usize,
+    seen_script: &mut bool,
+    seen_setup: &mut bool,
+  ) {
+    if script.attrs.setup {
+      if *seen_setup || body_start == body_end {
+        *seen_setup = true;
+        return;
+      }
+      *seen_setup = true;
+    } else {
+      if *seen_script || (*seen_setup && body_start == body_end) {
+        return;
+      }
+      *seen_script = true;
+    }
+
+    self.push_script_punctuator(script.open_start, script.open_end, "<script>");
+    self.apply_script_source_type(script.attrs.lang);
+
+    if body_start < body_end {
+      let span = Span::new(body_start as u32, body_end as u32);
+      if let Some((_, _, _, tokens)) = self.oxc_parse(span, &[], &[], None)
+        && !tokens.is_empty()
       {
-        self.push_template_token(
-          VTokenKind::HTMLRCDataText,
-          chunk_start,
-          reference_end,
-          Some(value),
-        );
-        pos = reference_end;
-        continue;
+        self.sfc.script_tokens.push(tokens.into());
       }
-
-      while pos < end && !self.byte(pos).is_ascii_whitespace() && self.byte(pos) != b'&' {
-        pos += 1;
-      }
-      self.push_template_token(
-        VTokenKind::HTMLRCDataText,
-        chunk_start,
-        pos,
-        Some(&self.source_text[chunk_start..pos]),
-      );
     }
+
+    self.push_script_punctuator(body_end, close_end, "</script>");
   }
 
-  fn emit_raw_text_chunks(&mut self, start: usize, end: usize) {
-    let mut pos = start;
-    while pos < end {
-      let chunk_start = pos;
-      let is_ws = self.byte(pos).is_ascii_whitespace();
-      while pos < end && self.byte(pos).is_ascii_whitespace() == is_ws {
-        pos += 1;
-      }
-      let kind = if is_ws { VTokenKind::HTMLWhitespace } else { VTokenKind::HTMLRawText };
-      self.push_template_token(kind, chunk_start, pos, Some(&self.source_text[chunk_start..pos]));
-    }
-  }
-
-  fn emit_html_comment(&mut self, start: usize) -> usize {
-    let (end, value_end) = if let Some(end) = self.find_from(start + 4, "-->") {
-      (end + 3, end)
+  fn apply_script_source_type(&mut self, lang: Option<&str>) {
+    let source_type = if let Some(lang) = lang
+      && let Ok(parsed) = SourceType::from_extension(lang)
+    {
+      parsed.with_module(true)
     } else {
-      (self.source_text.len(), self.source_text.len())
+      SourceType::mjs()
     };
+    self.sfc.source_type = Some(source_type);
+  }
+
+  fn push_template_comment(&mut self, token: VToken<'b>) {
+    let r#type =
+      if token.kind == VTokenKind::HTMLComment { "HTMLComment" } else { "HTMLBogusComment" };
     self.sfc.template_comments.push(VComment {
-      r#type: "HTMLComment",
-      value: &self.source_text[start + 4..value_end],
-      span: Span::new(start as u32, end as u32),
+      r#type,
+      value: token.value.unwrap_or_default(),
+      span: token.span,
     });
-    end
-  }
-
-  fn emit_bogus_comment(&mut self, start: usize) -> usize {
-    let (end, value_end) = if let Some(end) = self.find_from(start + 2, ">") {
-      (end + 1, end)
-    } else {
-      (self.source_text.len(), self.source_text.len())
-    };
-    self.sfc.template_comments.push(VComment {
-      r#type: "HTMLBogusComment",
-      value: &self.source_text[start + 2..value_end],
-      span: Span::new(start as u32, end as u32),
-    });
-    end
-  }
-
-  fn emit_cdata_text(&mut self, start: usize) -> usize {
-    let value_start = start + "<![CDATA[".len();
-    let (end, value_end) = if let Some(end) = self.find_from(value_start, "]]>") {
-      (end + 3, end)
-    } else {
-      (self.source_text.len(), self.source_text.len())
-    };
-    self.push_template_token(
-      VTokenKind::HTMLCDataText,
-      start,
-      end,
-      Some(&self.source_text[value_start..value_end]),
-    );
-    end
   }
 
   fn emit_expression_tokens(&mut self, start: usize, end: usize) {
@@ -632,6 +585,73 @@ where
     self.sfc.template_tokens.push(token.into());
   }
 
+  fn push_script_punctuator(&mut self, start: usize, end: usize, value: &'static str) {
+    self.sfc.script_tokens.push(
+      VToken::new(VTokenKind::Punctuator, Span::new(start as u32, end as u32), Some(value)).into(),
+    );
+  }
+
+  fn push_template_vtoken(&mut self, token: VToken<'b>) {
+    self.push_template_token(token.kind, token_start(token), token_end(token), token.value);
+  }
+
+  fn emit_attr_value(&mut self, attr_name: &'b str, token: VToken<'b>) {
+    let Some(value) = token.value else {
+      return;
+    };
+
+    let token_start = token_start(token);
+    let token_end = token_end(token);
+    let kind = attr_value_kind(attr_name);
+    if matches!(kind, AttrValueKind::Literal) {
+      self.push_template_token(VTokenKind::HTMLLiteral, token_start, token_end, Some(value));
+      return;
+    }
+
+    let quoted = matches!(self.byte(token_start), b'\'' | b'"');
+    let value_start = if quoted { token_start + 1 } else { token_start };
+    let value_end = if quoted { token_end - 1 } else { token_end };
+    if quoted {
+      self.push_template_token(
+        VTokenKind::Punctuator,
+        token_start,
+        value_start,
+        Some(&self.source_text[token_start..value_start]),
+      );
+    }
+
+    match kind {
+      AttrValueKind::Expression => self.emit_expression_tokens(value_start, value_end),
+      AttrValueKind::Handler => self.emit_handler_tokens(value_start, value_end),
+      AttrValueKind::SlotParams => self.emit_slot_params_tokens(value_start, value_end),
+      AttrValueKind::VFor => self.emit_v_for_tokens(value_start, value_end),
+      AttrValueKind::Literal => {}
+    }
+
+    if quoted {
+      self.push_template_token(
+        VTokenKind::Punctuator,
+        value_end,
+        token_end,
+        Some(&self.source_text[value_end..token_end]),
+      );
+    }
+  }
+
+  fn push_template_token(
+    &mut self,
+    kind: VTokenKind,
+    start: usize,
+    end: usize,
+    value: Option<&'b str>,
+  ) {
+    self.sfc.template_tokens.push(SerializableToken::from(VToken::new(
+      kind,
+      Span::new(start as u32, end as u32),
+      value,
+    )));
+  }
+
   fn split_v_for_expression(&self, start: usize, end: usize) -> Option<VForParts<'b>> {
     let mut pos = start;
     let mut paren_depth = 0_u32;
@@ -701,87 +721,6 @@ where
     None
   }
 
-  fn push_script_punctuator(&mut self, start: usize, end: usize, value: &'static str) {
-    self.sfc.script_tokens.push(
-      VToken::new(VTokenKind::Punctuator, Span::new(start as u32, end as u32), Some(value)).into(),
-    );
-  }
-
-  fn push_template_token(
-    &mut self,
-    kind: VTokenKind,
-    start: usize,
-    end: usize,
-    value: Option<&'b str>,
-  ) {
-    self.sfc.template_tokens.push(SerializableToken::from(VToken::new(
-      kind,
-      Span::new(start as u32, end as u32),
-      value,
-    )));
-  }
-
-  fn read_tag(&self, start: usize) -> Option<TagInfo> {
-    let mut pos = start + 1;
-    let is_end = self.byte(pos) == b'/';
-    if is_end {
-      pos += 1;
-    }
-    let name_start = pos;
-    while pos < self.source_text.len() {
-      let b = self.byte(pos);
-      if !(b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.')) {
-        break;
-      }
-      pos += 1;
-    }
-    if pos == name_start {
-      return None;
-    }
-    let name_end = pos;
-    let tag_end = self.find_tag_end(pos)?;
-    let mut close_probe = tag_end;
-    while close_probe > name_end && self.byte(close_probe - 1).is_ascii_whitespace() {
-      close_probe -= 1;
-    }
-    Some(TagInfo {
-      name_start,
-      name_end,
-      tag_end,
-      is_end,
-      is_self_closing: close_probe > name_end && self.byte(close_probe - 1) == b'/',
-    })
-  }
-
-  fn find_tag_end(&self, mut pos: usize) -> Option<usize> {
-    while pos < self.source_text.len() {
-      match self.byte(pos) {
-        b'\'' | b'"' => {
-          let quote = self.byte(pos);
-          pos = self.find_byte(pos + 1, self.source_text.len(), quote)? + 1;
-        }
-        b'>' => return Some(pos),
-        _ => pos += 1,
-      }
-    }
-    None
-  }
-
-  fn find_ascii_case_insensitive(&self, start: usize, needle: &str) -> Option<usize> {
-    let bytes = self.source_text.as_bytes();
-    let needle = needle.as_bytes();
-    if needle.is_empty() || start + needle.len() > bytes.len() {
-      return None;
-    }
-    (start..=bytes.len() - needle.len()).find(|&i| {
-      bytes[i..i + needle.len()].iter().zip(needle).all(|(a, b)| a.eq_ignore_ascii_case(b))
-    })
-  }
-
-  fn lower_source(&self, start: usize, end: usize) -> String {
-    self.source_text[start..end].to_ascii_lowercase()
-  }
-
   fn alloc_str(&self, value: &str) -> &'b str {
     self.js_allocator.alloc_str(value)
   }
@@ -825,56 +764,27 @@ where
     pos
   }
 
-  fn find_byte(&self, start: usize, end: usize, byte: u8) -> Option<usize> {
-    self.source_text.as_bytes()[start..end].iter().position(|b| *b == byte).map(|i| start + i)
-  }
-
-  fn find_from(&self, start: usize, needle: &str) -> Option<usize> {
-    self.source_text[start..].find(needle).map(|i| start + i)
-  }
-
-  fn read_character_reference(&self, start: usize, end: usize) -> Option<(usize, &'b str)> {
-    let name_start = start + 1;
-    let mut name_end = name_start;
-    while name_end < end && self.byte(name_end).is_ascii_alphanumeric() {
-      name_end += 1;
-    }
-    if name_end >= end || self.byte(name_end) != b';' {
-      return None;
-    }
-
-    let value = match &self.source_text[name_start..name_end] {
-      "amp" => "&",
-      "lt" => "<",
-      "gt" => ">",
-      "quot" => "\"",
-      "apos" => "'",
-      _ => return None,
-    };
-
-    Some((name_end + 1, self.alloc_str(value)))
-  }
-
-  fn starts_with(&self, pos: usize, needle: &str) -> bool {
-    self.source_text[pos..].starts_with(needle)
-  }
-
   fn byte(&self, pos: usize) -> u8 {
     self.source_text.as_bytes()[pos]
   }
 }
 
-fn attr_value<'s>(source: &'s str, name: &str) -> Option<&'s str> {
-  let start = source.find(name)? + name.len();
-  let rest = source[start..].trim_start();
-  let rest = rest.strip_prefix('=')?.trim_start();
-  let quote = rest.as_bytes().first().copied()?;
-  if !matches!(quote, b'\'' | b'"') {
-    return None;
+fn update_lexer_mode(lexer: &mut Lexer<'_>, element_stack: &[ElementState]) {
+  if element_stack.iter().rev().any(|element| element.v_pre) {
+    lexer.set_mode(LexerMode::VPre);
+  } else if is_foreign_content(element_stack) {
+    lexer.set_mode(LexerMode::ForeignContent);
+  } else {
+    lexer.set_mode(LexerMode::Data);
   }
-  let value_start = 1;
-  let value_end = rest[value_start..].find(quote as char)? + value_start;
-  Some(&rest[value_start..value_end])
+}
+
+const fn token_start(token: VToken<'_>) -> usize {
+  token.span.start as usize
+}
+
+const fn token_end(token: VToken<'_>) -> usize {
+  token.span.end as usize
 }
 
 fn attr_value_kind(attr_name: &str) -> AttrValueKind {
@@ -918,12 +828,12 @@ fn is_rcdata_element(name: &str) -> bool {
   matches!(name, "textarea" | "title")
 }
 
-fn is_foreign_content(element_stack: &[String]) -> bool {
-  element_stack.iter().rev().any(|name| matches!(name.as_str(), "svg" | "math"))
+fn is_foreign_content(element_stack: &[ElementState]) -> bool {
+  element_stack.iter().rev().any(|element| matches!(element.name.as_str(), "svg" | "math"))
 }
 
-fn pop_element(element_stack: &mut Vec<String>, name: &str) {
-  if let Some(index) = element_stack.iter().rposition(|current| current == name) {
+fn pop_element(element_stack: &mut Vec<ElementState>, name: &str) {
+  if let Some(index) = element_stack.iter().rposition(|current| current.name == name) {
     element_stack.truncate(index);
   }
 }

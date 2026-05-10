@@ -5,6 +5,15 @@ impl<'a> Lexer<'a> {
     self.source[self.pos as usize..].starts_with(needle.as_bytes())
   }
 
+  pub(super) fn starts_with_ascii_case_insensitive(&self, needle: &str) -> bool {
+    let source = &self.source[self.pos as usize..];
+    let needle = needle.as_bytes();
+    if needle.len() > source.len() {
+      return false;
+    }
+    source[..needle.len()].iter().zip(needle).all(|(a, b)| a.eq_ignore_ascii_case(b))
+  }
+
   pub(super) fn find_after(&self, needle: &str) -> Option<u32> {
     let haystack = &self.source[self.pos as usize..];
     haystack
