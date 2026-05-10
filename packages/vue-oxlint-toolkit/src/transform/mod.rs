@@ -10,7 +10,7 @@ use crate::{
 #[napi]
 #[must_use]
 #[allow(clippy::needless_pass_by_value)]
-pub fn transform_jsx(source: String) -> NativeTransformResult {
+pub fn native_transform_jsx(source: String) -> NativeTransformResult {
   let ret = VueJsxCodegen::new(&source).build();
   let source_offsets = SourceOffsets::new(&source);
   let generated_offsets = SourceOffsets::new(&ret.source_text);

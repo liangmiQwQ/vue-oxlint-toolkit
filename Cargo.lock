@@ -1771,11 +1771,14 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_diagnostics",
+ "oxc_estree",
  "oxc_span",
  "vue_oxlint_jsx",
+ "vue_oxlint_parser",
 ]
 
 [[package]]
