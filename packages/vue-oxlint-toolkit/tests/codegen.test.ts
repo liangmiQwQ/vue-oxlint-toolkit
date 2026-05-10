@@ -80,6 +80,23 @@ const s = "你好" // hello
   })
 })
 
+it('converts native byte offsets in mappings', () => {
+  const source = `<script setup>
+const 你好 = 1
+</script>
+<template>{{ 你好 }}</template>`
+  const result = transformJsx(source)
+  const originalStart = source.indexOf('const 你好')
+  const virtualStart = result.sourceText.indexOf('const 你好')
+
+  expect(result.mappings).toContainEqual({
+    virtualStart,
+    virtualEnd: virtualStart + 'const 你好'.length,
+    originalStart,
+    originalEnd: originalStart + 'const 你好'.length,
+  })
+})
+
 it('keeps bogus template comment values', () => {
   const result = transformJsx(`<template>
 <! hello>

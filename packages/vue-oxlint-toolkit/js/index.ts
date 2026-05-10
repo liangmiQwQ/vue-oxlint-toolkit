@@ -1,4 +1,6 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
+import { nativeParse } from '../bindings'
+import { getConvertor } from './location'
 import { transformJsx } from './transform'
 
 export { transformJsx } from './transform'
@@ -28,10 +30,13 @@ export interface ParseResult {
 }
 
 export function parse(_path: string, source: string, _options?: {}): ParseResult {
+  const sourceConvertor = getConvertor(source)
+  const result = nativeParse(source)
+
   return {
-    transform: transformJsx(source),
+    transform: transformJsx(source, sourceConvertor),
     ast: null,
-    errors: [],
-    panicked: false,
+    errors: result.errors.map(sourceConvertor.fix),
+    panicked: result.panicked,
   }
 }
