@@ -21,6 +21,17 @@ export interface NativeMapping {
   originalEnd: number
 }
 
+export declare function nativeParse(source: string): NativeParseResult
+
+export interface NativeParseResult {
+  astJson: string
+  irregularWhitespaces: [number, number][]
+  errors: Array<NativeDiagnostic>
+  panicked: boolean
+}
+
+export declare function nativeTransformJsx(source: string): NativeTransformResult
+
 export interface NativeTransformResult {
   sourceText: string
   scriptKind: 'jsx' | 'tsx'
@@ -29,5 +40,3 @@ export interface NativeTransformResult {
   errors: Array<NativeDiagnostic>
   mappings: Array<NativeMapping>
 }
-
-export declare function transformJsx(source: string): NativeTransformResult

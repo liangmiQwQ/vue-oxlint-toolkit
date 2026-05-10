@@ -1,6 +1,9 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
-import { transformJsx as nativeTransformJsx } from '../bindings'
-import { withLoc } from './location'
+import { nativeParse } from '../bindings'
+import { getConvertor } from './location'
+import { transformJsx } from './transform'
+
+export { transformJsx } from './transform'
 
 export interface Mapping {
   virtualStart: number
@@ -26,17 +29,14 @@ export interface ParseResult {
   transform: ToolkitTransformResult
 }
 
-export declare function parse(path: string, source: string, options?: {}): ParseResult
-
-export function transformJsx(source: string): ToolkitTransformResult {
-  const result = nativeTransformJsx(source)
+export function parse(_path: string, source: string, _options?: {}): ParseResult {
+  const sourceConvertor = getConvertor(source)
+  const result = nativeParse(source)
 
   return {
-    sourceText: result.sourceText,
-    scriptKind: result.scriptKind,
-    comments: result.comments.map((comment) => withLoc(source, comment)),
-    irregularWhitespaces: result.irregularWhitespaces,
-    errors: result.errors.map((error) => withLoc(source, error)),
-    mappings: result.mappings,
+    transform: transformJsx(source, sourceConvertor),
+    ast: null,
+    errors: result.errors.map(sourceConvertor.fix),
+    panicked: result.panicked,
   }
 }

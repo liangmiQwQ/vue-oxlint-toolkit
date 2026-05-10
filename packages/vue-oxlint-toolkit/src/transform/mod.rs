@@ -3,41 +3,33 @@ mod comments;
 use napi_derive::napi;
 use vue_oxlint_jsx::VueJsxCodegen;
 
-use crate::{
-  diagnostics::native_diagnostic, source_text::SourceOffsets, transform::comments::native_comment,
-};
+use crate::{diagnostics::native_diagnostic, transform::comments::native_comment};
 
 #[napi]
 #[must_use]
 #[allow(clippy::needless_pass_by_value)]
-pub fn transform_jsx(source: String) -> NativeTransformResult {
+pub fn native_transform_jsx(source: String) -> NativeTransformResult {
   let ret = VueJsxCodegen::new(&source).build();
-  let source_offsets = SourceOffsets::new(&source);
-  let generated_offsets = SourceOffsets::new(&ret.source_text);
   let script_kind = if ret.source_type.is_typescript() { "tsx" } else { "jsx" }.to_string();
 
   NativeTransformResult {
     source_text: ret.source_text,
     script_kind,
-    comments: ret
-      .comments
-      .iter()
-      .map(|comment| native_comment(&source, &source_offsets, comment))
-      .collect(),
+    comments: ret.comments.iter().map(|comment| native_comment(&source, comment)).collect(),
     irregular_whitespaces: ret
       .irregular_whitespaces
       .iter()
-      .map(|span| source_offsets.range(*span))
+      .map(|span| (span.start, span.end))
       .collect(),
-    errors: ret.errors.iter().map(|error| native_diagnostic(&source_offsets, error)).collect(),
+    errors: ret.errors.iter().map(native_diagnostic).collect(),
     mappings: ret
       .mappings
       .iter()
       .map(|mapping| NativeMapping {
-        virtual_start: generated_offsets.offset(mapping.codegen_span.start),
-        virtual_end: generated_offsets.offset(mapping.codegen_span.end),
-        original_start: source_offsets.offset(mapping.original_span.start),
-        original_end: source_offsets.offset(mapping.original_span.end),
+        virtual_start: mapping.codegen_span.start,
+        virtual_end: mapping.codegen_span.end,
+        original_start: mapping.original_span.start,
+        original_end: mapping.original_span.end,
       })
       .collect(),
   }

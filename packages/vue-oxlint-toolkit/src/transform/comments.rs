@@ -2,15 +2,9 @@ use oxc_ast::Comment;
 use oxc_ast::ast::CommentKind;
 use oxc_span::Span;
 
-use crate::source_text::SourceOffsets;
-
 use crate::transform::NativeComment;
 
-pub fn native_comment(
-  source_text: &str,
-  offsets: &SourceOffsets,
-  comment: &Comment,
-) -> NativeComment {
+pub fn native_comment(source_text: &str, comment: &Comment) -> NativeComment {
   let comment_data = comment_data(source_text, comment.kind, comment.span.start, comment.span.end);
   let span = Span::new(comment_data.start, comment_data.end);
 
@@ -21,9 +15,9 @@ pub fn native_comment(
     }
     .to_string(),
     value: comment_data.value.to_string(),
-    start: offsets.offset(comment_data.start),
-    end: offsets.offset(comment_data.end),
-    range: offsets.range(span),
+    start: comment_data.start,
+    end: comment_data.end,
+    range: (span.start, span.end),
   }
 }
 

@@ -11,8 +11,7 @@ impl<'a, 'b> VueParser<'a, 'b> {
   pub fn parse(self) -> VueParserReturn<'a, 'b> {
     let mut lexer = Lexer::new(self.vue_allocator, self.source_text);
 
-    while let Some(token) = lexer.next_token() {
-      println!("token: {token:#?}");
+    while let Some(_token) = lexer.next_token() {
       // TODO: Should move to `parser/parse` module (divide logic into different modules (files))
     }
 
