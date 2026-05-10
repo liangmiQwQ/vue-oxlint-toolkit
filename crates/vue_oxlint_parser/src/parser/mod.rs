@@ -17,6 +17,26 @@ struct TagInfo {
   is_self_closing: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum AttrValueKind {
+  Literal,
+  Expression,
+  Handler,
+  SlotParams,
+  VFor,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct VForParts<'s> {
+  left_start: usize,
+  left_end: usize,
+  operator: &'s str,
+  operator_start: usize,
+  operator_end: usize,
+  right_start: usize,
+  right_end: usize,
+}
+
 impl<'a, 'b> VueParser<'a, 'b> {
   #[must_use]
   pub fn parse(mut self) -> VueParserReturn<'a, 'b> {
@@ -275,7 +295,7 @@ where
   fn emit_dynamic_arg_tokens(&mut self, start: usize, end: usize) {
     if start < end && self.byte(start) == b'[' && self.byte(end - 1) == b']' {
       self.push_template_token(VTokenKind::Punctuator, start, start + 1, Some("["));
-      self.emit_oxc_tokens(start + 1, end - 1);
+      self.emit_expression_tokens(start + 1, end - 1);
       self.push_template_token(VTokenKind::Punctuator, end - 1, end, Some("]"));
     } else if start < end {
       if let Some(dot) = self.source_text[start..end].find('.') {
@@ -312,23 +332,30 @@ where
     token_start: usize,
     token_end: usize,
   ) {
-    if should_parse_attr_value(attr_name) {
-      if token_start < value_start {
-        let quote = &self.source_text[token_start..value_start];
-        self.push_template_token(VTokenKind::Punctuator, token_start, value_start, Some(quote));
-      }
-      self.emit_oxc_tokens(value_start, value_end);
-      if value_end < token_end {
-        let quote = &self.source_text[value_end..token_end];
-        self.push_template_token(VTokenKind::Punctuator, value_end, token_end, Some(quote));
-      }
-    } else {
+    let kind = attr_value_kind(attr_name);
+    if matches!(kind, AttrValueKind::Literal) {
       self.push_template_token(
         VTokenKind::HTMLLiteral,
         token_start,
         token_end,
         Some(&self.source_text[value_start..value_end]),
       );
+    } else {
+      if token_start < value_start {
+        let quote = &self.source_text[token_start..value_start];
+        self.push_template_token(VTokenKind::Punctuator, token_start, value_start, Some(quote));
+      }
+      match kind {
+        AttrValueKind::Expression => self.emit_expression_tokens(value_start, value_end),
+        AttrValueKind::Handler => self.emit_handler_tokens(value_start, value_end),
+        AttrValueKind::SlotParams => self.emit_slot_params_tokens(value_start, value_end),
+        AttrValueKind::VFor => self.emit_v_for_tokens(value_start, value_end),
+        AttrValueKind::Literal => {}
+      }
+      if value_end < token_end {
+        let quote = &self.source_text[value_end..token_end];
+        self.push_template_token(VTokenKind::Punctuator, value_end, token_end, Some(quote));
+      }
     }
   }
 
@@ -339,7 +366,7 @@ where
         && let Some(close) = self.find_from(pos + 2, "}}")
       {
         self.push_template_token(VTokenKind::VExpressionStart, pos, pos + 2, Some("{{"));
-        self.emit_oxc_tokens(pos + 2, close);
+        self.emit_expression_tokens(pos + 2, close);
         self.push_template_token(VTokenKind::VExpressionEnd, close, close + 2, Some("}}"));
         pos = close + 2;
         continue;
@@ -377,91 +404,136 @@ where
     }
   }
 
-  fn emit_oxc_tokens(&mut self, start: usize, end: usize) {
-    self.emit_js_like_tokens(start, end);
+  fn emit_expression_tokens(&mut self, start: usize, end: usize) {
+    let span = Span::new(start as u32, end as u32);
+    if let Some(tokens) = self.parse_pure_expression_tokens(span)
+      && !tokens.is_empty()
+    {
+      self.push_template_oxc_tokens(tokens);
+    }
   }
 
-  fn emit_js_like_tokens(&mut self, start: usize, end: usize) {
-    let mut pos = start;
-    while pos < end {
-      let b = self.byte(pos);
-      if b.is_ascii_whitespace() {
-        pos += 1;
-        continue;
-      }
-
-      if self.starts_with(pos, "/*") {
-        pos = self.find_from(pos + 2, "*/").map_or(end, |comment_end| comment_end + 2);
-        continue;
-      }
-      if self.starts_with(pos, "//") {
-        pos = self.find_from(pos + 2, "\n").unwrap_or(end);
-        continue;
-      }
-
-      if matches!(b, b'\'' | b'"') {
-        let token_start = pos;
-        pos += 1;
-        while pos < end {
-          match self.byte(pos) {
-            b'\\' => pos = (pos + 2).min(end),
-            quote if quote == b => {
-              pos += 1;
-              break;
-            }
-            _ => pos += 1,
-          }
-        }
-        self.push_template_token(
-          VTokenKind::String,
-          token_start,
-          pos,
-          Some(&self.source_text[token_start..pos]),
-        );
-        continue;
-      }
-
-      if b.is_ascii_digit() {
-        let token_start = pos;
-        pos += 1;
-        while pos < end {
-          let b = self.byte(pos);
-          if b.is_ascii_alphanumeric() || matches!(b, b'_' | b'.') {
-            pos += 1;
-          } else {
-            break;
-          }
-        }
-        self.push_template_token(
-          VTokenKind::Numeric,
-          token_start,
-          pos,
-          Some(&self.source_text[token_start..pos]),
-        );
-        continue;
-      }
-
-      if is_ident_start(b) {
-        let token_start = pos;
-        pos += 1;
-        while pos < end && is_ident_continue(self.byte(pos)) {
-          pos += 1;
-        }
-        let value = &self.source_text[token_start..pos];
-        let kind = if value == "in" { VTokenKind::Keyword } else { VTokenKind::Identifier };
-        self.push_template_token(kind, token_start, pos, Some(value));
-        continue;
-      }
-
-      let token_start = pos;
-      pos += 1;
-      self.push_template_token(
-        VTokenKind::Punctuator,
-        token_start,
-        pos,
-        Some(&self.source_text[token_start..pos]),
-      );
+  fn emit_handler_tokens(&mut self, start: usize, end: usize) {
+    let span = Span::new(start as u32, end as u32);
+    if let Some(tokens) = self.parse_block_statement_tokens(span)
+      && !tokens.is_empty()
+    {
+      self.push_template_oxc_tokens(tokens);
     }
+  }
+
+  fn emit_slot_params_tokens(&mut self, start: usize, end: usize) {
+    let start = self.skip_ws(start, end);
+    let end = self.trim_end_ws(start, end);
+    if start >= end {
+      return;
+    }
+
+    let span = Span::new(start as u32, end as u32);
+    let is_parenthesized = self.byte(start) == b'(' && self.byte(end - 1) == b')';
+    if let Some(tokens) = self.parse_arrow_params_tokens(span, is_parenthesized)
+      && !tokens.is_empty()
+    {
+      self.push_template_oxc_tokens(tokens);
+    }
+  }
+
+  fn emit_v_for_tokens(&mut self, start: usize, end: usize) {
+    let Some(parts) = self.split_v_for_expression(start, end) else {
+      self.emit_expression_tokens(start, end);
+      return;
+    };
+
+    self.emit_slot_params_tokens(parts.left_start, parts.left_end);
+    self.push_manual_oxc_token(
+      if parts.operator == "in" { "Keyword" } else { "Identifier" },
+      parts.operator,
+      parts.operator_start,
+      parts.operator_end,
+    );
+    self.emit_expression_tokens(parts.right_start, parts.right_end);
+  }
+
+  fn push_template_oxc_tokens(&mut self, tokens: &'a str) {
+    if !tokens.is_empty() {
+      self.sfc.template_tokens.push(tokens.into());
+    }
+  }
+
+  fn push_manual_oxc_token(&mut self, token_type: &str, value: &str, start: usize, end: usize) {
+    let token =
+      format!(r#"{{"type":"{token_type}","value":"{value}","start":{start},"end":{end}}}"#);
+    let token = self.vue_allocator.alloc_str(&token);
+    self.sfc.template_tokens.push(token.into());
+  }
+
+  fn split_v_for_expression(&self, start: usize, end: usize) -> Option<VForParts<'b>> {
+    let mut pos = start;
+    let mut paren_depth = 0_u32;
+    let mut bracket_depth = 0_u32;
+    let mut brace_depth = 0_u32;
+
+    while pos < end {
+      match self.byte(pos) {
+        b'\'' | b'"' => {
+          pos = self.skip_quoted(pos, end);
+          continue;
+        }
+        b'`' => {
+          pos = self.skip_template_literal(pos, end);
+          continue;
+        }
+        b'(' => paren_depth += 1,
+        b')' => paren_depth = paren_depth.saturating_sub(1),
+        b'[' => bracket_depth += 1,
+        b']' => bracket_depth = bracket_depth.saturating_sub(1),
+        b'{' => brace_depth += 1,
+        b'}' => brace_depth = brace_depth.saturating_sub(1),
+        byte
+          if byte.is_ascii_whitespace()
+            && paren_depth == 0
+            && bracket_depth == 0
+            && brace_depth == 0 =>
+        {
+          let operator_start = self.skip_ws(pos, end);
+          let operator_source = &self.source_text[operator_start..end];
+          let operator_end =
+            if operator_source.starts_with("in") || operator_source.starts_with("of") {
+              operator_start + 2
+            } else {
+              pos += 1;
+              continue;
+            };
+
+          if operator_end >= end || !self.byte(operator_end).is_ascii_whitespace() {
+            pos += 1;
+            continue;
+          }
+
+          let left_start = self.skip_ws(start, pos);
+          let left_end = self.trim_end_ws(left_start, pos);
+          let right_start = self.skip_ws(operator_end, end);
+          let right_end = self.trim_end_ws(right_start, end);
+          if left_start >= left_end || right_start >= right_end {
+            return None;
+          }
+
+          return Some(VForParts {
+            left_start,
+            left_end,
+            operator: &self.source_text[operator_start..operator_end],
+            operator_start,
+            operator_end,
+            right_start,
+            right_end,
+          });
+        }
+        _ => {}
+      }
+      pos += 1;
+    }
+
+    None
   }
 
   fn push_script_punctuator(&mut self, start: usize, end: usize, value: &'static str) {
@@ -556,6 +628,38 @@ where
     pos
   }
 
+  fn trim_end_ws(&self, start: usize, mut end: usize) -> usize {
+    while end > start && self.byte(end - 1).is_ascii_whitespace() {
+      end -= 1;
+    }
+    end
+  }
+
+  fn skip_quoted(&self, mut pos: usize, end: usize) -> usize {
+    let quote = self.byte(pos);
+    pos += 1;
+    while pos < end {
+      match self.byte(pos) {
+        b'\\' => pos = (pos + 2).min(end),
+        byte if byte == quote => return pos + 1,
+        _ => pos += 1,
+      }
+    }
+    pos
+  }
+
+  fn skip_template_literal(&self, mut pos: usize, end: usize) -> usize {
+    pos += 1;
+    while pos < end {
+      match self.byte(pos) {
+        b'\\' => pos = (pos + 2).min(end),
+        b'`' => return pos + 1,
+        _ => pos += 1,
+      }
+    }
+    pos
+  }
+
   fn find_byte(&self, start: usize, end: usize, byte: u8) -> Option<usize> {
     self.source_text.as_bytes()[start..end].iter().position(|b| *b == byte).map(|i| start + i)
   }
@@ -586,18 +690,32 @@ fn attr_value<'s>(source: &'s str, name: &str) -> Option<&'s str> {
   Some(&rest[value_start..value_end])
 }
 
-fn should_parse_attr_value(attr_name: &str) -> bool {
-  (matches!(attr_name.as_bytes().first(), Some(b':' | b'@' | b'#')) && attr_name.len() > 1)
-    || attr_name == "v-bind"
-    || matches!(attr_name, "v-if" | "v-else-if" | "v-for" | "v-model")
-    || attr_name.starts_with("v-bind:")
+fn attr_value_kind(attr_name: &str) -> AttrValueKind {
+  if attr_name == "v-for" {
+    return AttrValueKind::VFor;
+  }
+
+  if attr_name == "v-on" || attr_name.starts_with("v-on:") {
+    return AttrValueKind::Handler;
+  }
+
+  if attr_name.as_bytes().first() == Some(&b'@') && attr_name.len() > 1 {
+    return AttrValueKind::Handler;
+  }
+
+  if (attr_name.as_bytes().first() == Some(&b'#') && attr_name.len() > 1)
     || (attr_name.starts_with("v-slot:") && !attr_name.ends_with(':'))
-}
+  {
+    return AttrValueKind::SlotParams;
+  }
 
-const fn is_ident_start(b: u8) -> bool {
-  b.is_ascii_alphabetic() || matches!(b, b'_' | b'$')
-}
+  if (attr_name.as_bytes().first() == Some(&b':') && attr_name.len() > 1)
+    || attr_name == "v-bind"
+    || matches!(attr_name, "v-if" | "v-else-if" | "v-model")
+    || attr_name.starts_with("v-bind:")
+  {
+    return AttrValueKind::Expression;
+  }
 
-const fn is_ident_continue(b: u8) -> bool {
-  is_ident_start(b) || b.is_ascii_digit() || b == b'-'
+  AttrValueKind::Literal
 }

@@ -24,6 +24,67 @@ where
     Some((expr.clone_in(self.js_allocator), tokens))
   }
 
+  pub(crate) fn parse_pure_expression_tokens(&mut self, span: Span) -> Option<&'a str> {
+    let allocator = Allocator::new();
+    self.parse_wrapped_tokens(span, b"(", b")", &allocator)
+  }
+
+  pub(crate) fn parse_arrow_params_tokens(
+    &mut self,
+    span: Span,
+    is_parenthesized: bool,
+  ) -> Option<&'a str> {
+    let allocator = Allocator::new();
+    let (start_wrap, end_wrap): (&[u8], &[u8]) =
+      if is_parenthesized { (b"(", b"=>0)") } else { (b"((", b")=>0)") };
+
+    self.parse_wrapped_tokens(span, start_wrap, end_wrap, &allocator)
+  }
+
+  pub(crate) fn parse_block_statement_tokens(&mut self, span: Span) -> Option<&'a str> {
+    let allocator = Allocator::new();
+    self.parse_wrapped_tokens(span, b"(()=>{", b"})", &allocator)
+  }
+
+  fn parse_wrapped_tokens(
+    &mut self,
+    span: Span,
+    start_wrap: &[u8],
+    end_wrap: &[u8],
+    allocator: &'c Allocator,
+  ) -> Option<&'a str> {
+    if span.start < start_wrap.len() as u32 {
+      return None;
+    }
+
+    let (_, _, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
+    Some(self.filter_tokens_in_span(tokens, span))
+  }
+
+  fn filter_tokens_in_span(&self, tokens: &str, span: Span) -> &'a str {
+    let mut filtered = String::new();
+    for (start, end) in token_object_ranges(tokens) {
+      let token = &tokens[start..end];
+      let Some(token_start) = token_u32_field(token, "start") else {
+        continue;
+      };
+      let Some(token_end) = token_u32_field(token, "end") else {
+        continue;
+      };
+
+      if token_start < span.start || token_end > span.end {
+        continue;
+      }
+
+      if !filtered.is_empty() {
+        filtered.push(',');
+      }
+      filtered.push_str(token);
+    }
+
+    self.vue_allocator.alloc_str(&filtered)
+  }
+
   /// Parse expression with [`oxc_parser`]
   /// The reason we don't wrap the expression with `(` and `)` is to avoid unnecessary copy
   /// `b"(("` and `b"))=>{})"` is much more efficient than passing `b"("` `b")=>{}"` and copy it in a [`Vec`] and push and slice
@@ -158,4 +219,69 @@ where
       );
     }
   }
+}
+
+fn token_object_ranges(tokens: &str) -> impl Iterator<Item = (usize, usize)> + '_ {
+  let bytes = tokens.as_bytes();
+  let mut pos = 0;
+  std::iter::from_fn(move || {
+    while pos < bytes.len() && bytes[pos] != b'{' {
+      pos += 1;
+    }
+    if pos == bytes.len() {
+      return None;
+    }
+
+    let start = pos;
+    let mut depth = 0_u32;
+    let mut in_string = false;
+    let mut escaped = false;
+
+    while pos < bytes.len() {
+      let byte = bytes[pos];
+      pos += 1;
+
+      if in_string {
+        if escaped {
+          escaped = false;
+        } else if byte == b'\\' {
+          escaped = true;
+        } else if byte == b'"' {
+          in_string = false;
+        }
+        continue;
+      }
+
+      match byte {
+        b'"' => in_string = true,
+        b'{' => depth += 1,
+        b'}' => {
+          depth -= 1;
+          if depth == 0 {
+            return Some((start, pos));
+          }
+        }
+        _ => {}
+      }
+    }
+
+    None
+  })
+}
+
+fn token_u32_field(token: &str, field: &str) -> Option<u32> {
+  let needle = format!(r#""{field}":"#);
+  let mut pos = token.find(&needle)? + needle.len();
+  let bytes = token.as_bytes();
+  let start = pos;
+
+  while pos < bytes.len() && bytes[pos].is_ascii_digit() {
+    pos += 1;
+  }
+
+  if pos == start {
+    return None;
+  }
+
+  token[start..pos].parse().ok()
 }
