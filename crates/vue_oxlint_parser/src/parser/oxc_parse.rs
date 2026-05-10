@@ -133,7 +133,8 @@ where
         &ret.tokens,
         &ret.program,
         source,
-        &Utf8ToUtf16::new(source),
+        // ATTENTION: we do not convert to UTF-16 on Rust side to avoid AST modifying, we process it unitedly on Js (toolkit) side.
+        &Utf8ToUtf16::new(""),
         ESTreeTokenOptions::new(ret.program.source_type.is_typescript()),
       );
 

@@ -34,7 +34,6 @@ impl ESTree for SerializableToken<'_, '_> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     match self {
       Self::OxcToken(str) if !str.is_empty() => {
-        serializer.buffer_mut().print_char(',');
         serializer.buffer_mut().print_str(str);
       }
       Self::VToken(token) => token.serialize(serializer),
