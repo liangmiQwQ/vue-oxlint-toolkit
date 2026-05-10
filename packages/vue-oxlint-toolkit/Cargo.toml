@@ -19,6 +19,9 @@ vue_oxlint_jsx = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_diagnostics = { workspace = true }
+oxc_span = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
