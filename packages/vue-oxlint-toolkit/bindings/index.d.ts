@@ -25,7 +25,7 @@ export interface NativeTransformResult {
   sourceText: string
   scriptKind: 'jsx' | 'tsx'
   comments: Array<NativeComment>
-  irregularWhitespaces: Array<[number, number]>
+  irregularWhitespaces: [number, number][]
   errors: Array<NativeDiagnostic>
   mappings: Array<NativeMapping>
 }
