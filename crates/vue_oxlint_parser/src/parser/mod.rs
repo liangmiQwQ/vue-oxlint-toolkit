@@ -6,7 +6,9 @@ use crate::ast::token::SerializableToken;
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::irregular_whitespaces::collect_irregular_whitespaces;
 use crate::{VueParser, VueParserReturn};
-use oxc_span::{SourceType, Span};
+use oxc_allocator::Allocator;
+use oxc_ast::ast::Expression;
+use oxc_span::{GetSpan, SourceType, Span};
 
 #[derive(Debug, Clone, Copy)]
 struct TagInfo {
@@ -406,7 +408,7 @@ where
 
   fn emit_expression_tokens(&mut self, start: usize, end: usize) {
     let span = Span::new(start as u32, end as u32);
-    if let Some(tokens) = self.parse_pure_expression_tokens(span)
+    if let Some((_, tokens)) = self.parse_pure_expression(span)
       && !tokens.is_empty()
     {
       self.push_template_oxc_tokens(tokens);
@@ -415,7 +417,23 @@ where
 
   fn emit_handler_tokens(&mut self, start: usize, end: usize) {
     let span = Span::new(start as u32, end as u32);
-    if let Some(tokens) = self.parse_block_statement_tokens(span)
+    let allocator = Allocator::new();
+    let tokens = unsafe {
+      self.parse_expression(span, b"(()=>{", b"})", &allocator, |expression| {
+        let Expression::ArrowFunctionExpression(arrow) = expression else {
+          return None;
+        };
+
+        let Some(first) = arrow.body.statements.first() else {
+          return Some(((), Span::new(span.start, span.start)));
+        };
+        let last = arrow.body.statements.last().unwrap_or(first);
+
+        Some(((), Span::new(first.span().start, last.span().end)))
+      })
+    };
+
+    if let Some(((), tokens)) = tokens
       && !tokens.is_empty()
     {
       self.push_template_oxc_tokens(tokens);
@@ -431,7 +449,35 @@ where
 
     let span = Span::new(start as u32, end as u32);
     let is_parenthesized = self.byte(start) == b'(' && self.byte(end - 1) == b')';
-    if let Some(tokens) = self.parse_arrow_params_tokens(span, is_parenthesized)
+    let (start_wrap, end_wrap): (&[u8], &[u8]) =
+      if is_parenthesized { (b"(", b"=>0)") } else { (b"((", b")=>0)") };
+
+    let allocator = Allocator::new();
+    let tokens = unsafe {
+      self.parse_expression(span, start_wrap, end_wrap, &allocator, |expression| {
+        let Expression::ArrowFunctionExpression(arrow) = expression else {
+          return None;
+        };
+
+        let token_span = if is_parenthesized {
+          span
+        } else if let Some(first) = arrow.params.items.first() {
+          let end = arrow.params.rest.as_ref().map_or_else(
+            || arrow.params.items.last().map_or(first.span.end, |last| last.span.end),
+            |rest| rest.span.end,
+          );
+          Span::new(first.span.start, end)
+        } else if let Some(rest) = &arrow.params.rest {
+          rest.span
+        } else {
+          Span::new(span.start, span.start)
+        };
+
+        Some(((), token_span))
+      })
+    };
+
+    if let Some(((), tokens)) = tokens
       && !tokens.is_empty()
     {
       self.push_template_oxc_tokens(tokens);

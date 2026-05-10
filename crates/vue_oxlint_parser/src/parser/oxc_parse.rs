@@ -6,7 +6,7 @@ use oxc_ast::ast::{Directive, Expression, Statement};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
 use oxc_parser::config::TokensParserConfig;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::VueParser;
@@ -20,69 +20,13 @@ where
   pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &'a str)> {
     let allocator = Allocator::new();
     // SAFETY: use `()` as wrap
-    let (expr, tokens) = unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
+    let (expr, tokens) = unsafe {
+      self.parse_expression(span, b"(", b")", &allocator, |expression| {
+        let span = expression.span();
+        Some((expression.take_in(&allocator), span))
+      })
+    }?;
     Some((expr.clone_in(self.js_allocator), tokens))
-  }
-
-  pub(crate) fn parse_pure_expression_tokens(&mut self, span: Span) -> Option<&'a str> {
-    let allocator = Allocator::new();
-    self.parse_wrapped_tokens(span, b"(", b")", &allocator)
-  }
-
-  pub(crate) fn parse_arrow_params_tokens(
-    &mut self,
-    span: Span,
-    is_parenthesized: bool,
-  ) -> Option<&'a str> {
-    let allocator = Allocator::new();
-    let (start_wrap, end_wrap): (&[u8], &[u8]) =
-      if is_parenthesized { (b"(", b"=>0)") } else { (b"((", b")=>0)") };
-
-    self.parse_wrapped_tokens(span, start_wrap, end_wrap, &allocator)
-  }
-
-  pub(crate) fn parse_block_statement_tokens(&mut self, span: Span) -> Option<&'a str> {
-    let allocator = Allocator::new();
-    self.parse_wrapped_tokens(span, b"(()=>{", b"})", &allocator)
-  }
-
-  fn parse_wrapped_tokens(
-    &mut self,
-    span: Span,
-    start_wrap: &[u8],
-    end_wrap: &[u8],
-    allocator: &'c Allocator,
-  ) -> Option<&'a str> {
-    if span.start < start_wrap.len() as u32 {
-      return None;
-    }
-
-    let (_, _, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
-    Some(self.filter_tokens_in_span(tokens, span))
-  }
-
-  fn filter_tokens_in_span(&self, tokens: &str, span: Span) -> &'a str {
-    let mut filtered = String::new();
-    for (start, end) in token_object_ranges(tokens) {
-      let token = &tokens[start..end];
-      let Some(token_start) = token_u32_field(token, "start") else {
-        continue;
-      };
-      let Some(token_end) = token_u32_field(token, "end") else {
-        continue;
-      };
-
-      if token_start < span.start || token_end > span.end {
-        continue;
-      }
-
-      if !filtered.is_empty() {
-        filtered.push(',');
-      }
-      filtered.push_str(token);
-    }
-
-    self.vue_allocator.alloc_str(&filtered)
   }
 
   /// Parse expression with [`oxc_parser`]
@@ -92,13 +36,14 @@ where
   /// ## Safety
   /// - `start_wrap` must start with `(`
   /// - `end_wrap` must end with `)`
-  pub(crate) unsafe fn parse_expression(
+  pub(crate) unsafe fn parse_expression<T>(
     &mut self,
     span: Span,
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: &'c Allocator,
-  ) -> Option<(Expression<'c>, &'a str)> {
+    get_node: impl FnOnce(&mut Expression<'c>) -> Option<(T, Span)>,
+  ) -> Option<(T, &'a str)> {
     // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it
     let (_, mut body, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
@@ -111,17 +56,10 @@ where
       unreachable!()
     };
 
-    // it mustn't be the first or last element in the whole array.
-    let tokens = tokens.as_bytes();
-    let start_needle = format!(r#""end":{}}},"#, span.start - 1);
-    let start = find(tokens, start_needle.as_bytes())? + start_needle.len();
-    let end_needle = format!(r#""end":{}}}"#, span.end);
-    let end = rfind(tokens, end_needle.as_bytes())? + end_needle.len();
+    let (node, span) = get_node(&mut expression.expression)?;
+    let tokens = slice_tokens(tokens, span)?;
 
-    Some((expression.expression.take_in(self.js_allocator), unsafe {
-      // SAFETY: it is sliced from a &str
-      str::from_utf8_unchecked(&tokens[start..end])
-    }))
+    Some((node, tokens))
   }
 
   /// Call [`oxc_parser::Parser::parse`] with a custom wrap
@@ -221,67 +159,21 @@ where
   }
 }
 
-fn token_object_ranges(tokens: &str) -> impl Iterator<Item = (usize, usize)> + '_ {
+fn slice_tokens(tokens: &str, span: Span) -> Option<&str> {
+  if span.start == span.end {
+    return Some("");
+  }
+
   let bytes = tokens.as_bytes();
-  let mut pos = 0;
-  std::iter::from_fn(move || {
-    while pos < bytes.len() && bytes[pos] != b'{' {
-      pos += 1;
-    }
-    if pos == bytes.len() {
-      return None;
-    }
+  let start_needle = format!(r#""start":{}"#, span.start);
+  let start_field = find(bytes, start_needle.as_bytes())?;
+  let start = rfind(&bytes[..start_field], br#"{"type""#)?;
 
-    let start = pos;
-    let mut depth = 0_u32;
-    let mut in_string = false;
-    let mut escaped = false;
+  let end_needle = format!(r#""end":{}}}"#, span.end);
+  let end = find(&bytes[start_field..], end_needle.as_bytes())? + start_field + end_needle.len();
 
-    while pos < bytes.len() {
-      let byte = bytes[pos];
-      pos += 1;
-
-      if in_string {
-        if escaped {
-          escaped = false;
-        } else if byte == b'\\' {
-          escaped = true;
-        } else if byte == b'"' {
-          in_string = false;
-        }
-        continue;
-      }
-
-      match byte {
-        b'"' => in_string = true,
-        b'{' => depth += 1,
-        b'}' => {
-          depth -= 1;
-          if depth == 0 {
-            return Some((start, pos));
-          }
-        }
-        _ => {}
-      }
-    }
-
-    None
+  Some(unsafe {
+    // SAFETY: the slice boundaries are found from the original valid UTF-8 string.
+    str::from_utf8_unchecked(&bytes[start..end])
   })
-}
-
-fn token_u32_field(token: &str, field: &str) -> Option<u32> {
-  let needle = format!(r#""{field}":"#);
-  let mut pos = token.find(&needle)? + needle.len();
-  let bytes = token.as_bytes();
-  let start = pos;
-
-  while pos < bytes.len() && bytes[pos].is_ascii_digit() {
-    pos += 1;
-  }
-
-  if pos == start {
-    return None;
-  }
-
-  token[start..pos].parse().ok()
 }
