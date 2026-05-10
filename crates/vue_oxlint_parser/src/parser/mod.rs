@@ -250,9 +250,11 @@ where
   }
 
   fn handle_literal(&mut self, token: VToken<'b>, current_tag: &mut Option<CurrentTag<'b>>) {
+    let mut is_v_pre_attr = false;
     let literal_attr_name = if let Some(tag) = current_tag
       && let Some(current_attr_name) = tag.awaiting_attr_value.take()
     {
+      is_v_pre_attr = tag.attrs.v_pre;
       if current_attr_name.eq_ignore_ascii_case("lang") {
         tag.attrs.lang = token.value;
       }
@@ -266,7 +268,7 @@ where
     };
 
     if let Some(attr_name) = literal_attr_name {
-      self.emit_attr_value(attr_name, token);
+      self.emit_attr_value(attr_name, token, is_v_pre_attr);
     } else {
       self.push_template_vtoken(token);
     }
@@ -595,7 +597,7 @@ where
     self.push_template_token(token.kind, token_start(token), token_end(token), token.value);
   }
 
-  fn emit_attr_value(&mut self, attr_name: &'b str, token: VToken<'b>) {
+  fn emit_attr_value(&mut self, attr_name: &'b str, token: VToken<'b>, is_v_pre_attr: bool) {
     let Some(value) = token.value else {
       return;
     };
@@ -603,7 +605,7 @@ where
     let token_start = token_start(token);
     let token_end = token_end(token);
     let kind = attr_value_kind(attr_name);
-    if matches!(kind, AttrValueKind::Literal) {
+    if is_v_pre_attr || matches!(kind, AttrValueKind::Literal) {
       self.push_template_token(VTokenKind::HTMLLiteral, token_start, token_end, Some(value));
       return;
     }
