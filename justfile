@@ -61,5 +61,6 @@ bump TYPE:
   git push origin main v{{ TYPE }}
 
 main:
-  git checkout main
-  git pull origin main
+  git fetch origin main
+  git switch main
+  git merge --ff-only origin/main
