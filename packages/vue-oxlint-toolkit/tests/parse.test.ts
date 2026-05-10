@@ -25,10 +25,10 @@ for (const testFile of TEST_FILES.pass) {
     const convertor = getConvertor(testFile.source_text)
     const nativeParseResult = JSON.parse(nativeParse(testFile.source_text).astJson)
     const bodyTokens = (nativeParseResult.scriptTokens as AST.Token[]).map((token) =>
-      convertor.fix(token),
+      normalizeToken(convertor.fix(token)),
     )
     const templateBodyToken = (nativeParseResult.templateTokens as AST.Token[]).map((token) =>
-      convertor.fix(token),
+      normalizeToken(convertor.fix(token)),
     )
 
     const vueEslintParserResult = vueEslintParser.parse(
@@ -43,4 +43,10 @@ for (const testFile of TEST_FILES.pass) {
       expect(templateBodyToken).toEqual(vueEslintParserResult.templateBody.tokens)
     }
   })
+}
+
+function normalizeToken<T extends AST.Token & { start?: number; end?: number }>(token: T) {
+  const { start: _start, end: _end, ...rest } = token
+
+  return rest
 }

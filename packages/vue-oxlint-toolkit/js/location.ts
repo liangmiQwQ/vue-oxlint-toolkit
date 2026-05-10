@@ -1,4 +1,4 @@
-import type { LineColumn, Location, Ranged } from '@oxlint/plugins'
+import type { LineColumn, Location, Ranged, Span } from '@oxlint/plugins'
 
 // JavaScript uses UTF-16 for internal string representation, while Rust uses UTF-8 for string representation.
 // We have to convert it when we get location metadata from Rust side.
@@ -10,7 +10,7 @@ export interface LocationConvertor {
   // For ASCII chars, utf-8 and utf-16 have the same span, so we only record non utf-8 chars' checkpoints.
   // So that `toUtf16` can directly find the nearest checkpoint and calculate offset.
   checkPoints: CheckPoint[]
-  fix: <T extends Ranged | { start: number; end: number }>(node: T) => any
+  fix: <T extends Ranged | { start: number; end: number }>(node: T) => T & Span
   range: (range: [number, number]) => [number, number]
   toUtf16: ({ start, end }: { start: number; end: number }) => {
     start: number
@@ -39,30 +39,11 @@ export function getConvertor(sourceText: string): LocationConvertor {
       return [fixed.start, fixed.end]
     },
     fix: (node) => {
-      const hasRange = 'range' in node
-      const [utf8Start, utf8End] = hasRange ? node.range : [node.start, node.end]
+      const [utf8Start, utf8End] = 'range' in node ? node.range : [node.start, node.end]
       // We should use utf16 location for location creation.
       const { start, end } = convertor.toUtf16({ start: utf8Start, end: utf8End })
 
       let loc: Location | undefined
-
-      if ('type' in node && 'value' in node) {
-        const {
-          start: _start,
-          end: _end,
-          ...rest
-        } = node as typeof node & {
-          start?: number
-          end?: number
-        }
-        return {
-          ...rest,
-          range: [start, end],
-          get loc() {
-            return (loc ??= createLocation(sourceText, start, end))
-          },
-        }
-      }
 
       return {
         ...node,
