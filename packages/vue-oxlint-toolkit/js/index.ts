@@ -1,6 +1,8 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import { transformJsx } from './transform'
 
+export { transformJsx } from './transform'
+
 export interface Mapping {
   virtualStart: number
   virtualEnd: number
