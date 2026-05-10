@@ -5,6 +5,7 @@ export interface NativeComment {
   value: string
   start: number
   end: number
+  range: [number, number]
 }
 
 export interface NativeDiagnostic {
@@ -20,16 +21,11 @@ export interface NativeMapping {
   originalEnd: number
 }
 
-export interface NativeRange {
-  start: number
-  end: number
-}
-
 export interface NativeTransformResult {
   sourceText: string
   scriptKind: 'jsx' | 'tsx'
   comments: Array<NativeComment>
-  irregularWhitespaces: Array<NativeRange>
+  irregularWhitespaces: [number, number][]
   errors: Array<NativeDiagnostic>
   mappings: Array<NativeMapping>
 }
