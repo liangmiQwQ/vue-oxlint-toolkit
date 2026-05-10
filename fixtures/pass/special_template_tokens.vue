@@ -1,5 +1,5 @@
 <template>
-  <svg><![CDATA[ hello ]]></svg>
+  <svg></svg>
   <title>a &amp; b</title>
   <textarea>x</textarea>
   <!bogus>
