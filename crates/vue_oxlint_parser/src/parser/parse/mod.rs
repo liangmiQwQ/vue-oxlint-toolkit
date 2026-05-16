@@ -63,7 +63,7 @@ where
         VTokenKind::HTMLTagClose | VTokenKind::HTMLSelfClosingTagClose => {
           if let Some(tag) = &mut current_tag {
             self.flush_attr_name(tag);
-            Self::flush_attr_value(tag);
+            self.flush_attr_value(tag);
             Self::analyze_tag_attrs(tag);
             self.emit_tag_attrs(tag);
           }
@@ -86,10 +86,12 @@ where
           self.handle_attr_name_part(token, &mut current_tag);
         }
         VTokenKind::HTMLAssociation => {
-          if let Some(tag) = &mut current_tag {
+          if let Some(tag) = &mut current_tag
+            && tag.awaiting_attr_value.is_none()
+          {
             self.start_attr_value(tag, token);
           } else {
-            self.push_template_vtoken(token);
+            self.handle_attr_name_part(token, &mut current_tag);
           }
         }
         VTokenKind::HTMLLiteral => {
@@ -100,10 +102,12 @@ where
           interpolation_start = Some(token_end(token));
         }
         VTokenKind::HTMLWhitespace if current_tag.is_some() => {
-          if let Some(tag) = &mut current_tag
-            && tag.awaiting_attr_value.is_none()
-          {
-            self.flush_attr_name(tag);
+          if let Some(tag) = &mut current_tag {
+            if tag.awaiting_attr_value.is_some() {
+              self.flush_attr_value(tag);
+            } else {
+              self.flush_attr_name(tag);
+            }
           }
         }
         _ => self.push_template_vtoken(token),

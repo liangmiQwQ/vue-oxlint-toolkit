@@ -16,7 +16,7 @@ where
       && !tag.is_end
     {
       if tag.awaiting_attr_value.is_some() {
-        Self::complete_attr_value(tag, token);
+        self.extend_attr_value(tag, token);
         return;
       }
 
@@ -36,9 +36,12 @@ where
     token: VToken<'b>,
     current_tag: &mut Option<CurrentTag<'b>>,
   ) {
-    if let Some(tag) = current_tag
-      && tag.awaiting_attr_value.is_none()
-    {
+    if let Some(tag) = current_tag {
+      if tag.awaiting_attr_value.is_some() {
+        self.extend_attr_value(tag, token);
+        return;
+      }
+
       if tag.attr_name_start.is_none() {
         tag.attr_name_start = Some(token_start(token));
       }
@@ -104,15 +107,29 @@ where
     tag.attr_name_end = 0;
   }
 
-  pub(super) fn flush_attr_value(tag: &mut CurrentTag<'b>) {
-    if let Some(pending_attr) = tag.awaiting_attr_value.take() {
+  pub(super) fn flush_attr_value(&self, tag: &mut CurrentTag<'b>) {
+    if let Some(mut pending_attr) = tag.awaiting_attr_value.take() {
+      if let Some(value) = pending_attr.value {
+        let start = token_start(value);
+        let end = token_end(value);
+        pending_attr.value = Some(VToken::new(
+          VTokenKind::HTMLLiteral,
+          value.span,
+          Some(&self.source_text[start..end]),
+        ));
+      }
       tag.attributes.push(pending_attr);
     }
   }
 
-  fn complete_attr_value(tag: &mut CurrentTag<'b>, token: VToken<'b>) {
-    if let Some(pending_attr) = tag.awaiting_attr_value.take() {
-      Self::push_attr_value(tag, pending_attr, token);
+  fn extend_attr_value(&self, tag: &mut CurrentTag<'b>, token: VToken<'b>) {
+    if let Some(attr) = &mut tag.awaiting_attr_value {
+      let start = attr.value.map_or(token.span.start, |value| value.span.start);
+      attr.value = Some(VToken::new(
+        VTokenKind::HTMLLiteral,
+        oxc_span::Span::new(start, token.span.end),
+        Some(&self.source_text[start as usize..token.span.end as usize]),
+      ));
     }
   }
 
@@ -171,7 +188,7 @@ where
       && name.len() > 1
     {
       self.push_template_token(VTokenKind::Punctuator, start, start + 1, Some(&name[..1]));
-      self.emit_dynamic_arg_tokens(start + 1, end);
+      self.emit_arg_and_modifiers(start + 1, end);
       return;
     }
 
@@ -186,61 +203,96 @@ where
         Some(&self.source_text[start..colon]),
       );
       self.push_template_token(VTokenKind::Punctuator, colon, colon + 1, Some(":"));
-      self.emit_dynamic_arg_tokens(colon + 1, end);
+      self.emit_arg_and_modifiers(colon + 1, end);
       return;
     }
 
-    if let Some(dot_offset) = name.find('.') {
-      let dot = start + dot_offset;
+    self.emit_static_arg_and_modifiers(start, end);
+  }
+
+  fn emit_arg_and_modifiers(&mut self, start: usize, end: usize) {
+    if start < end
+      && self.byte(start) == b'['
+      && let Some(arg_end) = self.find_dynamic_arg_end(start, end)
+    {
+      self.push_template_token(VTokenKind::Punctuator, start, start + 1, Some("["));
+      self.emit_expression_tokens(start + 1, arg_end - 1);
+      self.push_template_token(VTokenKind::Punctuator, arg_end - 1, arg_end, Some("]"));
+      self.emit_modifiers(arg_end, end);
+    } else if start < end {
+      self.emit_static_arg_and_modifiers(start, end);
+    }
+  }
+
+  fn emit_static_arg_and_modifiers(&mut self, start: usize, end: usize) {
+    let first_dot = self.source_text[start..end].find('.').map(|offset| start + offset);
+    let arg_end = first_dot.unwrap_or(end);
+    if start < arg_end {
       self.push_template_token(
         VTokenKind::HTMLIdentifier,
         start,
-        dot,
-        Some(&self.source_text[start..dot]),
+        arg_end,
+        Some(&self.source_text[start..arg_end]),
       );
-      self.push_template_token(VTokenKind::Punctuator, dot, dot + 1, Some("."));
-      self.push_template_token(
-        VTokenKind::HTMLIdentifier,
-        dot + 1,
-        end,
-        Some(&self.source_text[dot + 1..end]),
-      );
-      return;
     }
-
-    self.push_template_token(VTokenKind::HTMLIdentifier, start, end, Some(name));
+    self.emit_modifiers(arg_end, end);
   }
 
-  fn emit_dynamic_arg_tokens(&mut self, start: usize, end: usize) {
-    if start < end && self.byte(start) == b'[' && self.byte(end - 1) == b']' {
-      self.push_template_token(VTokenKind::Punctuator, start, start + 1, Some("["));
-      self.emit_expression_tokens(start + 1, end - 1);
-      self.push_template_token(VTokenKind::Punctuator, end - 1, end, Some("]"));
-    } else if start < end {
-      if let Some(dot_offset) = self.source_text[start..end].find('.') {
-        let dot = start + dot_offset;
-        self.push_template_token(
-          VTokenKind::HTMLIdentifier,
-          start,
-          dot,
-          Some(&self.source_text[start..dot]),
-        );
-        self.push_template_token(VTokenKind::Punctuator, dot, dot + 1, Some("."));
-        self.push_template_token(
-          VTokenKind::HTMLIdentifier,
-          dot + 1,
-          end,
-          Some(&self.source_text[dot + 1..end]),
-        );
-      } else {
+  fn emit_modifiers(&mut self, mut start: usize, end: usize) {
+    while start < end {
+      if self.byte(start) != b'.' {
         self.push_template_token(
           VTokenKind::HTMLIdentifier,
           start,
           end,
           Some(&self.source_text[start..end]),
         );
+        return;
       }
+
+      self.push_template_token(VTokenKind::Punctuator, start, start + 1, Some("."));
+      let modifier_start = start + 1;
+      let next_dot =
+        self.source_text[modifier_start..end].find('.').map(|offset| modifier_start + offset);
+      let modifier_end = next_dot.unwrap_or(end);
+      if modifier_start < modifier_end {
+        self.push_template_token(
+          VTokenKind::HTMLIdentifier,
+          modifier_start,
+          modifier_end,
+          Some(&self.source_text[modifier_start..modifier_end]),
+        );
+      }
+      start = modifier_end;
     }
+  }
+
+  fn find_dynamic_arg_end(&self, start: usize, end: usize) -> Option<usize> {
+    let mut pos = start;
+    let mut depth = 0usize;
+    let mut quote = None;
+
+    while pos < end {
+      let byte = self.byte(pos);
+      if let Some(current_quote) = quote {
+        if byte == current_quote {
+          quote = None;
+        } else if byte == b'\\' {
+          pos += 1;
+        }
+      } else if matches!(byte, b'\'' | b'"' | b'`') {
+        quote = Some(byte);
+      } else if byte == b'[' {
+        depth += 1;
+      } else if byte == b']' {
+        depth = depth.saturating_sub(1);
+        if depth == 0 {
+          return Some(pos + 1);
+        }
+      }
+      pos += 1;
+    }
+    None
   }
 
   fn emit_attr_value(&mut self, attr_name: &'b str, token: VToken<'b>, is_v_pre_attr: bool) {
@@ -288,7 +340,7 @@ where
 }
 
 fn attr_value_kind(attr_name: &str) -> AttrValueKind {
-  if attr_name == "v-for" {
+  if attr_name == "v-for" || attr_name.starts_with("v-for.") {
     return AttrValueKind::VFor;
   }
 
@@ -301,7 +353,9 @@ fn attr_value_kind(attr_name: &str) -> AttrValueKind {
   }
 
   if (attr_name.as_bytes().first() == Some(&b'#') && attr_name.len() > 1)
+    || attr_name == "v-slot"
     || (attr_name.starts_with("v-slot:") && !attr_name.ends_with(':'))
+    || attr_name.starts_with("v-slot.")
   {
     return AttrValueKind::SlotParams;
   }
@@ -310,6 +364,11 @@ fn attr_value_kind(attr_name: &str) -> AttrValueKind {
     || attr_name == "v-bind"
     || matches!(attr_name, "v-if" | "v-else-if" | "v-model")
     || attr_name.starts_with("v-bind:")
+    || attr_name.starts_with("v-bind.")
+    || attr_name.starts_with("v-if.")
+    || attr_name.starts_with("v-else-if.")
+    || attr_name.starts_with("v-model:")
+    || attr_name.starts_with("v-model.")
   {
     return AttrValueKind::Expression;
   }
