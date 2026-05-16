@@ -1,0 +1,286 @@
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_ast::ast::{Expression, FormalParameters};
+use oxc_span::Span;
+
+use crate::VueParser;
+use crate::ast::{
+  VAttribute, VDirective, VDirectiveArgument, VDirectiveArgumentExpression, VDirectiveExpression,
+  VDirectiveKey, VElement, VEndTag, VForDirective, VForExpression, VIdentifier, VInterpolation,
+  VLiteral, VNode, VPureAttribute, VSlotDirective, VSlotExpression, VStartTag, VText,
+};
+
+#[derive(Debug)]
+pub(super) enum ParsedNode<'b> {
+  Element(ParsedElement<'b>),
+  Text(ParsedText<'b>),
+  Interpolation(ParsedInterpolation<'b>),
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedElement<'b> {
+  pub(super) name: &'b str,
+  pub(super) raw_name: &'b str,
+  pub(super) start_tag: ParsedStartTag<'b>,
+  pub(super) children: Vec<ParsedNode<'b>>,
+  pub(super) end_tag: Option<Span>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedStartTag<'b> {
+  pub(super) attributes: Vec<ParsedAttribute<'b>>,
+  pub(super) self_closing: bool,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedText<'b> {
+  pub(super) value: &'b str,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedInterpolation<'b> {
+  pub(super) expression: Expression<'b>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) enum ParsedAttribute<'b> {
+  Pure(ParsedPureAttribute<'b>),
+  Directive(ParsedDirective<'b>),
+  Slot(ParsedSlotDirective<'b>),
+  For(ParsedForDirective<'b>),
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedPureAttribute<'b> {
+  pub(super) key: ParsedIdentifier<'b>,
+  pub(super) value: Option<ParsedLiteral<'b>>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedDirective<'b> {
+  pub(super) key: ParsedDirectiveKey<'b>,
+  pub(super) value: Option<ParsedDirectiveExpression<'b>>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedSlotDirective<'b> {
+  pub(super) key: ParsedDirectiveKey<'b>,
+  pub(super) value: Option<ParsedSlotExpression<'b>>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedForDirective<'b> {
+  pub(super) key: ParsedDirectiveKey<'b>,
+  pub(super) value: Option<ParsedForExpression<'b>>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedDirectiveKey<'b> {
+  pub(super) name: ParsedIdentifier<'b>,
+  pub(super) argument: Option<ParsedDirectiveArgument<'b>>,
+  pub(super) modifiers: Vec<ParsedIdentifier<'b>>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) enum ParsedDirectiveArgument<'b> {
+  Dynamic(ParsedDirectiveExpression<'b>),
+  Static(ParsedIdentifier<'b>),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(super) struct ParsedIdentifier<'b> {
+  pub(super) name: &'b str,
+  pub(super) raw_name: &'b str,
+  pub(super) span: Span,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(super) struct ParsedLiteral<'b> {
+  pub(super) value: &'b str,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedDirectiveExpression<'b> {
+  pub(super) expression: Expression<'b>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedSlotExpression<'b> {
+  pub(super) params: ArenaBox<'b, FormalParameters<'b>>,
+  pub(super) expression_span: Span,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedForExpression<'b> {
+  pub(super) left: ArenaBox<'b, FormalParameters<'b>>,
+  pub(super) right: Expression<'b>,
+  pub(super) expression_span: Span,
+  pub(super) span: Span,
+}
+
+impl<'a, 'b> VueParser<'a, 'b>
+where
+  'b: 'a,
+{
+  pub(super) fn push_parsed_node(
+    root: &mut Vec<ParsedNode<'b>>,
+    stack: &mut [ParsedElement<'b>],
+    node: ParsedNode<'b>,
+  ) {
+    if let Some(parent) = stack.last_mut() {
+      parent.children.push(node);
+    } else {
+      root.push(node);
+    }
+  }
+
+  pub(super) fn build_arena_nodes(
+    &self,
+    nodes: Vec<ParsedNode<'b>>,
+  ) -> ArenaVec<'a, VNode<'a, 'b>> {
+    let mut arena_nodes = ArenaVec::new_in(self.vue_allocator);
+    for node in nodes {
+      arena_nodes.push(self.build_arena_node(node));
+    }
+    arena_nodes
+  }
+
+  pub(super) fn build_arena_node(&self, node: ParsedNode<'b>) -> VNode<'a, 'b> {
+    match node {
+      ParsedNode::Element(element) => {
+        VNode::Element(ArenaBox::new_in(self.build_arena_element(element), self.vue_allocator))
+      }
+      ParsedNode::Text(text) => VNode::Text(ArenaBox::new_in(
+        VText { text: text.value, span: text.span },
+        self.vue_allocator,
+      )),
+      ParsedNode::Interpolation(interpolation) => VNode::Interpolation(ArenaBox::new_in(
+        VInterpolation {
+          expression: interpolation.expression,
+          references: ArenaVec::new_in(self.vue_allocator),
+          span: interpolation.span,
+        },
+        self.vue_allocator,
+      )),
+    }
+  }
+
+  fn build_arena_element(&self, element: ParsedElement<'b>) -> VElement<'a, 'b> {
+    let mut attributes = ArenaVec::new_in(self.vue_allocator);
+    for attribute in element.start_tag.attributes {
+      attributes.push(self.build_arena_attribute(attribute));
+    }
+
+    VElement {
+      name: element.name,
+      raw_name: element.raw_name,
+      start_tag: VStartTag {
+        attributes,
+        self_closing: element.start_tag.self_closing,
+        span: element.start_tag.span,
+      },
+      children: self.build_arena_nodes(element.children),
+      end_tag: element.end_tag.map(|span| VEndTag { span }),
+      variables: ArenaVec::new_in(self.vue_allocator),
+      span: element.span,
+    }
+  }
+
+  fn build_arena_attribute(&self, attribute: ParsedAttribute<'b>) -> VAttribute<'a, 'b> {
+    match attribute {
+      ParsedAttribute::Pure(attribute) => VAttribute::VPureAttribute(ArenaBox::new_in(
+        VPureAttribute {
+          key: Self::build_identifier(attribute.key),
+          value: attribute.value.map(Self::build_literal),
+          span: attribute.span,
+        },
+        self.vue_allocator,
+      )),
+      ParsedAttribute::Directive(attribute) => VAttribute::VDirective(ArenaBox::new_in(
+        VDirective {
+          key: self.build_directive_key(attribute.key),
+          value: attribute.value.map(|value| VDirectiveExpression {
+            expression: value.expression,
+            references: ArenaVec::new_in(self.vue_allocator),
+            span: value.span,
+          }),
+          span: attribute.span,
+        },
+        self.vue_allocator,
+      )),
+      ParsedAttribute::Slot(attribute) => VAttribute::VSlotDirective(ArenaBox::new_in(
+        VSlotDirective {
+          key: self.build_directive_key(attribute.key),
+          value: attribute.value.map(|value| VSlotExpression {
+            params: value.params,
+            expression_span: value.expression_span,
+            span: value.span,
+          }),
+          span: attribute.span,
+        },
+        self.vue_allocator,
+      )),
+      ParsedAttribute::For(attribute) => VAttribute::VForDirective(ArenaBox::new_in(
+        VForDirective {
+          key: self.build_directive_key(attribute.key),
+          value: attribute.value.map(|value| VForExpression {
+            left: value.left,
+            right: value.right,
+            references: ArenaVec::new_in(self.js_allocator),
+            expression_span: value.expression_span,
+            span: value.span,
+          }),
+          span: attribute.span,
+        },
+        self.vue_allocator,
+      )),
+    }
+  }
+
+  fn build_directive_key(&self, key: ParsedDirectiveKey<'b>) -> VDirectiveKey<'a, 'b> {
+    let name = self.vue_allocator.alloc(Self::build_identifier(key.name));
+
+    let argument = match key.argument {
+      Some(ParsedDirectiveArgument::Dynamic(value)) => {
+        Some(VDirectiveArgument::VDirectiveArgument(ArenaBox::new_in(
+          VDirectiveArgumentExpression {
+            expression: value.expression,
+            references: ArenaVec::new_in(self.vue_allocator),
+            span: value.span,
+          },
+          self.vue_allocator,
+        )))
+      }
+      Some(ParsedDirectiveArgument::Static(identifier)) => Some(VDirectiveArgument::VIdentifier(
+        ArenaBox::new_in(Self::build_identifier(identifier), self.vue_allocator),
+      )),
+      None => None,
+    };
+
+    let mut modifiers = ArenaVec::new_in(self.vue_allocator);
+    for modifier in key.modifiers {
+      modifiers.push(Self::build_identifier(modifier));
+    }
+
+    VDirectiveKey { name, argument, modifiers, span: key.span }
+  }
+
+  const fn build_identifier(identifier: ParsedIdentifier<'b>) -> VIdentifier<'a> {
+    VIdentifier { name: identifier.name, raw_name: identifier.raw_name, span: identifier.span }
+  }
+
+  const fn build_literal(literal: ParsedLiteral<'b>) -> VLiteral<'a> {
+    VLiteral { value: literal.value, span: literal.span }
+  }
+}

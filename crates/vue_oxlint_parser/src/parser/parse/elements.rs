@@ -3,6 +3,7 @@ use crate::lexer::{Lexer, LexerMode, VToken, VTokenKind};
 use crate::parser::parse::state::{
   CurrentTag, ElementState, PendingScript, RawElement, ScriptInfo, TagAttrs,
 };
+use crate::parser::parse::tree::{ParsedElement, ParsedNode, ParsedStartTag};
 use crate::parser::parse::{token_end, token_start};
 use oxc_span::{SourceType, Span};
 
@@ -49,6 +50,8 @@ where
     lexer: &mut Lexer<'b>,
     current_tag: &mut Option<CurrentTag<'b>>,
     element_stack: &mut Vec<ElementState>,
+    node_stack: &mut Vec<ParsedElement<'b>>,
+    root_nodes: &mut Vec<ParsedNode<'b>>,
     raw_element: &mut Option<RawElement<'b>>,
     pending_script: &mut Option<PendingScript<'b>>,
     seen_script: &mut bool,
@@ -60,7 +63,6 @@ where
 
     let tag_end = token_end(token);
     if tag.is_end {
-      pop_element(element_stack, &tag.normalized_name);
       if let Some(script) = pending_script.take() {
         self.emit_script_tokens(
           script.info,
@@ -71,15 +73,20 @@ where
           seen_setup,
         );
       }
+      Self::close_node(tag.open_start, tag_end, &tag.normalized_name, node_stack, root_nodes);
+      pop_element(element_stack, &tag.normalized_name);
       update_lexer_mode(lexer, element_stack);
       return;
     }
 
+    let element = self.open_node(&tag, token.kind == VTokenKind::HTMLSelfClosingTagClose, tag_end);
     if token.kind == VTokenKind::HTMLSelfClosingTagClose {
+      Self::push_parsed_node(root_nodes, node_stack, ParsedNode::Element(element));
       update_lexer_mode(lexer, element_stack);
       return;
     }
 
+    node_stack.push(element);
     let state = ElementState { name: tag.normalized_name.clone(), v_pre: tag.attrs.v_pre };
     element_stack.push(state);
 
@@ -138,6 +145,53 @@ where
     }
 
     self.push_script_punctuator(body_end, close_end, "</script>");
+  }
+
+  fn open_node(
+    &mut self,
+    tag: &CurrentTag<'b>,
+    self_closing: bool,
+    tag_end: usize,
+  ) -> ParsedElement<'b> {
+    let name = self.alloc_str(&tag.normalized_name);
+    ParsedElement {
+      name,
+      raw_name: tag.name,
+      start_tag: ParsedStartTag {
+        attributes: self.parse_tag_attributes(tag),
+        self_closing,
+        span: Span::new(tag.open_start as u32, tag_end as u32),
+      },
+      children: Vec::new(),
+      end_tag: None,
+      span: Span::new(tag.open_start as u32, tag_end as u32),
+    }
+  }
+
+  fn close_node(
+    close_start: usize,
+    close_end: usize,
+    name: &str,
+    node_stack: &mut Vec<ParsedElement<'b>>,
+    root_nodes: &mut Vec<ParsedNode<'b>>,
+  ) {
+    let Some(index) = node_stack.iter().rposition(|element| element.name == name) else {
+      return;
+    };
+
+    let mut completed = Vec::new();
+    while node_stack.len() > index {
+      let mut element = node_stack.pop().unwrap();
+      if element.name == name {
+        element.end_tag = Some(Span::new(close_start as u32, close_end as u32));
+        element.span = Span::new(element.span.start, close_end as u32);
+      }
+      completed.push(element);
+    }
+
+    while let Some(element) = completed.pop() {
+      Self::push_parsed_node(root_nodes, node_stack, ParsedNode::Element(element));
+    }
   }
 
   fn apply_script_source_type(&mut self, lang: Option<&str>) {

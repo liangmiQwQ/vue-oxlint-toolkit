@@ -1,7 +1,11 @@
 use std::sync::LazyLock;
 
 use crate::VueParser;
+use crate::parser::parse::tree::{
+  ParsedDirectiveExpression, ParsedForExpression, ParsedSlotExpression,
+};
 use oxc_allocator::Allocator;
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::Expression;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
@@ -135,6 +139,88 @@ where
       operator_end: start + operator.end(),
       right_start: start + right.start(),
       right_end: start + right.end(),
+    })
+  }
+
+  pub(super) fn parse_directive_expression_node(
+    &mut self,
+    expression_span: Span,
+    container_span: Span,
+  ) -> Option<ParsedDirectiveExpression<'b>> {
+    let (expression, _) = self.parse_pure_expression(expression_span)?;
+    Some(ParsedDirectiveExpression { expression, span: container_span })
+  }
+
+  pub(super) fn parse_slot_expression_node(
+    &mut self,
+    start: usize,
+    end: usize,
+    container_span: Span,
+  ) -> Option<ParsedSlotExpression<'b>> {
+    let start = self.skip_ws(start, end);
+    let end = self.trim_end_ws(start, end);
+    if start >= end {
+      return None;
+    }
+
+    let span = Span::new(start as u32, end as u32);
+    let is_parenthesized = self.byte(start) == b'(' && self.byte(end - 1) == b')';
+    let (start_wrap, end_wrap): (&[u8], &[u8]) =
+      if is_parenthesized { (b"(", b"=>0)") } else { (b"((", b")=>0)") };
+
+    let allocator = Allocator::new();
+    let (_, mut body, _, _) = self.oxc_parse(span, start_wrap, end_wrap, Some(&allocator))?;
+    let Some(oxc_ast::ast::Statement::ExpressionStatement(stmt)) = body.get_mut(0) else {
+      return None;
+    };
+    let Expression::ParenthesizedExpression(expression) = &mut stmt.expression else {
+      return None;
+    };
+    let Expression::ArrowFunctionExpression(arrow) = &mut expression.expression else {
+      return None;
+    };
+
+    let expression_span = if is_parenthesized {
+      span
+    } else if let Some(first) = arrow.params.items.first() {
+      let end = arrow.params.rest.as_ref().map_or_else(
+        || arrow.params.items.last().map_or(first.span.end, |last| last.span.end),
+        |rest| rest.span.end,
+      );
+      Span::new(first.span.start, end)
+    } else if let Some(rest) = &arrow.params.rest {
+      rest.span
+    } else {
+      Span::new(span.start, span.start)
+    };
+
+    Some(ParsedSlotExpression {
+      params: arrow.params.clone_in(self.js_allocator),
+      expression_span,
+      span: container_span,
+    })
+  }
+
+  pub(super) fn parse_v_for_expression_node(
+    &mut self,
+    start: usize,
+    end: usize,
+    container_span: Span,
+  ) -> Option<ParsedForExpression<'b>> {
+    let parts = self.split_v_for_expression(start, end)?;
+    let left = self.parse_slot_expression_node(
+      parts.left_start,
+      parts.left_end,
+      Span::new(parts.left_start as u32, parts.left_end as u32),
+    )?;
+    let right_span = Span::new(parts.right_start as u32, parts.right_end as u32);
+    let (right, _) = self.parse_pure_expression(right_span)?;
+
+    Some(ParsedForExpression {
+      left: left.params,
+      right,
+      expression_span: Span::new(start as u32, end as u32),
+      span: container_span,
     })
   }
 }

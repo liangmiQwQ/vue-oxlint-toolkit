@@ -48,6 +48,7 @@ pub struct VDirectiveArgumentExpression<'a, 'b> {
 pub struct VOnExpression<'b> {
   pub body: Vec<'b, Statement<'b>>,
   pub references: Vec<'b, Reference<'b>>,
+  pub expression_span: Span,
   pub span: Span,
 }
 
@@ -56,6 +57,7 @@ pub struct VForExpression<'b> {
   pub left: Box<'b, FormalParameters<'b>>,
   pub right: Expression<'b>,
   pub references: Vec<'b, Reference<'b>>,
+  pub expression_span: Span,
   pub span: Span,
 }
 
@@ -63,6 +65,7 @@ pub struct VForExpression<'b> {
 pub struct VSlotExpression<'b> {
   pub params: Box<'b, FormalParameters<'b>>,
   // There shouldn't be references in slot expression
+  pub expression_span: Span,
   pub span: Span,
 }
 
@@ -78,7 +81,7 @@ impl ESTree for VInterpolation<'_, '_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
-    state.serialize_field("reference", &self.references);
+    state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
   }
@@ -89,7 +92,7 @@ impl ESTree for VDirectiveExpression<'_, '_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
-    state.serialize_field("reference", &self.references);
+    state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
   }
@@ -100,7 +103,7 @@ impl ESTree for VDirectiveArgumentExpression<'_, '_> {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field("expression", &self.expression);
-    state.serialize_field("reference", &self.references);
+    state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
   }
@@ -125,8 +128,11 @@ impl ESTree for VOnExpression<'_> {
 
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &VOnExpression { body: &self.body, span: self.span });
-    state.serialize_field("reference", &self.references);
+    state.serialize_field(
+      "expression",
+      &VOnExpression { body: &self.body, span: self.expression_span },
+    );
+    state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
   }
@@ -155,9 +161,9 @@ impl ESTree for VForExpression<'_> {
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
     state.serialize_field(
       "expression",
-      &VForExpression { left: &self.left, right: &self.right, span: self.span },
+      &VForExpression { left: &self.left, right: &self.right, span: self.expression_span },
     );
-    state.serialize_field("reference", &self.references);
+    state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
   }
@@ -182,8 +188,11 @@ impl ESTree for VSlotExpression<'_> {
 
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &VSlotExpression { params: &self.params, span: self.span });
-    state.serialize_field("reference", &[(); 0]);
+    state.serialize_field(
+      "expression",
+      &VSlotExpression { params: &self.params, span: self.expression_span },
+    );
+    state.serialize_field("references", &[(); 0]);
     state.serialize_span(self.span);
     state.end();
   }

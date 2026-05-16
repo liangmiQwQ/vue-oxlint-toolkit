@@ -108,7 +108,7 @@ impl ESTree for VText<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VText"));
-    state.serialize_field("text", &self.text);
+    state.serialize_field("value", &self.text);
     state.serialize_span(self.span);
     state.end();
   }
