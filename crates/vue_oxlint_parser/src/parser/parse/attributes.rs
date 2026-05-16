@@ -14,8 +14,12 @@ where
   ) {
     if let Some(tag) = current_tag
       && !tag.is_end
-      && tag.awaiting_attr_value.is_none()
     {
+      if tag.awaiting_attr_value.is_some() {
+        Self::complete_attr_value(tag, token);
+        return;
+      }
+
       if tag.attr_name_start.is_none() {
         tag.attr_name_start = Some(token_start(token));
       }
@@ -53,12 +57,9 @@ where
   ) {
     let has_current_tag = current_tag.is_some();
     if let Some(tag) = current_tag
-      && let Some(mut pending_attr) = tag.awaiting_attr_value.take()
+      && let Some(pending_attr) = tag.awaiting_attr_value.take()
     {
-      pending_attr.value = Some(token);
-      tag.attributes.push(pending_attr);
-      tag.attr_name_start = None;
-      tag.attr_name_end = 0;
+      Self::push_attr_value(tag, pending_attr, token);
       return;
     }
 
@@ -107,6 +108,23 @@ where
     if let Some(pending_attr) = tag.awaiting_attr_value.take() {
       tag.attributes.push(pending_attr);
     }
+  }
+
+  fn complete_attr_value(tag: &mut CurrentTag<'b>, token: VToken<'b>) {
+    if let Some(pending_attr) = tag.awaiting_attr_value.take() {
+      Self::push_attr_value(tag, pending_attr, token);
+    }
+  }
+
+  fn push_attr_value(
+    tag: &mut CurrentTag<'b>,
+    mut pending_attr: TagAttribute<'b>,
+    token: VToken<'b>,
+  ) {
+    pending_attr.value = Some(token);
+    tag.attributes.push(pending_attr);
+    tag.attr_name_start = None;
+    tag.attr_name_end = 0;
   }
 
   pub(super) fn analyze_tag_attrs(tag: &mut CurrentTag<'b>) {

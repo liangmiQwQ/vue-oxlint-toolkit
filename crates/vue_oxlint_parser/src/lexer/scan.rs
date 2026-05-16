@@ -170,7 +170,7 @@ impl<'a> Lexer<'a> {
 
     while self.pos < self.source_len() {
       if self.current_byte().is_ascii_whitespace()
-        || self.current_byte() == b'&'
+        || (self.current_byte() == b'&' && self.character_reference().is_some())
         || (self.current_byte() == b'<' && self.is_mode_end_tag())
       {
         break;
@@ -185,6 +185,11 @@ impl<'a> Lexer<'a> {
   }
 
   fn scan_character_reference(&self) -> Option<(u32, &'a str)> {
+    let (end, value) = self.character_reference()?;
+    Some((end, self.allocator.alloc_str(value)))
+  }
+
+  fn character_reference(&self) -> Option<(u32, &'static str)> {
     let start = self.pos + 1;
     let mut end = start;
     while end < self.source_len() && self.source[end as usize].is_ascii_alphanumeric() {
@@ -203,14 +208,23 @@ impl<'a> Lexer<'a> {
       "apos" => "'",
       _ => return None,
     };
-    Some((end + 1, self.allocator.alloc_str(value)))
+    Some((end + 1, value))
   }
 
   fn is_mode_end_tag(&self) -> bool {
     let Some(end_tag) = self.mode_end_tag else {
       return true;
     };
-    self.starts_with_ascii_case_insensitive(end_tag)
+    if !self.starts_with_ascii_case_insensitive(end_tag) {
+      return false;
+    }
+
+    let boundary = self.pos + end_tag.len() as u32;
+    if boundary >= self.source_len() {
+      return true;
+    }
+
+    !is_tag_name_continue(self.source[boundary as usize])
   }
 
   fn is_text_end(&self) -> bool {
@@ -223,4 +237,8 @@ impl<'a> Lexer<'a> {
       || (self.starts_with("</") && self.is_tag_name_start(2))
       || self.is_tag_name_start(1)
   }
+}
+
+const fn is_tag_name_continue(byte: u8) -> bool {
+  byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.')
 }
