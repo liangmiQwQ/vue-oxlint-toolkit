@@ -8,7 +8,7 @@ pub(super) struct TagAttrs<'s> {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(super) struct PendingAttr<'s> {
+pub(super) struct TagAttribute<'s> {
   pub(super) name_start: usize,
   pub(super) name_end: usize,
   pub(super) name: &'s str,
@@ -23,11 +23,10 @@ pub(super) struct CurrentTag<'s> {
   pub(super) open_start: usize,
   pub(super) is_end: bool,
   pub(super) attrs: TagAttrs<'s>,
-  pub(super) last_attr_name: Option<&'s str>,
   pub(super) attr_name_start: Option<usize>,
   pub(super) attr_name_end: usize,
-  pub(super) pending_attrs: Vec<PendingAttr<'s>>,
-  pub(super) awaiting_attr_value: Option<PendingAttr<'s>>,
+  pub(super) attributes: Vec<TagAttribute<'s>>,
+  pub(super) awaiting_attr_value: Option<TagAttribute<'s>>,
 }
 
 #[derive(Debug, Clone)]

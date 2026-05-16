@@ -1,6 +1,6 @@
 use crate::VueParser;
 use crate::lexer::{VToken, VTokenKind};
-use crate::parser::parse::state::{AttrValueKind, CurrentTag, PendingAttr};
+use crate::parser::parse::state::{AttrValueKind, CurrentTag, TagAttribute, TagAttrs};
 use crate::parser::parse::{token_end, token_start};
 
 impl<'a, 'b> VueParser<'a, 'b>
@@ -14,20 +14,12 @@ where
   ) {
     if let Some(tag) = current_tag
       && !tag.is_end
-      && let Some(value) = token.value
+      && tag.awaiting_attr_value.is_none()
     {
-      if tag.awaiting_attr_value.is_none() {
-        if tag.attr_name_start.is_none() {
-          tag.attr_name_start = Some(token_start(token));
-        }
-        tag.attr_name_end = token_end(token);
+      if tag.attr_name_start.is_none() {
+        tag.attr_name_start = Some(token_start(token));
       }
-      tag.last_attr_name = Some(value);
-      if value.eq_ignore_ascii_case("setup") {
-        tag.attrs.setup = true;
-      } else if value.eq_ignore_ascii_case("v-pre") {
-        tag.attrs.v_pre = true;
-      }
+      tag.attr_name_end = token_end(token);
     }
 
     if current_tag.is_none() {
@@ -63,14 +55,10 @@ where
     if let Some(tag) = current_tag
       && let Some(mut pending_attr) = tag.awaiting_attr_value.take()
     {
-      if pending_attr.name.eq_ignore_ascii_case("lang") {
-        tag.attrs.lang = token.value;
-      }
       pending_attr.value = Some(token);
-      tag.pending_attrs.push(pending_attr);
+      tag.attributes.push(pending_attr);
       tag.attr_name_start = None;
       tag.attr_name_end = 0;
-      tag.last_attr_name = None;
       return;
     }
 
@@ -85,7 +73,7 @@ where
     };
     let end = tag.attr_name_end;
     let name = &self.source_text[start..end];
-    tag.pending_attrs.push(PendingAttr {
+    tag.attributes.push(TagAttribute {
       name_start: start,
       name_end: end,
       name,
@@ -93,12 +81,11 @@ where
       value: None,
     });
     tag.attr_name_end = 0;
-    tag.last_attr_name = None;
   }
 
   pub(super) fn start_attr_value(&self, tag: &mut CurrentTag<'b>, token: VToken<'b>) {
     let Some(start) = tag.attr_name_start.take() else {
-      if let Some(mut pending_attr) = tag.pending_attrs.pop() {
+      if let Some(mut pending_attr) = tag.attributes.pop() {
         pending_attr.association = Some(token);
         tag.awaiting_attr_value = Some(pending_attr);
       }
@@ -106,7 +93,7 @@ where
     };
     let end = tag.attr_name_end;
     let name = &self.source_text[start..end];
-    tag.awaiting_attr_value = Some(PendingAttr {
+    tag.awaiting_attr_value = Some(TagAttribute {
       name_start: start,
       name_end: end,
       name,
@@ -114,17 +101,31 @@ where
       value: None,
     });
     tag.attr_name_end = 0;
-    tag.last_attr_name = None;
   }
 
   pub(super) fn flush_attr_value(tag: &mut CurrentTag<'b>) {
     if let Some(pending_attr) = tag.awaiting_attr_value.take() {
-      tag.pending_attrs.push(pending_attr);
+      tag.attributes.push(pending_attr);
     }
   }
 
+  pub(super) fn analyze_tag_attrs(tag: &mut CurrentTag<'b>) {
+    tag.attrs = tag.attributes.iter().fold(TagAttrs::default(), |mut attrs, attr| {
+      if attr.name.eq_ignore_ascii_case("setup") {
+        attrs.setup = true;
+      } else if attr.name.eq_ignore_ascii_case("v-pre") {
+        attrs.v_pre = true;
+      } else if attr.name.eq_ignore_ascii_case("lang")
+        && let Some(value) = attr.value.and_then(|token| token.value)
+      {
+        attrs.lang = Some(value);
+      }
+      attrs
+    });
+  }
+
   pub(super) fn emit_tag_attrs(&mut self, tag: &CurrentTag<'b>) {
-    for attr in &tag.pending_attrs {
+    for attr in &tag.attributes {
       if tag.attrs.v_pre {
         self.push_template_token(
           VTokenKind::HTMLIdentifier,

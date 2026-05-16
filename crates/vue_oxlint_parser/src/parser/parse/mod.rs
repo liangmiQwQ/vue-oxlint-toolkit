@@ -64,6 +64,7 @@ where
           if let Some(tag) = &mut current_tag {
             self.flush_attr_name(tag);
             Self::flush_attr_value(tag);
+            Self::analyze_tag_attrs(tag);
             self.emit_tag_attrs(tag);
           }
           self.push_template_vtoken(token);

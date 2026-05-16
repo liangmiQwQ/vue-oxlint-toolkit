@@ -35,10 +35,9 @@ where
       open_start: token_start(token),
       is_end: token.kind == VTokenKind::HTMLEndTagOpen,
       attrs: TagAttrs::default(),
-      last_attr_name: None,
       attr_name_start: None,
       attr_name_end: 0,
-      pending_attrs: Vec::new(),
+      attributes: Vec::new(),
       awaiting_attr_value: None,
     });
   }
