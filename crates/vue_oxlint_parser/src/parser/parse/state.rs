@@ -1,8 +1,19 @@
+use crate::lexer::VToken;
+
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct TagAttrs<'s> {
   pub(super) setup: bool,
   pub(super) v_pre: bool,
   pub(super) lang: Option<&'s str>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(super) struct PendingAttr<'s> {
+  pub(super) name_start: usize,
+  pub(super) name_end: usize,
+  pub(super) name: &'s str,
+  pub(super) association: Option<VToken<'s>>,
+  pub(super) value: Option<VToken<'s>>,
 }
 
 #[derive(Debug)]
@@ -15,8 +26,8 @@ pub(super) struct CurrentTag<'s> {
   pub(super) last_attr_name: Option<&'s str>,
   pub(super) attr_name_start: Option<usize>,
   pub(super) attr_name_end: usize,
-  pub(super) flushed_attr_name: Option<&'s str>,
-  pub(super) awaiting_attr_value: Option<&'s str>,
+  pub(super) pending_attrs: Vec<PendingAttr<'s>>,
+  pub(super) awaiting_attr_value: Option<PendingAttr<'s>>,
 }
 
 #[derive(Debug, Clone)]

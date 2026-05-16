@@ -236,7 +236,10 @@ impl<'a: 'b, 'b> ParserImpl<'a> {
         let attr_span = Span::new(attr.location.start.offset as u32, attr_end);
         ast.jsx_attribute_item_attribute(
           attr_span,
-          ast.jsx_attribute_name_identifier(attr.name_loc.span(), ast.str(attr.name)),
+          ast.jsx_attribute_name_identifier(
+            attr.name_loc.span(),
+            self.codegen_directive_identifier(attr.name),
+          ),
           if let Some(value) = attr.value {
             Some(ast.jsx_attribute_value_string_literal(
               Span::new(value.location.span().start + 1, attr_end - 1),

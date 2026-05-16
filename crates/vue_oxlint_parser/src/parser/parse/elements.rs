@@ -38,7 +38,7 @@ where
       last_attr_name: None,
       attr_name_start: None,
       attr_name_end: 0,
-      flushed_attr_name: None,
+      pending_attrs: Vec::new(),
       awaiting_attr_value: None,
     });
   }

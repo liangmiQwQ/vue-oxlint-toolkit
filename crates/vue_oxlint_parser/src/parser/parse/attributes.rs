@@ -1,6 +1,6 @@
 use crate::VueParser;
 use crate::lexer::{VToken, VTokenKind};
-use crate::parser::parse::state::{AttrValueKind, CurrentTag};
+use crate::parser::parse::state::{AttrValueKind, CurrentTag, PendingAttr};
 use crate::parser::parse::{token_end, token_start};
 
 impl<'a, 'b> VueParser<'a, 'b>
@@ -59,39 +59,91 @@ where
     token: VToken<'b>,
     current_tag: &mut Option<CurrentTag<'b>>,
   ) {
-    let mut is_v_pre_attr = false;
-    let literal_attr_name = if let Some(tag) = current_tag
-      && let Some(current_attr_name) = tag.awaiting_attr_value.take()
+    let has_current_tag = current_tag.is_some();
+    if let Some(tag) = current_tag
+      && let Some(mut pending_attr) = tag.awaiting_attr_value.take()
     {
-      is_v_pre_attr = tag.attrs.v_pre;
-      if current_attr_name.eq_ignore_ascii_case("lang") {
+      if pending_attr.name.eq_ignore_ascii_case("lang") {
         tag.attrs.lang = token.value;
       }
+      pending_attr.value = Some(token);
+      tag.pending_attrs.push(pending_attr);
       tag.attr_name_start = None;
       tag.attr_name_end = 0;
       tag.last_attr_name = None;
-      tag.flushed_attr_name = None;
-      Some(current_attr_name)
-    } else {
-      None
-    };
+      return;
+    }
 
-    if let Some(attr_name) = literal_attr_name {
-      self.emit_attr_value(attr_name, token, is_v_pre_attr);
-    } else {
+    if !has_current_tag {
       self.push_template_vtoken(token);
     }
   }
 
-  pub(super) fn flush_attr_name(&mut self, tag: &mut CurrentTag<'b>) {
+  pub(super) fn flush_attr_name(&self, tag: &mut CurrentTag<'b>) {
     let Some(start) = tag.attr_name_start.take() else {
       return;
     };
     let end = tag.attr_name_end;
     let name = &self.source_text[start..end];
-    self.emit_attr_name(name, start, end);
-    tag.flushed_attr_name = Some(name);
+    tag.pending_attrs.push(PendingAttr {
+      name_start: start,
+      name_end: end,
+      name,
+      association: None,
+      value: None,
+    });
     tag.attr_name_end = 0;
+    tag.last_attr_name = None;
+  }
+
+  pub(super) fn start_attr_value(&self, tag: &mut CurrentTag<'b>, token: VToken<'b>) {
+    let Some(start) = tag.attr_name_start.take() else {
+      if let Some(mut pending_attr) = tag.pending_attrs.pop() {
+        pending_attr.association = Some(token);
+        tag.awaiting_attr_value = Some(pending_attr);
+      }
+      return;
+    };
+    let end = tag.attr_name_end;
+    let name = &self.source_text[start..end];
+    tag.awaiting_attr_value = Some(PendingAttr {
+      name_start: start,
+      name_end: end,
+      name,
+      association: Some(token),
+      value: None,
+    });
+    tag.attr_name_end = 0;
+    tag.last_attr_name = None;
+  }
+
+  pub(super) fn flush_attr_value(tag: &mut CurrentTag<'b>) {
+    if let Some(pending_attr) = tag.awaiting_attr_value.take() {
+      tag.pending_attrs.push(pending_attr);
+    }
+  }
+
+  pub(super) fn emit_tag_attrs(&mut self, tag: &CurrentTag<'b>) {
+    for attr in &tag.pending_attrs {
+      if tag.attrs.v_pre {
+        self.push_template_token(
+          VTokenKind::HTMLIdentifier,
+          attr.name_start,
+          attr.name_end,
+          Some(attr.name),
+        );
+      } else {
+        self.emit_attr_name(attr.name, attr.name_start, attr.name_end);
+      }
+
+      if let Some(association) = attr.association {
+        self.push_template_vtoken(association);
+      }
+
+      if let Some(value) = attr.value {
+        self.emit_attr_value(attr.name, value, tag.attrs.v_pre);
+      }
+    }
   }
 
   fn emit_attr_name(&mut self, name: &'b str, start: usize, end: usize) {

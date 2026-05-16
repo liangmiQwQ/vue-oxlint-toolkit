@@ -63,6 +63,8 @@ where
         VTokenKind::HTMLTagClose | VTokenKind::HTMLSelfClosingTagClose => {
           if let Some(tag) = &mut current_tag {
             self.flush_attr_name(tag);
+            Self::flush_attr_value(tag);
+            self.emit_tag_attrs(tag);
           }
           self.push_template_vtoken(token);
           self.finish_tag(
@@ -84,10 +86,10 @@ where
         }
         VTokenKind::HTMLAssociation => {
           if let Some(tag) = &mut current_tag {
-            self.flush_attr_name(tag);
-            tag.awaiting_attr_value = tag.flushed_attr_name.or(tag.last_attr_name);
+            self.start_attr_value(tag, token);
+          } else {
+            self.push_template_vtoken(token);
           }
-          self.push_template_vtoken(token);
         }
         VTokenKind::HTMLLiteral => {
           self.handle_literal(token, &mut current_tag);
