@@ -1,8 +1,8 @@
 import { expect, it } from 'vite-plus/test'
-import { readTestFiles } from './utils'
+import { readTestFiles } from '../utils'
 import { AST } from 'vue-eslint-parser'
-import { nativeParse } from '../bindings'
-import { getConvertor } from '../js/location'
+import { nativeParse } from '../../bindings'
+import { getConvertor } from '../../js/location'
 import vueEslintParser from 'vue-eslint-parser'
 import tsParser from '@typescript-eslint/parser'
 

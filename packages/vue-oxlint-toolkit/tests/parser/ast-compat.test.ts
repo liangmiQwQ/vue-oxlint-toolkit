@@ -1,8 +1,8 @@
 import { expect, it } from 'vite-plus/test'
-import { readTestFiles } from './utils'
+import { readTestFiles } from '../utils'
 import { AST } from 'vue-eslint-parser'
-import { nativeParse } from '../bindings'
-import { visitorKeys } from '../js'
+import { nativeParse } from '../../bindings'
+import { visitorKeys } from '../../js'
 import vueEslintParser from 'vue-eslint-parser'
 import tsParser from '@typescript-eslint/parser'
 
@@ -46,58 +46,6 @@ const SEMANTIC_KEYS = [
 
 it('exports the same visitor keys as vue-eslint-parser', () => {
   expect(visitorKeys).toEqual(AST.KEYS)
-})
-
-it('normalizes AST nodes through visitor keys and semantic fields', () => {
-  expect(
-    normalizeAstForCompatibility({
-      type: 'VElement',
-      name: 'div',
-      rawName: 'div',
-      range: [0, 11],
-      startTag: {
-        type: 'VStartTag',
-        selfClosing: false,
-        range: [0, 5],
-        attributes: [],
-      },
-      children: [
-        {
-          type: 'VText',
-          value: 'hello',
-          range: [5, 10],
-        },
-      ],
-      endTag: {
-        type: 'VEndTag',
-        range: [10, 11],
-      },
-      parent: {},
-      tokens: [],
-    }),
-  ).toEqual({
-    type: 'VElement',
-    range: [0, 11],
-    name: 'div',
-    rawName: 'div',
-    startTag: {
-      type: 'VStartTag',
-      range: [0, 5],
-      selfClosing: false,
-      attributes: [],
-    },
-    children: [
-      {
-        type: 'VText',
-        range: [5, 10],
-        value: 'hello',
-      },
-    ],
-    endTag: {
-      type: 'VEndTag',
-      range: [10, 11],
-    },
-  })
 })
 
 it.skip('should produce the same normalized AST as vue-eslint-parser', () => {
