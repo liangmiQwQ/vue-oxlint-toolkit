@@ -1,8 +1,7 @@
 import { expect, it } from 'vite-plus/test'
 import { readTestFiles } from '../utils'
 import { AST } from 'vue-eslint-parser'
-import { nativeParse } from '../../bindings'
-import { visitorKeys } from '../../js'
+import { parse, visitorKeys } from '../../js'
 import vueEslintParser from 'vue-eslint-parser'
 import tsParser from '@typescript-eslint/parser'
 
@@ -48,19 +47,19 @@ it('exports the same visitor keys as vue-eslint-parser', () => {
   expect(visitorKeys).toEqual(AST.KEYS)
 })
 
-it.skip('should produce the same normalized AST as vue-eslint-parser', () => {
-  for (const testFile of TEST_FILES.pass) {
-    const nativeParseResult = JSON.parse(nativeParse(testFile.source_text).astJson)
+for (const testFile of TEST_FILES.pass) {
+  it.skip(`should produce the same normalized AST as vue-eslint-parser: ${testFile.path}`, () => {
+    const toolkitParseResult = parse(testFile.path, testFile.source_text, VUE_ESLINT_PARSER_OPTION)
     const vueEslintParserResult = vueEslintParser.parse(
       testFile.source_text,
       VUE_ESLINT_PARSER_OPTION,
     )
 
-    expect(normalizeAstForCompatibility(nativeParseResult)).toEqual(
+    expect(normalizeAstForCompatibility(toolkitParseResult.ast)).toEqual(
       normalizeAstForCompatibility(vueEslintParserResult),
     )
-  }
-})
+  })
+}
 
 function normalizeAstForCompatibility(value: unknown): unknown {
   if (Array.isArray(value)) {
