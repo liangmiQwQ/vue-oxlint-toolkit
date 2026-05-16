@@ -48,7 +48,7 @@ it('exports the same visitor keys as vue-eslint-parser', () => {
 })
 
 for (const testFile of TEST_FILES.pass) {
-  it.skip(`should produce the same normalized AST as vue-eslint-parser: ${testFile.path}`, () => {
+  it(`should produce the same normalized AST as vue-eslint-parser: ${testFile.path}`, () => {
     const toolkitParseResult = parse(testFile.path, testFile.source_text, VUE_ESLINT_PARSER_OPTION)
     const vueEslintParserResult = vueEslintParser.parse(
       testFile.source_text,
