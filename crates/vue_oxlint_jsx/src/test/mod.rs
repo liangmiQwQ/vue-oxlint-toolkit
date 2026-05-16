@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub use crate::parser::ParserImplReturn;
 use crate::parser::{ParseConfig, ParserImpl};
 use oxc_allocator::Allocator;
