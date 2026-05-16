@@ -15,6 +15,7 @@ impl ESTree for VToken<'_> {
     state.serialize_field("type", self.kind.as_str());
     state.serialize_field("value", &self.value);
     state.serialize_span(self.span);
+    state.end();
   }
 }
 

@@ -6,7 +6,7 @@ use oxc_ast::ast::{Directive, Expression, Statement};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
 use oxc_parser::config::TokensParserConfig;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::VueParser;
@@ -17,10 +17,15 @@ where
   'b: 'a,
   'a: 'c,
 {
-  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &str)> {
+  pub(crate) fn parse_pure_expression(&mut self, span: Span) -> Option<(Expression<'b>, &'a str)> {
     let allocator = Allocator::new();
     // SAFETY: use `()` as wrap
-    let (expr, tokens) = unsafe { self.parse_expression(span, b"(", b")", &allocator) }?;
+    let (expr, tokens) = unsafe {
+      self.parse_expression(span, b"(", b")", &allocator, |expression| {
+        let span = expression.span();
+        Some((expression.take_in(&allocator), span))
+      })
+    }?;
     Some((expr.clone_in(self.js_allocator), tokens))
   }
 
@@ -31,13 +36,14 @@ where
   /// ## Safety
   /// - `start_wrap` must start with `(`
   /// - `end_wrap` must end with `)`
-  pub(crate) unsafe fn parse_expression(
+  pub(crate) unsafe fn parse_expression<T>(
     &mut self,
     span: Span,
     start_wrap: &[u8],
     end_wrap: &[u8],
     allocator: &'c Allocator,
-  ) -> Option<(Expression<'c>, &'a str)> {
+    get_node: impl FnOnce(&mut Expression<'c>) -> Option<(T, Span)>,
+  ) -> Option<(T, &'a str)> {
     // The only purpose to not use [`oxc_parser::Parser::parse_expression`] is to keep the code comments in it
     let (_, mut body, _, tokens) = self.oxc_parse(span, start_wrap, end_wrap, Some(allocator))?;
 
@@ -50,18 +56,10 @@ where
       unreachable!()
     };
 
-    // it mustn't be the first or last element in the whole array.
-    let tokens = tokens.as_bytes();
-    // SAFETY: we add "start_wrap" and "end_wrap", so there must be a token which contains corresponding "end" field
-    let start_needle = format!(r#""end":{}}},"#, span.start - 1);
-    let start = find(tokens, start_needle.as_bytes()).unwrap() + start_needle.len();
-    let end_needle = format!(r#""end":{}}}"#, span.end);
-    let end = rfind(tokens, end_needle.as_bytes()).unwrap() + end_needle.len();
+    let (node, span) = get_node(&mut expression.expression)?;
+    let tokens = slice_tokens(tokens, span)?;
 
-    Some((expression.expression.take_in(self.js_allocator), unsafe {
-      // SAFETY: it is sliced from a &str
-      str::from_utf8_unchecked(&tokens[start..end])
-    }))
+    Some((node, tokens))
   }
 
   /// Call [`oxc_parser::Parser::parse`] with a custom wrap
@@ -159,4 +157,23 @@ where
       );
     }
   }
+}
+
+fn slice_tokens(tokens: &str, span: Span) -> Option<&str> {
+  if span.start == span.end {
+    return Some("");
+  }
+
+  let bytes = tokens.as_bytes();
+  let start_needle = format!(r#""start":{}"#, span.start);
+  let start_field = find(bytes, start_needle.as_bytes())?;
+  let start = rfind(&bytes[..start_field], br#"{"type""#)?;
+
+  let end_needle = format!(r#""end":{}}}"#, span.end);
+  let end = find(&bytes[start_field..], end_needle.as_bytes())? + start_field + end_needle.len();
+
+  Some(unsafe {
+    // SAFETY: the slice boundaries are found from the original valid UTF-8 string.
+    str::from_utf8_unchecked(&bytes[start..end])
+  })
 }
