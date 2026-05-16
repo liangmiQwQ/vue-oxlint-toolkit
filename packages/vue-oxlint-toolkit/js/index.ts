@@ -4,7 +4,7 @@ import { getConvertor } from './location'
 import { transformJsx } from './transform'
 
 export { transformJsx } from './transform'
-export { visitorKeys } from './visitorKeys'
+export { visitorKeys } from './parse/visitorKeys'
 
 export interface Mapping {
   virtualStart: number
