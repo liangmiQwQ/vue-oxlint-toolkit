@@ -8,8 +8,6 @@ export type Node =
   | VOnExpression
   | VSlotScopeExpression
   | VGenericExpression
-  | VFilterSequenceExpression
-  | VFilter
 
 export interface Token extends Span {
   type: string
@@ -80,20 +78,6 @@ export interface VGenericExpression extends Span {
   rawParams: string[]
 }
 
-export interface VFilterSequenceExpression extends Span {
-  type: 'VFilterSequenceExpression'
-  parent: VExpressionContainer
-  expression: ESTree.Expression
-  filters: VFilter[]
-}
-
-export interface VFilter extends Span {
-  type: 'VFilter'
-  parent: VFilterSequenceExpression
-  callee: ESTree.IdentifierReference
-  arguments: ESTree.Argument[]
-}
-
 export type VNode =
   | VAttribute
   | VDirective
@@ -118,7 +102,6 @@ export interface VExpressionContainer extends Span {
   parent: VDocumentFragment | VElement | VDirective | VDirectiveKey
   expression:
     | ESTree.Expression
-    | VFilterSequenceExpression
     | VForExpression
     | VOnExpression
     | VSlotScopeExpression

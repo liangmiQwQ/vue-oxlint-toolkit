@@ -5,8 +5,6 @@ import type {
   VOnExpression,
   VSlotScopeExpression,
   VGenericExpression,
-  VFilterSequenceExpression,
-  VFilter,
   VNode,
   VText,
   VExpressionContainer,
@@ -43,8 +41,6 @@ export type RawVForExpression = RawNode<VForExpression>
 export type RawVOnExpression = RawNode<VOnExpression>
 export type RawVSlotScopeExpression = RawNode<VSlotScopeExpression>
 export type RawVGenericExpression = RawNode<VGenericExpression>
-export type RawVFilterSequenceExpression = RawNode<VFilterSequenceExpression>
-export type RawVFilter = RawNode<VFilter>
 export type RawVNode = RawNode<VNode>
 export type RawVText = RawNode<VText>
 export type RawVExpressionContainer = RawNode<VExpressionContainer>

@@ -1,8 +1,9 @@
 import type { LocationConvertor } from '../location'
 import type { NativeSfc, ParserOptions } from './types'
 import { fixNativeNode } from './fix'
-import { injectParents } from './parents'
 import { rebuildScriptProgram } from './script'
+import { visitorKeys } from './visitorKeys'
+
 import { rebuildTemplateBody } from './template'
 
 export function rebuildProgram(
@@ -34,7 +35,39 @@ export function rebuildProgram(
     program.templateBody = templateBody
   }
 
-  injectParents(program)
+  visit(program, null)
 
   return program
+}
+
+function visit(node: unknown, parent: unknown) {
+  if (!isNode(node)) {
+    return
+  }
+
+  node.parent = parent
+
+  const keys = visitorKeys[node.type as keyof typeof visitorKeys]
+  if (!keys) {
+    return
+  }
+
+  for (const key of keys) {
+    const child = node[key]
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        visit(item, node)
+      }
+    } else {
+      visit(child, node)
+    }
+  }
+}
+
+function isNode(value: unknown): value is Record<string, any> & { type: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { type?: unknown }).type === 'string'
+  )
 }
