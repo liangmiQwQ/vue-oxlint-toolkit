@@ -6,6 +6,7 @@ import { transformJsx } from './transform'
 
 export { transformJsx } from './transform'
 export { visitorKeys } from './parse/visitorKeys'
+export * from './ast'
 
 export interface Mapping {
   virtualStart: number
