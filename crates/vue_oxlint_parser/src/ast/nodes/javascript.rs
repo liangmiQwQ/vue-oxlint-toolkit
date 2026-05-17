@@ -26,21 +26,21 @@ use crate::ast::bindings::Reference;
 #[derive(Debug)]
 pub struct VInterpolation<'a, 'b> {
   pub expression: Expression<'b>,
-  pub references: Vec<'a, Reference<'a>>,
+  pub references: Vec<'a, Reference<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VDirectiveExpression<'a, 'b> {
   pub expression: Expression<'b>,
-  pub references: Vec<'a, Reference<'a>>,
+  pub references: Vec<'a, Reference<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VDirectiveArgumentExpression<'a, 'b> {
   pub expression: Expression<'b>,
-  pub references: Vec<'a, Reference<'a>>,
+  pub references: Vec<'a, Reference<'b>>,
   pub span: Span,
 }
 

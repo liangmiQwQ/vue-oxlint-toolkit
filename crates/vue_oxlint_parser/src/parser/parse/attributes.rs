@@ -6,7 +6,13 @@ use crate::parser::parse::tree::{
   ParsedForDirective, ParsedIdentifier, ParsedLiteral, ParsedPureAttribute, ParsedSlotDirective,
 };
 use crate::parser::parse::{token_end, token_start};
+use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::FromIn;
+use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_span::Span;
+use oxc_str::Ident;
+use oxc_syntax::node::NodeId;
+use std::cell::Cell;
 
 impl<'a, 'b> VueParser<'a, 'b>
 where
@@ -219,7 +225,7 @@ where
     let value = if matches!(kind, AttrValueKind::Literal) {
       None
     } else {
-      self.parse_expression_attr_value(attr)
+      self.parse_expression_attr_value(attr).or_else(|| self.parse_bind_shorthand_expression(&key))
     };
 
     ParsedAttribute::Directive(ParsedDirective { key, value, span })
@@ -335,7 +341,7 @@ where
       name: ParsedIdentifier {
         name: raw_name,
         raw_name,
-        span: Span::new(name_start as u32, directive_name_end as u32),
+        span: Span::new(start as u32, directive_name_end as u32),
       },
       argument,
       modifiers,
@@ -384,6 +390,53 @@ where
     };
 
     (argument, self.parse_modifiers(modifier_start, end))
+  }
+
+  fn parse_bind_shorthand_expression(
+    &mut self,
+    key: &ParsedDirectiveKey<'b>,
+  ) -> Option<crate::parser::parse::tree::ParsedDirectiveExpression<'b>> {
+    if key.name.name != "bind" || !key.modifiers.is_empty() {
+      return None;
+    }
+
+    let Some(ParsedDirectiveArgument::Static(argument)) = key.argument else {
+      return None;
+    };
+
+    if !argument.name.contains('-') {
+      return self.parse_directive_expression_node(argument.span, argument.span);
+    }
+
+    let name = Self::camelize(argument.name);
+    Some(crate::parser::parse::tree::ParsedDirectiveExpression {
+      expression: Expression::Identifier(ArenaBox::new_in(
+        IdentifierReference {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: argument.span,
+          name: Ident::from_in(name, self.js_allocator),
+          reference_id: Cell::new(None),
+        },
+        self.js_allocator,
+      )),
+      span: argument.span,
+    })
+  }
+
+  fn camelize(value: &str) -> String {
+    let mut result = String::with_capacity(value.len());
+    let mut uppercase_next = false;
+    for char in value.chars() {
+      if char == '-' {
+        uppercase_next = true;
+      } else if uppercase_next {
+        result.extend(char.to_uppercase());
+        uppercase_next = false;
+      } else {
+        result.push(char);
+      }
+    }
+    result
   }
 
   fn parse_modifiers(&self, mut start: usize, end: usize) -> Vec<ParsedIdentifier<'b>> {

@@ -26,7 +26,7 @@ pub struct VElement<'a, 'b> {
   pub start_tag: VStartTag<'a, 'b>,
   pub children: Vec<'a, VNode<'a, 'b>>,
   pub end_tag: Option<VEndTag>,
-  pub variables: Vec<'a, Variable<'a>>,
+  pub variables: Vec<'a, Variable<'b>>,
   pub span: Span,
 }
 

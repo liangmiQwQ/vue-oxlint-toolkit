@@ -3,12 +3,12 @@ use oxc_ast::Comment;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::{SourceType, Span};
 
-mod bindings;
+pub(crate) mod bindings;
 mod comments;
 mod nodes;
 pub mod token;
 
-pub use bindings::*;
+pub use bindings::{Reference, Variable};
 pub use nodes::*;
 
 use crate::ast::{comments::ESTreeComment, token::SerializableToken};

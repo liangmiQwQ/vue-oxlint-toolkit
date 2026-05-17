@@ -18,13 +18,17 @@ export function fixNativeNode<T>(value: T, convertor: LocationConvertor): T {
   }
 
   const fixed = hasRange(value)
-    ? (convertor.fix(value as Ranged) as unknown as NativeNode)
+    ? withoutStartEnd(convertor.fix(value as Ranged) as unknown as NativeNode)
     : ({ ...value } as NativeNode)
 
   for (const [key, child] of Object.entries(value)) {
     if (!RANGE_KEYS.has(key)) {
       fixed[key] = fixNativeNode(child, convertor)
     }
+  }
+
+  if (fixed.typeAnnotation === null) {
+    fixed.typeAnnotation = undefined
   }
 
   return fixed as T
@@ -48,6 +52,11 @@ function hasRange(value: Record<string, any>): value is Ranged {
   return (
     Array.isArray(value.range) || (typeof value.start === 'number' && typeof value.end === 'number')
   )
+}
+
+function withoutStartEnd<T extends NativeNode>(node: T): T {
+  const { start: _start, end: _end, ...rest } = node
+  return rest as T
 }
 
 function isRecord(value: unknown): value is Record<string, any> {
