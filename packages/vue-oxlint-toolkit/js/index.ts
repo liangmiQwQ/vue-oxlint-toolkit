@@ -39,7 +39,7 @@ export function parse(_path: string, source: string, _options?: {}): ParseResult
 
   return {
     transform: transformJsx(source, sourceConvertor),
-    ast: rebuildProgram(sfc, source, sourceConvertor, _options),
+    ast: rebuildProgram(sfc, sourceConvertor),
     errors: result.errors.map(sourceConvertor.fix),
     panicked: result.panicked,
   }

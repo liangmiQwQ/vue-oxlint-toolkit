@@ -159,6 +159,51 @@ where
   }
 }
 
+impl<'a, 'b> VueParser<'a, 'b>
+where
+  'b: 'a,
+{
+  pub(crate) fn oxc_parse_script(
+    &mut self,
+    span: Span,
+  ) -> Option<(ArenaVec<'b, Directive<'b>>, ArenaVec<'b, Statement<'b>>, &'a str)> {
+    let start = span.start as usize;
+    let end = span.end as usize;
+
+    unsafe {
+      let first_byte_ptr = self.mut_ptr_source_text.cast::<u8>();
+      for i in 0..start {
+        first_byte_ptr.add(i).write(b' ');
+      }
+    }
+
+    let source = unsafe { str::from_utf8_unchecked(&self.source_text.as_bytes()[..end]) };
+    let mut ret = oxc_parser::Parser::new(self.js_allocator, source, self.sfc.source_type.unwrap())
+      .with_options(self.options)
+      .with_config(TokensParserConfig)
+      .parse();
+
+    self.sync_source_text();
+
+    self.errors.append(&mut ret.errors);
+    if ret.panicked {
+      None
+    } else {
+      let mut comments = ret.program.comments.clone_in(self.js_allocator);
+      self.sfc.script_comments.append(&mut comments);
+      let tokens = to_estree_tokens_json(
+        &ret.tokens,
+        &ret.program,
+        source,
+        &Utf8ToUtf16::new(""),
+        ESTreeTokenOptions::new(ret.program.source_type.is_typescript()),
+      );
+      let tokens = self.vue_allocator.alloc_str(&tokens[1..tokens.len() - 1]);
+      Some((ret.program.directives, ret.program.body, tokens))
+    }
+  }
+}
+
 fn slice_tokens(tokens: &str, span: Span) -> Option<&str> {
   if span.start == span.end {
     return Some("");

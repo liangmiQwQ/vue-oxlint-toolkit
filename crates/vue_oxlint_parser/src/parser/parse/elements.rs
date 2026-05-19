@@ -5,6 +5,8 @@ use crate::parser::parse::state::{
 };
 use crate::parser::parse::tree::{ParsedElement, ParsedNode, ParsedStartTag};
 use crate::parser::parse::{token_end, token_start};
+use oxc_allocator::Box as ArenaBox;
+use oxc_ast::ast::{Directive, Expression, ExpressionStatement, Statement};
 use oxc_span::{SourceType, Span};
 
 impl<'a, 'b> VueParser<'a, 'b>
@@ -137,10 +139,19 @@ where
 
     if body_start < body_end {
       let span = Span::new(body_start as u32, body_end as u32);
-      if let Some((_, _, _, tokens)) = self.oxc_parse(span, &[], &[], None)
-        && !tokens.is_empty()
-      {
-        self.sfc.script_tokens.push(tokens.into());
+      if let Some((mut directives, mut body, tokens)) = self.oxc_parse_script(span) {
+        if script.attrs.setup {
+          let js_allocator = self.js_allocator;
+          self.sfc.script_body.extend(
+            directives.into_iter().map(|directive| directive_to_statement(js_allocator, directive)),
+          );
+        } else {
+          self.sfc.script_directives.append(&mut directives);
+        }
+        self.sfc.script_body.append(&mut body);
+        if !tokens.is_empty() {
+          self.sfc.script_tokens.push(tokens.into());
+        }
       }
     }
 
@@ -225,6 +236,20 @@ fn is_raw_text_element(name: &str) -> bool {
 
 fn is_rcdata_element(name: &str) -> bool {
   matches!(name, "textarea" | "title")
+}
+
+fn directive_to_statement<'b>(
+  js_allocator: &'b oxc_allocator::Allocator,
+  directive: Directive<'b>,
+) -> Statement<'b> {
+  Statement::ExpressionStatement(ArenaBox::new_in(
+    ExpressionStatement {
+      node_id: directive.node_id,
+      span: directive.span,
+      expression: Expression::StringLiteral(ArenaBox::new_in(directive.expression, js_allocator)),
+    },
+    js_allocator,
+  ))
 }
 
 fn is_foreign_content(element_stack: &[ElementState]) -> bool {

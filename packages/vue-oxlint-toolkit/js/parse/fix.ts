@@ -3,6 +3,15 @@ import type { LocationConvertor } from '../location'
 import type { NativeNode } from './types'
 
 const RANGE_KEYS = new Set(['range', 'start', 'end', 'loc', 'parent'])
+const ABSENT_WHEN_NULL_KEYS = new Set([
+  'accessibility',
+  'directive',
+  'phase',
+  'returnType',
+  'typeAnnotation',
+  'typeArguments',
+  'typeParameters',
+])
 
 export function fixNativeNode<T>(value: T, convertor: LocationConvertor): T {
   if (Array.isArray(value)) {
@@ -27,8 +36,18 @@ export function fixNativeNode<T>(value: T, convertor: LocationConvertor): T {
     }
   }
 
-  if (fixed.typeAnnotation === null) {
-    fixed.typeAnnotation = undefined
+  for (const key of ABSENT_WHEN_NULL_KEYS) {
+    if (fixed[key] === null) {
+      fixed[key] = undefined
+    }
+  }
+
+  if (fixed.type === 'ParenthesizedExpression') {
+    return fixed.expression as T
+  }
+
+  if (fixed.type === 'Literal' && fixed.value === null && typeof fixed.bigint === 'string') {
+    fixed.value = BigInt(fixed.bigint)
   }
 
   return fixed as T

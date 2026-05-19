@@ -10,6 +10,7 @@ use oxc_estree::{ESTree, StructSerializer};
 pub struct Reference<'b> {
   pub id: &'b IdentifierReference<'b>,
   pub mode: &'static str,
+  pub kind: ReferenceKind,
 }
 
 #[derive(Debug)]
@@ -18,13 +19,26 @@ pub struct Variable<'b> {
   pub kind: &'static str,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum ReferenceKind {
+  Value,
+  UnresolvedVariable,
+}
+
 impl ESTree for Reference<'_> {
   fn serialize<S: oxc_estree::Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("id", &self.id);
     state.serialize_field("mode", &self.mode);
-    state.serialize_field("isValueReference", &true);
-    state.serialize_field("isTypeReference", &false);
+    match self.kind {
+      ReferenceKind::Value => {
+        state.serialize_field("isValueReference", &true);
+        state.serialize_field("isTypeReference", &false);
+      }
+      ReferenceKind::UnresolvedVariable => {
+        state.serialize_field("variable", &None::<()>);
+      }
+    }
     state.end();
   }
 }
@@ -42,7 +56,15 @@ pub fn collect_expression_references<'store, 'ast>(
   allocator: &'store Allocator,
   expression: &Expression<'ast>,
 ) -> Vec<'store, Reference<'ast>> {
-  let mut collector = ReferenceCollector { references: Vec::new_in(allocator) };
+  collect_expression_references_with_kind(allocator, expression, ReferenceKind::Value)
+}
+
+pub fn collect_expression_references_with_kind<'store, 'ast>(
+  allocator: &'store Allocator,
+  expression: &Expression<'ast>,
+  kind: ReferenceKind,
+) -> Vec<'store, Reference<'ast>> {
+  let mut collector = ReferenceCollector { references: Vec::new_in(allocator), kind };
   collector.visit_expression(expression);
   collector.references
 }
@@ -59,12 +81,13 @@ pub fn collect_parameter_variables<'store, 'ast>(
 
 struct ReferenceCollector<'store, 'ast> {
   references: Vec<'store, Reference<'ast>>,
+  kind: ReferenceKind,
 }
 
 impl<'ast> Visit<'ast> for ReferenceCollector<'_, 'ast> {
   fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'ast>) {
     let id = self.alloc(ident);
-    self.references.push(Reference { id, mode: "r" });
+    self.references.push(Reference { id, mode: "r", kind: self.kind });
   }
 }
 

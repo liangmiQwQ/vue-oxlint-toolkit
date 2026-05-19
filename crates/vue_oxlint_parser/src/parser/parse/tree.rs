@@ -7,7 +7,10 @@ use crate::ast::{
   VAttribute, VDirective, VDirectiveArgument, VDirectiveArgumentExpression, VDirectiveExpression,
   VDirectiveKey, VElement, VEndTag, VForDirective, VForExpression, VIdentifier, VInterpolation,
   VLiteral, VNode, VPureAttribute, VSlotDirective, VSlotExpression, VStartTag, VText, Variable,
-  bindings::{collect_expression_references, collect_parameter_variables},
+  bindings::{
+    ReferenceKind, collect_expression_references, collect_expression_references_with_kind,
+    collect_parameter_variables,
+  },
 };
 
 #[derive(Debug)]
@@ -112,6 +115,7 @@ pub(super) struct ParsedLiteral<'b> {
 #[derive(Debug)]
 pub(super) struct ParsedDirectiveExpression<'b> {
   pub(super) expression: Expression<'b>,
+  pub(super) reference_kind: ReferenceKind,
   pub(super) span: Span,
 }
 
@@ -240,7 +244,11 @@ where
         VDirective {
           key: self.build_directive_key(attribute.key),
           value: attribute.value.map(|value| VDirectiveExpression {
-            references: collect_expression_references(self.vue_allocator, &value.expression),
+            references: collect_expression_references_with_kind(
+              self.vue_allocator,
+              &value.expression,
+              value.reference_kind,
+            ),
             expression: value.expression,
             span: value.span,
           }),
@@ -284,7 +292,11 @@ where
       Some(ParsedDirectiveArgument::Dynamic(value)) => {
         Some(VDirectiveArgument::VDirectiveArgument(ArenaBox::new_in(
           VDirectiveArgumentExpression {
-            references: collect_expression_references(self.vue_allocator, &value.expression),
+            references: collect_expression_references_with_kind(
+              self.vue_allocator,
+              &value.expression,
+              value.reference_kind,
+            ),
             expression: value.expression,
             span: value.span,
           },

@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 use crate::VueParser;
+use crate::ast::bindings::ReferenceKind;
 use crate::parser::parse::tree::{
   ParsedDirectiveExpression, ParsedForExpression, ParsedSlotExpression,
 };
@@ -148,7 +149,11 @@ where
     container_span: Span,
   ) -> Option<ParsedDirectiveExpression<'b>> {
     let (expression, _) = self.parse_pure_expression(expression_span)?;
-    Some(ParsedDirectiveExpression { expression, span: container_span })
+    Some(ParsedDirectiveExpression {
+      expression,
+      reference_kind: ReferenceKind::Value,
+      span: container_span,
+    })
   }
 
   pub(super) fn parse_slot_expression_node(
