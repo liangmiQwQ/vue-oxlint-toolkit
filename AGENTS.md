@@ -24,11 +24,19 @@ Common commands:
 
 ## Project architecture
 
-- Parser: `crates/vue_oxlint_parser`, which includes a tokenizer (lexer) and parser, generate a custom AST (VueSingleFileComponent) which implemented ESTree trait, it is the underlying parser for generating vue-eslint-parser compatible ast and transformed js ast.
+- Parser: `crates/vue_oxlint_parser`, which includes a tokenizer (lexer) and parser, generate a custom AST (VueSingleFileComponent) which implemented ESTree trait, it is the underlying parser.
 - Jsx: `crates/vue_oxlint_jsx`, which receives the AST returned by parser, and emit an Oxc JSX/TSX program, it also supports emitting codegen result with volar mapping.
-- Toolkit: `packages/vue-oxlint-toolkit`, a rs-napi package + crate, mainly for data trasnfering and defining the Oxlint plugin, including control the ast + source_type generation pipeline and the process which rebuild the vue-eslint-parser compatible ast from the parser's AST. This is the main npm package for external dependencies.
+- Toolkit: `packages/vue-oxlint-toolkit`, a rs-napi package + crate, mainly for data trasnfering, including transform parser's ast into a vue-eslint-parser compatible AST.
 
 For now, as the parser crate is still working in progress, jsx crate is still depending on `vue-compiler-core`, and most of the logic in toolkit package / crate is missing.
+
+For how to get a `vue-eslint-parser` compatible AST, we should divide the work correctly to avoid cross-boundary processing. parser crates should handle serialization and inner node's structure and tokens, toolkit package should handle root level ast rebuild, and js only-metadata injecting. You shouldn't add things like generating `scriptBody` in parser crate, you should also never add things like call `@typescript-eslint/parser` in toolkit side.
+
+Some signs of behavior exceeding boundaries:
+
+1. If you found toolkit needs to read `source_text` after getting parser's AST for parsing use
+2. If you found toolkit has a separate error define / process logic besides Oxc's diagnostics and Raw errors.
+3. If you found `@typescript-eslint/parser` or `vue-eslint-parser` is called outside of tests.
 
 ## Conventions
 
