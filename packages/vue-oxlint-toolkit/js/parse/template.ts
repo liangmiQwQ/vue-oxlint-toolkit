@@ -3,10 +3,6 @@ import type { Token, VText } from '../ast'
 import type { NativeNode, NativeSfc } from './types'
 import { fixNativeNode } from './fix'
 
-const HTML_NS = 'http://www.w3.org/1999/xhtml'
-const SVG_NS = 'http://www.w3.org/2000/svg'
-const MATH_NS = 'http://www.w3.org/1998/Math/MathML'
-
 export function rebuildTemplate(
   sfc: NativeSfc,
   convertor: LocationConvertor,
@@ -17,7 +13,7 @@ export function rebuildTemplate(
   const prepared = mergeTextChildren(
     children
       .filter((child) => child.type !== 'VPureScript')
-      .map((child) => prepareTemplateNode(child, HTML_NS, convertor, comments)),
+      .map((child) => prepareTemplateNode(child, convertor, comments)),
     convertor,
     comments,
   )
@@ -48,7 +44,6 @@ function findTemplateBody(children: NativeNode[]) {
 
 function prepareTemplateNode(
   node: NativeNode,
-  namespace: string,
   convertor: LocationConvertor,
   comments: Token[],
 ): NativeNode {
@@ -56,35 +51,15 @@ function prepareTemplateNode(
     return node
   }
 
-  const childNamespace = elementNamespace(node, namespace)
-  node.namespace = childNamespace
-  node.variables ??= []
-  if (node.name === 'style') {
-    node.style = true
-  }
-  node.startTag = prepareTemplateNode(node.startTag, childNamespace, convertor, comments)
-  node.endTag = node.endTag
-    ? prepareTemplateNode(node.endTag, childNamespace, convertor, comments)
-    : null
   node.children = mergeTextChildren(
     node.children
       .filter((child: NativeNode) => child.type !== 'VPureScript')
-      .map((child: NativeNode) => prepareTemplateNode(child, childNamespace, convertor, comments)),
+      .map((child: NativeNode) => prepareTemplateNode(child, convertor, comments)),
     convertor,
     comments,
   )
 
   return node
-}
-
-function elementNamespace(node: NativeNode, current: string) {
-  if (node.name === 'svg') {
-    return SVG_NS
-  }
-  if (node.name === 'math') {
-    return MATH_NS
-  }
-  return current
 }
 
 function templateComments(sfc: NativeSfc, children: NativeNode[], convertor: LocationConvertor) {

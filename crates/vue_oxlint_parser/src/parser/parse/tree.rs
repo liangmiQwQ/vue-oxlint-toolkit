@@ -14,6 +14,10 @@ use crate::ast::{
   },
 };
 
+const HTML_NS: &str = "http://www.w3.org/1999/xhtml";
+const SVG_NS: &str = "http://www.w3.org/2000/svg";
+const MATH_NS: &str = "http://www.w3.org/1998/Math/MathML";
+
 #[derive(Debug)]
 pub(super) enum ParsedNode<'b> {
   Element(ParsedElement<'b>),
@@ -164,17 +168,32 @@ where
     &self,
     nodes: Vec<ParsedNode<'b>>,
   ) -> ArenaVec<'a, VNode<'a, 'b>> {
+    self.build_arena_nodes_in_namespace(nodes, HTML_NS)
+  }
+
+  fn build_arena_nodes_in_namespace(
+    &self,
+    nodes: Vec<ParsedNode<'b>>,
+    namespace: &'static str,
+  ) -> ArenaVec<'a, VNode<'a, 'b>> {
     let mut arena_nodes = ArenaVec::new_in(self.vue_allocator);
     for node in nodes {
-      arena_nodes.push(self.build_arena_node(node));
+      arena_nodes.push(self.build_arena_node(node, namespace));
     }
     arena_nodes
   }
 
-  pub(super) fn build_arena_node(&self, node: ParsedNode<'b>) -> VNode<'a, 'b> {
+  pub(super) fn build_arena_node(
+    &self,
+    node: ParsedNode<'b>,
+    namespace: &'static str,
+  ) -> VNode<'a, 'b> {
     match node {
       ParsedNode::Element(element) => {
-        VNode::Element(ArenaBox::new_in(self.build_arena_element(element), self.vue_allocator))
+        VNode::Element(ArenaBox::new_in(
+          self.build_arena_element(element, namespace),
+          self.vue_allocator,
+        ))
       }
       ParsedNode::Text(text) => VNode::Text(ArenaBox::new_in(
         VText { text: text.value, span: text.span },
@@ -200,7 +219,12 @@ where
     }
   }
 
-  fn build_arena_element(&self, element: ParsedElement<'b>) -> VElement<'a, 'b> {
+  fn build_arena_element(
+    &self,
+    element: ParsedElement<'b>,
+    namespace: &'static str,
+  ) -> VElement<'a, 'b> {
+    let child_namespace = element_namespace(element.name, namespace);
     let variables = self.collect_element_variables(&element.start_tag.attributes);
     let mut attributes = ArenaVec::new_in(self.vue_allocator);
     for attribute in element.start_tag.attributes {
@@ -210,14 +234,16 @@ where
     VElement {
       name: element.name,
       raw_name: element.raw_name,
+      namespace: child_namespace,
       start_tag: VStartTag {
         attributes,
         self_closing: element.start_tag.self_closing,
         span: element.start_tag.span,
       },
-      children: self.build_arena_nodes(element.children),
+      children: self.build_arena_nodes_in_namespace(element.children, child_namespace),
       end_tag: element.end_tag.map(|span| VEndTag { span }),
       variables,
+      style: element.name == "style",
       span: element.span,
     }
   }
@@ -342,5 +368,13 @@ where
 
   const fn build_literal(literal: ParsedLiteral<'b>) -> VLiteral<'a> {
     VLiteral { value: literal.value, span: literal.span }
+  }
+}
+
+const fn element_namespace(name: &str, current: &'static str) -> &'static str {
+  match name.as_bytes() {
+    b"svg" => SVG_NS,
+    b"math" => MATH_NS,
+    _ => current,
   }
 }

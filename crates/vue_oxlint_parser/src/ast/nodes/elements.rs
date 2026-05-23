@@ -23,10 +23,12 @@ pub enum VNode<'a, 'b> {
 pub struct VElement<'a, 'b> {
   pub name: &'a str,
   pub raw_name: &'a str,
+  pub namespace: &'static str,
   pub start_tag: VStartTag<'a, 'b>,
   pub children: Vec<'a, VNode<'a, 'b>>,
   pub end_tag: Option<VEndTag>,
   pub variables: Vec<'a, Variable<'b>>,
+  pub style: bool,
   pub span: Span,
 }
 
@@ -75,10 +77,14 @@ impl ESTree for VElement<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VElement"));
     state.serialize_field("name", &self.name);
     state.serialize_field("rawName", &self.raw_name);
+    state.serialize_field("namespace", &self.namespace);
     state.serialize_field("startTag", &self.start_tag);
     state.serialize_field("children", &self.children);
     state.serialize_field("endTag", &self.end_tag);
     state.serialize_field("variables", &self.variables);
+    if self.style {
+      state.serialize_field("style", &true);
+    }
     state.serialize_span(self.span);
     state.end();
   }
