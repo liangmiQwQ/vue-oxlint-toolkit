@@ -77,6 +77,7 @@ where
       match token.kind {
         VTokenKind::HTMLComment | VTokenKind::HTMLBogusComment => {
           self.push_template_comment(token);
+          Self::push_parsed_node(&mut root_nodes, &mut node_stack, ParsedNode::CommentBoundary);
         }
         VTokenKind::HTMLTagOpen | VTokenKind::HTMLEndTagOpen => {
           self.handle_tag_open(token, &mut current_tag, &mut raw_element, &mut pending_script);

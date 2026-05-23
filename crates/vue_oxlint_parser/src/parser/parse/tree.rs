@@ -24,6 +24,7 @@ pub(super) enum ParsedNode<'b> {
   Text(ParsedText<'b>),
   Interpolation(ParsedInterpolation<'b>),
   PureScript(ParsedPureScript<'b>),
+  CommentBoundary,
 }
 
 #[derive(Debug)]
@@ -177,9 +178,26 @@ where
     namespace: &'static str,
   ) -> ArenaVec<'a, VNode<'a, 'b>> {
     let mut arena_nodes = ArenaVec::new_in(self.vue_allocator);
+    let mut pending_text = None;
     for node in nodes {
-      arena_nodes.push(self.build_arena_node(node, namespace));
+      match node {
+        ParsedNode::Text(text) => {
+          pending_text = Some(if let Some(previous) = pending_text {
+            self.merge_text(previous, text)
+          } else {
+            text
+          });
+        }
+        ParsedNode::CommentBoundary => {
+          self.push_pending_text(&mut arena_nodes, &mut pending_text);
+        }
+        node => {
+          self.push_pending_text(&mut arena_nodes, &mut pending_text);
+          arena_nodes.push(self.build_arena_node(node, namespace));
+        }
+      }
     }
+    self.push_pending_text(&mut arena_nodes, &mut pending_text);
     arena_nodes
   }
 
@@ -189,16 +207,11 @@ where
     namespace: &'static str,
   ) -> VNode<'a, 'b> {
     match node {
-      ParsedNode::Element(element) => {
-        VNode::Element(ArenaBox::new_in(
-          self.build_arena_element(element, namespace),
-          self.vue_allocator,
-        ))
-      }
-      ParsedNode::Text(text) => VNode::Text(ArenaBox::new_in(
-        VText { text: text.value, span: text.span },
+      ParsedNode::Element(element) => VNode::Element(ArenaBox::new_in(
+        self.build_arena_element(element, namespace),
         self.vue_allocator,
       )),
+      ParsedNode::Text(text) => self.build_arena_text(text),
       ParsedNode::Interpolation(interpolation) => VNode::Interpolation(ArenaBox::new_in(
         VInterpolation {
           references: collect_expression_references(self.vue_allocator, &interpolation.expression),
@@ -216,6 +229,31 @@ where
         },
         self.vue_allocator,
       )),
+      ParsedNode::CommentBoundary => unreachable!(),
+    }
+  }
+
+  fn push_pending_text(
+    &self,
+    arena_nodes: &mut ArenaVec<'a, VNode<'a, 'b>>,
+    pending_text: &mut Option<ParsedText<'b>>,
+  ) {
+    if let Some(text) = pending_text.take() {
+      arena_nodes.push(self.build_arena_text(text));
+    }
+  }
+
+  fn build_arena_text(&self, text: ParsedText<'b>) -> VNode<'a, 'b> {
+    VNode::Text(ArenaBox::new_in(
+      VText { text: text.value, span: text.span },
+      self.vue_allocator,
+    ))
+  }
+
+  fn merge_text(&self, left: ParsedText<'b>, right: ParsedText<'b>) -> ParsedText<'b> {
+    ParsedText {
+      value: self.alloc_str(&format!("{}{}", left.value, right.value)),
+      span: Span::new(left.span.start, right.span.end),
     }
   }
 

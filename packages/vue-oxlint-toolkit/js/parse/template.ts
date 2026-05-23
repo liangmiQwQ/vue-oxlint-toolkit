@@ -1,5 +1,5 @@
 import type { LocationConvertor } from '../location'
-import type { Token, VText } from '../ast'
+import type { Token } from '../ast'
 import type { NativeNode, NativeSfc } from './types'
 import { fixNativeNode } from './fix'
 
@@ -10,13 +10,9 @@ export function rebuildTemplate(
 ) {
   const tokens = fixNativeNode(sfc.templateTokens, convertor) as Token[]
   const comments = templateComments(sfc, children, convertor)
-  const prepared = mergeTextChildren(
-    children
-      .filter((child) => child.type !== 'VPureScript')
-      .map((child) => prepareTemplateNode(child, convertor, comments)),
-    convertor,
-    comments,
-  )
+  const prepared = children
+    .filter((child) => child.type !== 'VPureScript')
+    .map((child) => prepareTemplateNode(child))
   const fragment = {
     type: 'VDocumentFragment',
     range: convertor.range(sfc.range),
@@ -42,22 +38,14 @@ function findTemplateBody(children: NativeNode[]) {
   return children.find((node) => node.type === 'VElement' && node.rawName === 'template')
 }
 
-function prepareTemplateNode(
-  node: NativeNode,
-  convertor: LocationConvertor,
-  comments: Token[],
-): NativeNode {
+function prepareTemplateNode(node: NativeNode): NativeNode {
   if (node.type !== 'VElement') {
     return node
   }
 
-  node.children = mergeTextChildren(
-    node.children
-      .filter((child: NativeNode) => child.type !== 'VPureScript')
-      .map((child: NativeNode) => prepareTemplateNode(child, convertor, comments)),
-    convertor,
-    comments,
-  )
+  node.children = node.children
+    .filter((child: NativeNode) => child.type !== 'VPureScript')
+    .map((child: NativeNode) => prepareTemplateNode(child))
 
   return node
 }
@@ -75,38 +63,6 @@ function templateComments(sfc: NativeSfc, children: NativeNode[], convertor: Loc
   return dedupeTokens([...templateComments, ...expressionComments]).sort(
     (a, b) => a.range[0] - b.range[0],
   )
-}
-
-function mergeTextChildren(
-  children: NativeNode[],
-  convertor: LocationConvertor,
-  comments: Token[],
-): NativeNode[] {
-  const merged: NativeNode[] = []
-
-  for (const child of children) {
-    const previous = merged.at(-1)
-    if (
-      previous?.type === 'VText' &&
-      child.type === 'VText' &&
-      previous.range &&
-      child.range &&
-      !hasCommentBetween(previous.range, child.range, comments)
-    ) {
-      const previousText = previous as VText
-      previousText.range = [previousText.range[0], child.range[1]]
-      previousText.loc = convertor.fix({ range: previousText.range }).loc
-      previousText.value += child.value
-    } else {
-      merged.push(child)
-    }
-  }
-
-  return merged
-}
-
-function hasCommentBetween(left: [number, number], right: [number, number], comments: Token[]) {
-  return comments.some((comment) => comment.range[0] >= left[1] && comment.range[1] <= right[0])
 }
 
 function dedupeTokens(tokens: Token[]) {
