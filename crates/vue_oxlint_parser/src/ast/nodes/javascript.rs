@@ -83,7 +83,7 @@ impl ESTree for VInterpolation<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &self.expression);
+    state.serialize_field("expression", &VueExpression(&self.expression));
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
@@ -94,7 +94,7 @@ impl ESTree for VDirectiveExpression<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &self.expression);
+    state.serialize_field("expression", &VueExpression(&self.expression));
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
@@ -105,7 +105,7 @@ impl ESTree for VDirectiveArgumentExpression<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VExpressionContainer"));
-    state.serialize_field("expression", &self.expression);
+    state.serialize_field("expression", &VueExpression(&self.expression));
     state.serialize_field("references", &self.references);
     state.serialize_span(self.span);
     state.end();
@@ -241,5 +241,16 @@ impl ESTree for SetupDirectiveStatement<'_> {
     state.serialize_ts_field("directive", &());
     state.serialize_span(self.0.span);
     state.end();
+  }
+}
+
+struct VueExpression<'b>(&'b Expression<'b>);
+
+impl ESTree for VueExpression<'_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    match self.0 {
+      Expression::ParenthesizedExpression(expression) => expression.expression.serialize(serializer),
+      expression => expression.serialize(serializer),
+    }
   }
 }
