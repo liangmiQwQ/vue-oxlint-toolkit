@@ -73,7 +73,11 @@ where
           seen_setup,
         )
       {
-        Self::push_parsed_node(root_nodes, node_stack, ParsedNode::PureScript(script_node));
+        if node_stack.len() == 1 {
+          root_nodes.push(ParsedNode::PureScript(script_node));
+        } else {
+          Self::push_parsed_node(root_nodes, node_stack, ParsedNode::PureScript(script_node));
+        }
       }
       Self::close_node(tag.open_start, tag_end, &tag.normalized_name, node_stack, root_nodes);
       pop_element(element_stack, &tag.normalized_name);

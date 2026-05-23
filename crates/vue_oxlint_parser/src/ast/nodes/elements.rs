@@ -2,12 +2,9 @@ use oxc_allocator::{Box, Vec};
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
-use crate::ast::{
-  bindings::Variable,
-  nodes::{
-    attribute::VAttribute,
-    javascript::{VInterpolation, VPureScript},
-  },
+use crate::ast::nodes::{
+  attribute::VAttribute,
+  javascript::{VInterpolation, VPureScript},
 };
 
 #[derive(Debug)]
@@ -15,7 +12,7 @@ pub enum VNode<'a, 'b> {
   Element(Box<'a, VElement<'a, 'b>>),
   Text(Box<'a, VText<'a>>),
   Comment(Box<'a, VComment<'a>>),
-  Interpolation(Box<'a, VInterpolation<'a, 'b>>),
+  Interpolation(Box<'a, VInterpolation<'b>>),
   PureScript(Box<'a, VPureScript<'b>>),
 }
 
@@ -27,7 +24,6 @@ pub struct VElement<'a, 'b> {
   pub start_tag: VStartTag<'a, 'b>,
   pub children: Vec<'a, VNode<'a, 'b>>,
   pub end_tag: Option<VEndTag>,
-  pub variables: Vec<'a, Variable<'b>>,
   pub style: bool,
   pub span: Span,
 }
@@ -81,7 +77,6 @@ impl ESTree for VElement<'_, '_> {
     state.serialize_field("startTag", &self.start_tag);
     state.serialize_field("children", &self.children);
     state.serialize_field("endTag", &self.end_tag);
-    state.serialize_field("variables", &self.variables);
     if self.style {
       state.serialize_field("style", &true);
     }

@@ -7,11 +7,6 @@ use crate::ast::{
   VAttribute, VDirective, VDirectiveArgument, VDirectiveArgumentExpression, VDirectiveExpression,
   VDirectiveKey, VElement, VEndTag, VForDirective, VForExpression, VIdentifier, VInterpolation,
   VLiteral, VNode, VPureAttribute, VPureScript, VSlotDirective, VSlotExpression, VStartTag, VText,
-  Variable,
-  bindings::{
-    ReferenceKind, collect_expression_references, collect_expression_references_with_kind,
-    collect_parameter_variables,
-  },
 };
 
 const HTML_NS: &str = "http://www.w3.org/1999/xhtml";
@@ -130,7 +125,6 @@ pub(super) struct ParsedLiteral<'b> {
 #[derive(Debug)]
 pub(super) struct ParsedDirectiveExpression<'b> {
   pub(super) expression: Expression<'b>,
-  pub(super) reference_kind: ReferenceKind,
   pub(super) span: Span,
 }
 
@@ -213,11 +207,7 @@ where
       )),
       ParsedNode::Text(text) => self.build_arena_text(text),
       ParsedNode::Interpolation(interpolation) => VNode::Interpolation(ArenaBox::new_in(
-        VInterpolation {
-          references: collect_expression_references(self.vue_allocator, &interpolation.expression),
-          expression: interpolation.expression,
-          span: interpolation.span,
-        },
+        VInterpolation { expression: interpolation.expression, span: interpolation.span },
         self.vue_allocator,
       )),
       ParsedNode::PureScript(script) => VNode::PureScript(ArenaBox::new_in(
@@ -244,10 +234,7 @@ where
   }
 
   fn build_arena_text(&self, text: ParsedText<'b>) -> VNode<'a, 'b> {
-    VNode::Text(ArenaBox::new_in(
-      VText { text: text.value, span: text.span },
-      self.vue_allocator,
-    ))
+    VNode::Text(ArenaBox::new_in(VText { text: text.value, span: text.span }, self.vue_allocator))
   }
 
   fn merge_text(&self, left: ParsedText<'b>, right: ParsedText<'b>) -> ParsedText<'b> {
@@ -263,7 +250,6 @@ where
     namespace: &'static str,
   ) -> VElement<'a, 'b> {
     let child_namespace = element_namespace(element.name, namespace);
-    let variables = self.collect_element_variables(&element.start_tag.attributes);
     let mut attributes = ArenaVec::new_in(self.vue_allocator);
     for attribute in element.start_tag.attributes {
       attributes.push(self.build_arena_attribute(attribute));
@@ -280,37 +266,9 @@ where
       },
       children: self.build_arena_nodes_in_namespace(element.children, child_namespace),
       end_tag: element.end_tag.map(|span| VEndTag { span }),
-      variables,
       style: element.name == "style",
       span: element.span,
     }
-  }
-
-  fn collect_element_variables(
-    &self,
-    attributes: &[ParsedAttribute<'b>],
-  ) -> ArenaVec<'a, Variable<'b>> {
-    let mut variables = ArenaVec::new_in(self.vue_allocator);
-    for attribute in attributes {
-      match attribute {
-        ParsedAttribute::Slot(attribute) => {
-          if let Some(value) = &attribute.value {
-            variables.extend(collect_parameter_variables(
-              self.vue_allocator,
-              &value.params,
-              "scope",
-            ));
-          }
-        }
-        ParsedAttribute::For(attribute) => {
-          if let Some(value) = &attribute.value {
-            variables.extend(collect_parameter_variables(self.vue_allocator, &value.left, "v-for"));
-          }
-        }
-        ParsedAttribute::Pure(_) | ParsedAttribute::Directive(_) => {}
-      }
-    }
-    variables
   }
 
   fn build_arena_attribute(&self, attribute: ParsedAttribute<'b>) -> VAttribute<'a, 'b> {
@@ -326,15 +284,9 @@ where
       ParsedAttribute::Directive(attribute) => VAttribute::VDirective(ArenaBox::new_in(
         VDirective {
           key: self.build_directive_key(attribute.key),
-          value: attribute.value.map(|value| VDirectiveExpression {
-            references: collect_expression_references_with_kind(
-              self.vue_allocator,
-              &value.expression,
-              value.reference_kind,
-            ),
-            expression: value.expression,
-            span: value.span,
-          }),
+          value: attribute
+            .value
+            .map(|value| VDirectiveExpression { expression: value.expression, span: value.span }),
           span: attribute.span,
         },
         self.vue_allocator,
@@ -355,7 +307,6 @@ where
         VForDirective {
           key: self.build_directive_key(attribute.key),
           value: attribute.value.map(|value| VForExpression {
-            references: collect_expression_references(self.js_allocator, &value.right),
             left: value.left,
             right: value.right,
             expression_span: value.expression_span,
@@ -374,15 +325,7 @@ where
     let argument = match key.argument {
       Some(ParsedDirectiveArgument::Dynamic(value)) => {
         Some(VDirectiveArgument::VDirectiveArgument(ArenaBox::new_in(
-          VDirectiveArgumentExpression {
-            references: collect_expression_references_with_kind(
-              self.vue_allocator,
-              &value.expression,
-              value.reference_kind,
-            ),
-            expression: value.expression,
-            span: value.span,
-          },
+          VDirectiveArgumentExpression { expression: value.expression, span: value.span },
           self.vue_allocator,
         )))
       }

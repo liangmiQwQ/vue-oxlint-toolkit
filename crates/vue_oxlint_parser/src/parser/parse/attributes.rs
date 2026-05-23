@@ -1,5 +1,4 @@
 use crate::VueParser;
-use crate::ast::bindings::ReferenceKind;
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::parse::state::{AttrValueKind, CurrentTag, TagAttribute, TagAttrs};
 use crate::parser::parse::tree::{
@@ -406,12 +405,7 @@ where
     };
 
     if !argument.name.contains('-') {
-      return self.parse_directive_expression_node(argument.span, argument.span).map(
-        |mut expression| {
-          expression.reference_kind = ReferenceKind::UnresolvedVariable;
-          expression
-        },
-      );
+      return self.parse_directive_expression_node(argument.span, argument.span);
     }
 
     let name = Self::camelize(argument.name);
@@ -425,7 +419,6 @@ where
         },
         self.js_allocator,
       )),
-      reference_kind: ReferenceKind::UnresolvedVariable,
       span: argument.span,
     })
   }

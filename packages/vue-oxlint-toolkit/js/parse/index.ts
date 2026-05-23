@@ -2,6 +2,7 @@ import type { LocationConvertor } from '../location'
 import type { NativeNode, NativeSfc } from './types'
 import { fixNativeNode } from './fix'
 import { rebuildTemplate } from './template'
+import { applyTemplateScope } from './templateScope'
 import { visitorKeys } from './visitorKeys'
 
 export function rebuildProgram(sfc: NativeSfc, convertor: LocationConvertor) {
@@ -32,6 +33,7 @@ export function rebuildProgram(sfc: NativeSfc, convertor: LocationConvertor) {
   if (template.fragment) {
     visit(template.fragment, null)
   }
+  applyTemplateScope(template.fragment)
 
   return program
 }
@@ -126,9 +128,6 @@ function visit(node: unknown, parent: NativeNode | null) {
       visit(child, node)
     }
   }
-
-  reconnectReferences(node)
-  reconnectVariables(node)
 }
 
 function isNode(value: unknown): value is Record<string, any> & { type: string } {
@@ -137,63 +136,6 @@ function isNode(value: unknown): value is Record<string, any> & { type: string }
     value !== null &&
     typeof (value as { type?: unknown }).type === 'string'
   )
-}
-
-function reconnectReferences(node: Record<string, any>) {
-  if (node.type !== 'VExpressionContainer' || !Array.isArray(node.references)) {
-    return
-  }
-
-  const identifiers = new Map<string, NativeNode>()
-  collectIdentifiers(node.expression, identifiers)
-  for (const reference of node.references) {
-    const id = reference.id
-    if (id?.type !== 'Identifier' || !id.range) {
-      continue
-    }
-    reference.id = identifiers.get(identifierKey(id)) ?? id
-  }
-}
-
-function reconnectVariables(node: Record<string, any>) {
-  if (node.type !== 'VElement' || !Array.isArray(node.variables) || node.variables.length === 0) {
-    return
-  }
-
-  const identifiers = new Map<string, NativeNode>()
-  collectIdentifiers(node.startTag, identifiers)
-  for (const variable of node.variables) {
-    const id = variable.id
-    if (id?.type !== 'Identifier' || !id.range) {
-      continue
-    }
-    variable.id = identifiers.get(identifierKey(id)) ?? id
-  }
-}
-
-function collectIdentifiers(node: unknown, identifiers: Map<string, NativeNode>) {
-  if (!isNode(node)) {
-    return
-  }
-
-  if (node.type === 'Identifier' && node.range) {
-    identifiers.set(identifierKey(node), node)
-  }
-
-  for (const key of childKeys(node)) {
-    const child = node[key]
-    if (Array.isArray(child)) {
-      for (const item of child) {
-        collectIdentifiers(item, identifiers)
-      }
-    } else {
-      collectIdentifiers(child, identifiers)
-    }
-  }
-}
-
-function identifierKey(node: NativeNode) {
-  return `${node.name}:${node.range![0]}:${node.range![1]}`
 }
 
 function childKeys(node: Record<string, any>) {

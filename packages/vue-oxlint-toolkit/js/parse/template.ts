@@ -10,9 +10,7 @@ export function rebuildTemplate(
 ) {
   const tokens = fixNativeNode(sfc.templateTokens, convertor) as Token[]
   const comments = templateComments(sfc, children, convertor)
-  const prepared = children
-    .filter((child) => child.type !== 'VPureScript')
-    .map((child) => prepareTemplateNode(child))
+  const prepared = children.filter((child) => child.type !== 'VPureScript')
   const fragment = {
     type: 'VDocumentFragment',
     range: convertor.range(sfc.range),
@@ -36,18 +34,6 @@ export function rebuildTemplate(
 
 function findTemplateBody(children: NativeNode[]) {
   return children.find((node) => node.type === 'VElement' && node.rawName === 'template')
-}
-
-function prepareTemplateNode(node: NativeNode): NativeNode {
-  if (node.type !== 'VElement') {
-    return node
-  }
-
-  node.children = node.children
-    .filter((child: NativeNode) => child.type !== 'VPureScript')
-    .map((child: NativeNode) => prepareTemplateNode(child))
-
-  return node
 }
 
 function templateComments(sfc: NativeSfc, children: NativeNode[], convertor: LocationConvertor) {
