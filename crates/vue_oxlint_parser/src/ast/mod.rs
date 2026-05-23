@@ -1,7 +1,6 @@
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::Comment;
-use oxc_ast::ast::{Directive, Statement};
-use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::{SourceType, Span};
 
 pub(crate) mod bindings;
@@ -33,8 +32,6 @@ pub struct VueSingleFileComponent<'a, 'b> {
   /// This field should be filled while calling `oxc_parse` function while parse `<script>` tag
   /// `<script setup>` and `<script>` tokens are also added before or after this.
   pub(crate) script_tokens: ArenaVec<'a, SerializableToken<'a, 'b>>,
-  pub(crate) script_directives: ArenaVec<'b, Directive<'b>>,
-  pub(crate) script_body: ArenaVec<'b, Statement<'b>>,
   /// Only for serialization use
   /// Corresponding: `ReturnValue<typeof await('vue-eslint-parser')>['templateBody']['tokens']`
   ///
@@ -74,7 +71,6 @@ where
     state.serialize_field("template_comments", &template_comments);
 
     state.serialize_field("scriptTokens", &self.script_tokens);
-    state.serialize_field("scriptBody", &Concat2(&self.script_directives, &self.script_body));
     state.serialize_field("templateTokens", &self.template_tokens);
     state.serialize_field("source_type", &self.source_type.map(SourceType::module_kind));
     state.serialize_span(self.span);

@@ -81,8 +81,6 @@ impl<'a, 'b: 'a> VueParser<'a, 'b> {
         script_comments: ArenaVec::new_in(vue_allocator),
         template_comments: ArenaVec::new_in(vue_allocator),
         script_tokens: ArenaVec::new_in(js_allocator),
-        script_directives: ArenaVec::new_in(js_allocator),
-        script_body: ArenaVec::new_in(js_allocator),
         template_tokens: ArenaVec::new_in(vue_allocator),
         children: ArenaVec::new_in(vue_allocator),
         span: Span::new(0, source_text.len() as u32),

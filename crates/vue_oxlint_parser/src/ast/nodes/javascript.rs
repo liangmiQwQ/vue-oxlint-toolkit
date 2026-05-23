@@ -18,7 +18,9 @@
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{Directive, Expression, FormalParameters, Statement};
-use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_estree::{
+  Concat2, ESTree, JsonSafeString, SequenceSerializer, Serializer, StructSerializer,
+};
 use oxc_span::Span;
 
 use crate::ast::bindings::Reference;
@@ -73,6 +75,7 @@ pub struct VSlotExpression<'b> {
 pub struct VPureScript<'b> {
   pub statements: Vec<'b, Statement<'b>>,
   pub directives: Vec<'b, Directive<'b>>,
+  pub setup: bool,
   pub span: Span,
 }
 
@@ -203,8 +206,40 @@ impl ESTree for VPureScript<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VPureScript"));
-    state.serialize_field("body", &Concat2(&self.directives, &self.statements));
+    if self.setup {
+      state.serialize_field("body", &SetupScriptBody(self));
+    } else {
+      state.serialize_field("body", &Concat2(&self.directives, &self.statements));
+    }
     state.serialize_span(self.span);
+    state.end();
+  }
+}
+
+struct SetupScriptBody<'b>(&'b VPureScript<'b>);
+
+impl ESTree for SetupScriptBody<'_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut seq = serializer.serialize_sequence();
+    for directive in &self.0.directives {
+      seq.serialize_element(&SetupDirectiveStatement(directive));
+    }
+    for statement in &self.0.statements {
+      seq.serialize_element(statement);
+    }
+    seq.end();
+  }
+}
+
+struct SetupDirectiveStatement<'b>(&'b Directive<'b>);
+
+impl ESTree for SetupDirectiveStatement<'_> {
+  fn serialize<S: Serializer>(&self, serializer: S) {
+    let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
+    state.serialize_field("expression", &self.0.expression);
+    state.serialize_ts_field("directive", &());
+    state.serialize_span(self.0.span);
     state.end();
   }
 }

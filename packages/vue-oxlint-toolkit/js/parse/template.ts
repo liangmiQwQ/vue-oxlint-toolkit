@@ -7,12 +7,17 @@ const HTML_NS = 'http://www.w3.org/1999/xhtml'
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const MATH_NS = 'http://www.w3.org/1998/Math/MathML'
 
-export function rebuildTemplate(sfc: NativeSfc, convertor: LocationConvertor) {
-  const children = fixNativeNode(sfc.children, convertor) as NativeNode[]
+export function rebuildTemplate(
+  sfc: NativeSfc,
+  convertor: LocationConvertor,
+  children = fixNativeNode(sfc.children, convertor) as NativeNode[],
+) {
   const tokens = fixNativeNode(sfc.templateTokens, convertor) as Token[]
   const comments = templateComments(sfc, children, convertor)
   const prepared = mergeTextChildren(
-    children.map((child) => prepareTemplateNode(child, HTML_NS, convertor, comments)),
+    children
+      .filter((child) => child.type !== 'VPureScript')
+      .map((child) => prepareTemplateNode(child, HTML_NS, convertor, comments)),
     convertor,
     comments,
   )
@@ -62,9 +67,9 @@ function prepareTemplateNode(
     ? prepareTemplateNode(node.endTag, childNamespace, convertor, comments)
     : null
   node.children = mergeTextChildren(
-    node.children.map((child: NativeNode) =>
-      prepareTemplateNode(child, childNamespace, convertor, comments),
-    ),
+    node.children
+      .filter((child: NativeNode) => child.type !== 'VPureScript')
+      .map((child: NativeNode) => prepareTemplateNode(child, childNamespace, convertor, comments)),
     convertor,
     comments,
   )

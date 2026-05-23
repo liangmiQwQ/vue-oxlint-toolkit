@@ -3,10 +3,8 @@ use crate::lexer::{Lexer, LexerMode, VToken, VTokenKind};
 use crate::parser::parse::state::{
   CurrentTag, ElementState, PendingScript, RawElement, ScriptInfo, TagAttrs,
 };
-use crate::parser::parse::tree::{ParsedElement, ParsedNode, ParsedStartTag};
+use crate::parser::parse::tree::{ParsedElement, ParsedNode, ParsedPureScript, ParsedStartTag};
 use crate::parser::parse::{token_end, token_start};
-use oxc_allocator::Box as ArenaBox;
-use oxc_ast::ast::{Directive, Expression, ExpressionStatement, Statement};
 use oxc_span::{SourceType, Span};
 
 impl<'a, 'b> VueParser<'a, 'b>
@@ -65,15 +63,17 @@ where
 
     let tag_end = token_end(token);
     if tag.is_end {
-      if let Some(script) = pending_script.take() {
-        self.emit_script_tokens(
+      if let Some(script) = pending_script.take()
+        && let Some(script_node) = self.emit_script_tokens(
           script.info,
           script.body_start,
           script.body_end,
           tag_end,
           seen_script,
           seen_setup,
-        );
+        )
+      {
+        Self::push_parsed_node(root_nodes, node_stack, ParsedNode::PureScript(script_node));
       }
       Self::close_node(tag.open_start, tag_end, &tag.normalized_name, node_stack, root_nodes);
       pop_element(element_stack, &tag.normalized_name);
@@ -120,16 +120,16 @@ where
     close_end: usize,
     seen_script: &mut bool,
     seen_setup: &mut bool,
-  ) {
+  ) -> Option<ParsedPureScript<'b>> {
     if script.attrs.setup {
       if *seen_setup || body_start == body_end {
         *seen_setup = true;
-        return;
+        return None;
       }
       *seen_setup = true;
     } else {
       if *seen_script || (*seen_setup && body_start == body_end) {
-        return;
+        return None;
       }
       *seen_script = true;
     }
@@ -137,18 +137,12 @@ where
     self.push_script_punctuator(script.open_start, script.open_end, "<script>");
     self.apply_script_source_type(script.attrs.lang);
 
+    let mut script_node = None;
     if body_start < body_end {
       let span = Span::new(body_start as u32, body_end as u32);
-      if let Some((mut directives, mut body, tokens)) = self.oxc_parse_script(span) {
-        if script.attrs.setup {
-          let js_allocator = self.js_allocator;
-          self.sfc.script_body.extend(
-            directives.into_iter().map(|directive| directive_to_statement(js_allocator, directive)),
-          );
-        } else {
-          self.sfc.script_directives.append(&mut directives);
-        }
-        self.sfc.script_body.append(&mut body);
+      if let Some((directives, statements, tokens)) = self.oxc_parse_script(span) {
+        script_node =
+          Some(ParsedPureScript { directives, statements, setup: script.attrs.setup, span });
         if !tokens.is_empty() {
           self.sfc.script_tokens.push(tokens.into());
         }
@@ -156,6 +150,7 @@ where
     }
 
     self.push_script_punctuator(body_end, close_end, "</script>");
+    script_node
   }
 
   fn open_node(
@@ -236,20 +231,6 @@ fn is_raw_text_element(name: &str) -> bool {
 
 fn is_rcdata_element(name: &str) -> bool {
   matches!(name, "textarea" | "title")
-}
-
-fn directive_to_statement<'b>(
-  js_allocator: &'b oxc_allocator::Allocator,
-  directive: Directive<'b>,
-) -> Statement<'b> {
-  Statement::ExpressionStatement(ArenaBox::new_in(
-    ExpressionStatement {
-      node_id: directive.node_id,
-      span: directive.span,
-      expression: Expression::StringLiteral(ArenaBox::new_in(directive.expression, js_allocator)),
-    },
-    js_allocator,
-  ))
 }
 
 fn is_foreign_content(element_stack: &[ElementState]) -> bool {

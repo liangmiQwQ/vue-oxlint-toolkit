@@ -1,12 +1,13 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::ast::{Expression, FormalParameters};
+use oxc_ast::ast::{Directive, Expression, FormalParameters, Statement};
 use oxc_span::Span;
 
 use crate::VueParser;
 use crate::ast::{
   VAttribute, VDirective, VDirectiveArgument, VDirectiveArgumentExpression, VDirectiveExpression,
   VDirectiveKey, VElement, VEndTag, VForDirective, VForExpression, VIdentifier, VInterpolation,
-  VLiteral, VNode, VPureAttribute, VSlotDirective, VSlotExpression, VStartTag, VText, Variable,
+  VLiteral, VNode, VPureAttribute, VPureScript, VSlotDirective, VSlotExpression, VStartTag, VText,
+  Variable,
   bindings::{
     ReferenceKind, collect_expression_references, collect_expression_references_with_kind,
     collect_parameter_variables,
@@ -18,6 +19,7 @@ pub(super) enum ParsedNode<'b> {
   Element(ParsedElement<'b>),
   Text(ParsedText<'b>),
   Interpolation(ParsedInterpolation<'b>),
+  PureScript(ParsedPureScript<'b>),
 }
 
 #[derive(Debug)]
@@ -46,6 +48,14 @@ pub(super) struct ParsedText<'b> {
 #[derive(Debug)]
 pub(super) struct ParsedInterpolation<'b> {
   pub(super) expression: Expression<'b>,
+  pub(super) span: Span,
+}
+
+#[derive(Debug)]
+pub(super) struct ParsedPureScript<'b> {
+  pub(super) directives: ArenaVec<'b, Directive<'b>>,
+  pub(super) statements: ArenaVec<'b, Statement<'b>>,
+  pub(super) setup: bool,
   pub(super) span: Span,
 }
 
@@ -175,6 +185,15 @@ where
           references: collect_expression_references(self.vue_allocator, &interpolation.expression),
           expression: interpolation.expression,
           span: interpolation.span,
+        },
+        self.vue_allocator,
+      )),
+      ParsedNode::PureScript(script) => VNode::PureScript(ArenaBox::new_in(
+        VPureScript {
+          directives: script.directives,
+          statements: script.statements,
+          setup: script.setup,
+          span: script.span,
         },
         self.vue_allocator,
       )),

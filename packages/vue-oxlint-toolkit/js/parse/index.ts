@@ -5,8 +5,9 @@ import { rebuildTemplate } from './template'
 import { visitorKeys } from './visitorKeys'
 
 export function rebuildProgram(sfc: NativeSfc, convertor: LocationConvertor) {
-  const template = rebuildTemplate(sfc, convertor)
-  const body = fixNativeNode(sfc.scriptBody, convertor)
+  const children = fixNativeNode(sfc.children, convertor) as NativeNode[]
+  const body = scriptBody(children)
+  const template = rebuildTemplate(sfc, convertor, children)
   const blocks = scriptBlocks(template.fragment.children)
   const comments = (fixNativeNode(sfc.script_comments, convertor) as NativeNode[]).filter(
     (comment) =>
@@ -33,6 +34,22 @@ export function rebuildProgram(sfc: NativeSfc, convertor: LocationConvertor) {
   }
 
   return program
+}
+
+function scriptBody(children: NativeNode[]) {
+  const body: NativeNode[] = []
+  collectScriptBody(children, body)
+  return body
+}
+
+function collectScriptBody(nodes: NativeNode[], body: NativeNode[]) {
+  for (const node of nodes) {
+    if (node.type === 'VPureScript') {
+      body.push(...node.body)
+    } else if (Array.isArray(node.children)) {
+      collectScriptBody(node.children, body)
+    }
+  }
 }
 
 function programRange(

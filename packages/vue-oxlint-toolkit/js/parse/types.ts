@@ -2,7 +2,6 @@ export interface NativeSfc {
   type: 'VueSingleFileComponent'
   children: NativeNode[]
   script_comments: NativeNode[]
-  scriptBody: NativeNode[]
   template_comments: NativeNode[]
   scriptTokens: NativeNode[]
   templateTokens: NativeNode[]
