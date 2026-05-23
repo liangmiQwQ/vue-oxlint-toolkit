@@ -34,9 +34,10 @@ For how to get a `vue-eslint-parser` compatible AST, we should divide the work c
 
 Some signs of behavior exceeding boundaries:
 
-1. If you found toolkit needs to read `source_text` after getting parser's AST for parsing use
-2. If you found toolkit has a separate error define / process logic besides Oxc's diagnostics and Raw errors.
-3. If you found `@typescript-eslint/parser` or `vue-eslint-parser` is called outside of tests.
+1. If you find toolkit needs to read `source_text` after getting parser's AST for parsing use
+2. If you find toolkit has a separate error define / process logic besides Oxc's diagnostics and Raw errors.
+3. If you find `@typescript-eslint/parser` or `vue-eslint-parser` is called outside of tests.
+4. If you find toolkit is modifying generated AST by type (Except top-level nodes and BigInt).
 
 ## Conventions
 
