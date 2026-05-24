@@ -52,7 +52,7 @@ bench:
 bump TYPE:
   just main
   node -p "require('semver').valid('{{ TYPE }}') || (console.error('Invalid version'), process.exit(1))"
-  vpx bumpp --no-commit -y --release -r {{ TYPE }}
+  vpx bumpp --no-commit -y -r --release {{ TYPE }}
   cargo workspaces version --no-git-commit -y custom {{ TYPE }}
   just build
   git add .
