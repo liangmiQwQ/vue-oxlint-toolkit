@@ -88,7 +88,7 @@ dependencies = [
 
 [[package]]
 name = "benchmark"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "criterion",
  "oxc_allocator",
@@ -1720,7 +1720,7 @@ dependencies = [
 
 [[package]]
 name = "vue_oxlint_jsx"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "bitflags 2.11.1",
  "cow-utils",
@@ -1748,7 +1748,7 @@ dependencies = [
 
 [[package]]
 name = "vue_oxlint_parser"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "insta",
  "memchr",
@@ -1768,7 +1768,7 @@ dependencies = [
 
 [[package]]
 name = "vue_oxlint_toolkit"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "napi",
  "napi-build",
