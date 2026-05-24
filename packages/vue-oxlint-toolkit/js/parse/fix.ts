@@ -42,6 +42,10 @@ export function fixNativeNode<T>(value: T, convertor: LocationConvertor): T {
     }
   }
 
+  if (fixed.type === 'ParenthesizedExpression') {
+    return fixed.expression as T
+  }
+
   if (fixed.type === 'Literal' && fixed.value === null && typeof fixed.bigint === 'string') {
     fixed.value = BigInt(fixed.bigint)
   }

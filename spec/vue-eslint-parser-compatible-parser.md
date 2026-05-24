@@ -16,7 +16,7 @@ This spec only covers the parser/toolkit work needed to produce a `vue-eslint-pa
 - Toolkit JavaScript should not become a second parser.
 - Toolkit JavaScript should not infer template or script AST structure from source text.
 - Toolkit JavaScript should not call `@typescript-eslint/parser`, `vue-eslint-parser`, or another parser outside tests.
-- Toolkit JavaScript should not patch generated inner AST nodes by node type, except explicitly allowed metadata injection.
+- Toolkit JavaScript should not patch generated inner AST nodes by node type, except explicitly allowed metadata injection and transport normalization.
 
 ## Architecture Boundary
 
@@ -52,6 +52,7 @@ It may handle:
 - Assigning `parent` links.
 - Converting UTF-8 offsets from Rust into UTF-16 offsets for JavaScript / ESLint consumers.
 - Parsing JSON or another transport format returned by native bindings.
+- Normalizing transport-only ESTree differences explicitly allowed by this spec.
 - Optional JS-only metadata injection explicitly defined by this spec.
 - Generating template `references` and `variables` compatibility metadata.
 
@@ -61,7 +62,7 @@ It must not:
 - Reconstruct inner V\* node structure from source text.
 - Define a separate parser error model independent of Oxc diagnostics and raw parser errors.
 - Call `@typescript-eslint/parser` or `vue-eslint-parser` outside tests.
-- Patch generated inner AST by `node.type`, except explicitly allowed metadata injection such as template scope metadata.
+- Patch generated inner AST by `node.type`, except explicitly allowed transport normalization and metadata injection.
 
 ## Boundary Checks
 
@@ -70,7 +71,7 @@ Use these checks when reviewing parser/toolkit compatibility work:
 1. If toolkit needs to read `source_text` after receiving parser AST for parsing use, the logic belongs in parser crate.
 2. If toolkit defines or processes errors separately from Oxc diagnostics and raw errors, the logic belongs in parser crate or the diagnostic transport layer.
 3. If `@typescript-eslint/parser` or `vue-eslint-parser` is called outside tests, the implementation is crossing the boundary.
-4. If toolkit modifies generated AST by node type, the logic belongs in parser serialization or parser AST construction, except for top-level root rebuild, BigInt value conversion, `parent` links, UTF-16 location conversion, and explicitly allowed metadata injection such as template scope metadata.
+4. If toolkit modifies generated AST by node type, the logic belongs in parser serialization or parser AST construction, except for top-level root rebuild, `parent` links, UTF-16 location conversion, explicitly allowed transport normalization, and explicitly allowed metadata injection such as template scope metadata.
 
 ## Source Text and Location Rules
 
@@ -212,7 +213,33 @@ Examples:
 
 The parser should preserve the source span of the Vue expression region while exposing the compatible expression node shape.
 
-If Oxc emits AST nodes that differ from the `vue-eslint-parser` compatibility target, parser-side ESTree serialization should normalize them. For example, if the compatibility target should not expose `ParenthesizedExpression`, parser serialization should emit the inner expression directly.
+If Oxc emits AST nodes that differ from the `vue-eslint-parser` compatibility target, parser-side ESTree serialization may normalize them. Toolkit may also normalize explicitly allowed transport-only ESTree differences after JSON parsing.
+
+### ESTree Transport Normalization
+
+Toolkit may normalize `ParenthesizedExpression` by replacing it with its inner `expression`.
+
+This exception exists because:
+
+- Oxc may preserve parentheses as explicit `ParenthesizedExpression` nodes.
+- `vue-eslint-parser` with `@typescript-eslint/parser` does not expose `ParenthesizedExpression` in the compatible AST shape.
+- The normalization does not require reading source text or reparsing; it only rewrites an already parsed ESTree transport shape.
+
+Example source:
+
+```ts
+const grouped = a + b + c
+const object = { wrapped: foo }
+```
+
+Allowed toolkit normalization:
+
+```text
+ParenthesizedExpression(BinaryExpression(a + b)) -> BinaryExpression(a + b)
+ParenthesizedExpression(Identifier(foo)) -> Identifier(foo)
+```
+
+No other Oxc ESTree node-type normalization is allowed by default. New cases must be added to this spec before implementation.
 
 ### BigInt
 
@@ -419,10 +446,10 @@ Disallowed uses:
 Use this checklist before merging compatibility work:
 
 - [ ] Parser emits compatible V\* node fields for all inner template nodes touched by the feature.
-- [ ] Toolkit only performs root rebuild, parent links, location conversion, transport parsing, BigInt conversion, and explicitly allowed template scope metadata generation.
+- [ ] Toolkit only performs root rebuild, parent links, location conversion, transport parsing, BigInt conversion, explicitly allowed transport normalization, and explicitly allowed template scope metadata generation.
 - [ ] No production code calls `vue-eslint-parser`.
 - [ ] No production code calls `@typescript-eslint/parser`.
 - [ ] Toolkit does not inspect `source_text` to infer AST structure.
-- [ ] Toolkit does not branch on inner node types to patch compatibility fields, except for the isolated template scope metadata module.
+- [ ] Toolkit does not branch on inner node types to patch compatibility fields, except for explicitly allowed transport normalization and the isolated template scope metadata module.
 - [ ] Diagnostics originate from Oxc diagnostics or raw parser errors.
 - [ ] Tests compare behavior against `vue-eslint-parser` where compatibility is being claimed.
