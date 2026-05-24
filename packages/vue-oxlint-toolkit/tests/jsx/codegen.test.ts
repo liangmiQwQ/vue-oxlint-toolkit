@@ -1,5 +1,5 @@
 import { it, expect } from 'vite-plus/test'
-import { transformJsx } from '../js'
+import { transformJsx } from '../../js'
 
 it('transforms Vue SFCs to generated JSX', () => {
   const source = `<script setup lang="ts">

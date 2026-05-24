@@ -1,7 +1,18 @@
 use crate::VueParser;
 use crate::lexer::{VToken, VTokenKind};
 use crate::parser::parse::state::{AttrValueKind, CurrentTag, TagAttribute, TagAttrs};
+use crate::parser::parse::tree::{
+  ParsedAttribute, ParsedDirective, ParsedDirectiveArgument, ParsedDirectiveKey,
+  ParsedForDirective, ParsedIdentifier, ParsedLiteral, ParsedPureAttribute, ParsedSlotDirective,
+};
 use crate::parser::parse::{token_end, token_start};
+use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::FromIn;
+use oxc_ast::ast::{Expression, IdentifierReference};
+use oxc_span::Span;
+use oxc_str::Ident;
+use oxc_syntax::node::NodeId;
+use std::cell::Cell;
 
 impl<'a, 'b> VueParser<'a, 'b>
 where
@@ -180,6 +191,276 @@ where
         self.emit_attr_value(attr.name, value, tag.attrs.v_pre);
       }
     }
+  }
+
+  pub(super) fn parse_tag_attributes(&mut self, tag: &CurrentTag<'b>) -> Vec<ParsedAttribute<'b>> {
+    tag.attributes.iter().map(|attr| self.parse_tag_attribute(tag, *attr)).collect()
+  }
+
+  fn parse_tag_attribute(
+    &mut self,
+    tag: &CurrentTag<'b>,
+    attr: TagAttribute<'b>,
+  ) -> ParsedAttribute<'b> {
+    if (tag.attrs.v_pre && !attr.name.eq_ignore_ascii_case("v-pre"))
+      || !is_directive_attribute(attr.name)
+    {
+      return ParsedAttribute::Pure(Self::parse_pure_attribute(attr));
+    }
+
+    let key = self.parse_directive_key(attr.name, attr.name_start, attr.name_end);
+    let span = Span::new(attr.name_start as u32, attr_span_end(attr) as u32);
+    let kind = attr_value_kind(attr.name);
+
+    if key.name.name == "slot" {
+      let value = self.parse_slot_attr_value(attr);
+      return ParsedAttribute::Slot(ParsedSlotDirective { key, value, span });
+    }
+
+    if key.name.name == "for" {
+      let value = self.parse_v_for_attr_value(attr);
+      return ParsedAttribute::For(ParsedForDirective { key, value, span });
+    }
+
+    let value = if matches!(kind, AttrValueKind::Literal) {
+      None
+    } else {
+      self.parse_expression_attr_value(attr).or_else(|| self.parse_bind_shorthand_expression(&key))
+    };
+
+    ParsedAttribute::Directive(ParsedDirective { key, value, span })
+  }
+
+  fn parse_pure_attribute(attr: TagAttribute<'b>) -> ParsedPureAttribute<'b> {
+    ParsedPureAttribute {
+      key: ParsedIdentifier {
+        name: attr.name,
+        raw_name: attr.name,
+        span: Span::new(attr.name_start as u32, attr.name_end as u32),
+      },
+      value: attr
+        .value
+        .map(|value| ParsedLiteral { value: value.value.unwrap_or_default(), span: value.span }),
+      span: Span::new(attr.name_start as u32, attr_span_end(attr) as u32),
+    }
+  }
+
+  fn parse_expression_attr_value(
+    &mut self,
+    attr: TagAttribute<'b>,
+  ) -> Option<crate::parser::parse::tree::ParsedDirectiveExpression<'b>> {
+    let value = attr.value?;
+    let (start, end) = self.unquoted_value_span(value);
+    if start >= end {
+      return None;
+    }
+
+    self.parse_directive_expression_node(
+      Span::new(start as u32, end as u32),
+      Span::new(token_start(value) as u32, token_end(value) as u32),
+    )
+  }
+
+  fn parse_slot_attr_value(
+    &mut self,
+    attr: TagAttribute<'b>,
+  ) -> Option<crate::parser::parse::tree::ParsedSlotExpression<'b>> {
+    let value = attr.value?;
+    let (start, end) = self.unquoted_value_span(value);
+    self.parse_slot_expression_node(
+      start,
+      end,
+      Span::new(token_start(value) as u32, token_end(value) as u32),
+    )
+  }
+
+  fn parse_v_for_attr_value(
+    &mut self,
+    attr: TagAttribute<'b>,
+  ) -> Option<crate::parser::parse::tree::ParsedForExpression<'b>> {
+    let value = attr.value?;
+    let (start, end) = self.unquoted_value_span(value);
+    self.parse_v_for_expression_node(
+      start,
+      end,
+      Span::new(token_start(value) as u32, token_end(value) as u32),
+    )
+  }
+
+  fn unquoted_value_span(&self, token: VToken<'b>) -> (usize, usize) {
+    let start = token_start(token);
+    let end = token_end(token);
+    if start < end && matches!(self.byte(start), b'\'' | b'"') {
+      (start + 1, end - 1)
+    } else {
+      (start, end)
+    }
+  }
+
+  fn parse_directive_key(
+    &mut self,
+    name: &'b str,
+    start: usize,
+    end: usize,
+  ) -> ParsedDirectiveKey<'b> {
+    if let Some(prefix) = name.as_bytes().first().copied()
+      && matches!(prefix, b':' | b'@' | b'#')
+    {
+      let semantic_name = match prefix {
+        b':' => "bind",
+        b'@' => "on",
+        b'#' => "slot",
+        _ => unreachable!(),
+      };
+      let semantic_name = self.alloc_str(semantic_name);
+      let (argument, modifiers) = self.parse_argument_and_modifiers(start + 1, end);
+
+      return ParsedDirectiveKey {
+        name: ParsedIdentifier {
+          name: semantic_name,
+          raw_name: &self.source_text[start..=start],
+          span: Span::new(start as u32, (start + 1) as u32),
+        },
+        argument,
+        modifiers,
+        span: Span::new(start as u32, end as u32),
+      };
+    }
+
+    let name_start = start + 2;
+    let directive_name_end = self.directive_name_end(name_start, end);
+    let raw_name = &self.source_text[name_start..directive_name_end];
+    let rest_start = if directive_name_end < end && self.byte(directive_name_end) == b':' {
+      directive_name_end + 1
+    } else {
+      directive_name_end
+    };
+    let (argument, modifiers) = self.parse_argument_and_modifiers(rest_start, end);
+
+    ParsedDirectiveKey {
+      name: ParsedIdentifier {
+        name: raw_name,
+        raw_name,
+        span: Span::new(start as u32, directive_name_end as u32),
+      },
+      argument,
+      modifiers,
+      span: Span::new(start as u32, end as u32),
+    }
+  }
+
+  fn directive_name_end(&self, mut start: usize, end: usize) -> usize {
+    while start < end && !matches!(self.byte(start), b':' | b'.') {
+      start += 1;
+    }
+    start
+  }
+
+  fn parse_argument_and_modifiers(
+    &mut self,
+    start: usize,
+    end: usize,
+  ) -> (Option<ParsedDirectiveArgument<'b>>, Vec<ParsedIdentifier<'b>>) {
+    if start >= end {
+      return (None, Vec::new());
+    }
+
+    let (argument, modifier_start) = if self.byte(start) == b'[' {
+      let Some(arg_end) = self.find_dynamic_arg_end(start, end) else {
+        return (None, self.parse_modifiers(start, end));
+      };
+      {
+        let expression = self.parse_directive_expression_node(
+          Span::new((start + 1) as u32, (arg_end - 1) as u32),
+          Span::new(start as u32, arg_end as u32),
+        );
+        (expression.map(ParsedDirectiveArgument::Dynamic), arg_end)
+      }
+    } else {
+      let first_dot = self.source_text[start..end].find('.').map(|offset| start + offset);
+      let arg_end = first_dot.unwrap_or(end);
+      let argument = (start < arg_end).then(|| {
+        ParsedDirectiveArgument::Static(ParsedIdentifier {
+          name: &self.source_text[start..arg_end],
+          raw_name: &self.source_text[start..arg_end],
+          span: Span::new(start as u32, arg_end as u32),
+        })
+      });
+      (argument, arg_end)
+    };
+
+    (argument, self.parse_modifiers(modifier_start, end))
+  }
+
+  fn parse_bind_shorthand_expression(
+    &mut self,
+    key: &ParsedDirectiveKey<'b>,
+  ) -> Option<crate::parser::parse::tree::ParsedDirectiveExpression<'b>> {
+    if key.name.name != "bind" || !key.modifiers.is_empty() {
+      return None;
+    }
+
+    let Some(ParsedDirectiveArgument::Static(argument)) = key.argument else {
+      return None;
+    };
+
+    if !argument.name.contains('-') {
+      return self.parse_directive_expression_node(argument.span, argument.span);
+    }
+
+    let name = Self::camelize(argument.name);
+    Some(crate::parser::parse::tree::ParsedDirectiveExpression {
+      expression: Expression::Identifier(ArenaBox::new_in(
+        IdentifierReference {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: argument.span,
+          name: Ident::from_in(name, self.js_allocator),
+          reference_id: Cell::new(None),
+        },
+        self.js_allocator,
+      )),
+      span: argument.span,
+    })
+  }
+
+  fn camelize(value: &str) -> String {
+    let mut result = String::with_capacity(value.len());
+    let mut uppercase_next = false;
+    for char in value.chars() {
+      if char == '-' {
+        uppercase_next = true;
+      } else if uppercase_next {
+        result.extend(char.to_uppercase());
+        uppercase_next = false;
+      } else {
+        result.push(char);
+      }
+    }
+    result
+  }
+
+  fn parse_modifiers(&self, mut start: usize, end: usize) -> Vec<ParsedIdentifier<'b>> {
+    let mut modifiers = Vec::new();
+    while start < end {
+      if self.byte(start) != b'.' {
+        break;
+      }
+
+      let modifier_start = start + 1;
+      let next_dot =
+        self.source_text[modifier_start..end].find('.').map(|offset| modifier_start + offset);
+      let modifier_end = next_dot.unwrap_or(end);
+      if modifier_start < modifier_end {
+        let modifier = &self.source_text[modifier_start..modifier_end];
+        modifiers.push(ParsedIdentifier {
+          name: modifier,
+          raw_name: modifier,
+          span: Span::new(modifier_start as u32, modifier_end as u32),
+        });
+      }
+      start = modifier_end;
+    }
+    modifiers
   }
 
   fn emit_attr_name(&mut self, name: &'b str, start: usize, end: usize) {
@@ -374,4 +655,18 @@ fn attr_value_kind(attr_name: &str) -> AttrValueKind {
   }
 
   AttrValueKind::Literal
+}
+
+fn is_directive_attribute(name: &str) -> bool {
+  if let Some(first) = name.as_bytes().first().copied()
+    && matches!(first, b':' | b'@' | b'#')
+  {
+    return name.len() > 1;
+  }
+
+  name.starts_with("v-") && !name.ends_with(':') && name.len() > 2
+}
+
+const fn attr_span_end(attr: TagAttribute<'_>) -> usize {
+  if let Some(value) = attr.value { value.span.end as usize } else { attr.name_end }
 }

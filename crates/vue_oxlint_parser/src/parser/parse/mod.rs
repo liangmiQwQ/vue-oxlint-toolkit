@@ -3,11 +3,13 @@ mod directives;
 mod elements;
 mod emit;
 mod state;
+mod tree;
 
 use crate::lexer::{Lexer, VToken, VTokenKind};
 use crate::parser::irregular_whitespaces::collect_irregular_whitespaces;
+use crate::parser::parse::tree::{ParsedInterpolation, ParsedNode, ParsedText};
 use crate::{VueParser, VueParserReturn};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 
 impl<'a, 'b> VueParser<'a, 'b> {
   #[must_use]
@@ -40,15 +42,34 @@ where
     let mut raw_element = None;
     let mut pending_script = None;
     let mut interpolation_start = None;
+    let mut interpolation_open_start = None;
     let mut seen_script = false;
     let mut seen_setup = false;
+    let mut root_nodes = Vec::new();
+    let mut node_stack = Vec::new();
 
     while let Some(token) = lexer.next_token() {
       if let Some(start) = interpolation_start {
         if token.kind == VTokenKind::VExpressionEnd {
+          if let Some((expression, _)) =
+            self.parse_pure_expression(Span::new(start as u32, token_start(token) as u32))
+          {
+            Self::push_parsed_node(
+              &mut root_nodes,
+              &mut node_stack,
+              ParsedNode::Interpolation(ParsedInterpolation {
+                expression,
+                span: Span::new(
+                  interpolation_open_start.unwrap_or(start) as u32,
+                  token_end(token) as u32,
+                ),
+              }),
+            );
+          }
           self.emit_expression_tokens(start, token_start(token));
           self.push_template_vtoken(token);
           interpolation_start = None;
+          interpolation_open_start = None;
         }
         continue;
       }
@@ -56,6 +77,7 @@ where
       match token.kind {
         VTokenKind::HTMLComment | VTokenKind::HTMLBogusComment => {
           self.push_template_comment(token);
+          Self::push_parsed_node(&mut root_nodes, &mut node_stack, ParsedNode::CommentBoundary);
         }
         VTokenKind::HTMLTagOpen | VTokenKind::HTMLEndTagOpen => {
           self.handle_tag_open(token, &mut current_tag, &mut raw_element, &mut pending_script);
@@ -73,6 +95,8 @@ where
             &mut lexer,
             &mut current_tag,
             &mut element_stack,
+            &mut node_stack,
+            &mut root_nodes,
             &mut raw_element,
             &mut pending_script,
             &mut seen_script,
@@ -100,6 +124,7 @@ where
         VTokenKind::VExpressionStart => {
           self.push_template_vtoken(token);
           interpolation_start = Some(token_end(token));
+          interpolation_open_start = Some(token_start(token));
         }
         VTokenKind::HTMLWhitespace if current_tag.is_some() => {
           if let Some(tag) = &mut current_tag {
@@ -110,9 +135,33 @@ where
             }
           }
         }
-        _ => self.push_template_vtoken(token),
+        _ => {
+          if let Some(value) = token.value
+            && matches!(
+              token.kind,
+              VTokenKind::HTMLText
+                | VTokenKind::HTMLWhitespace
+                | VTokenKind::HTMLRCDataText
+                | VTokenKind::HTMLRawText
+                | VTokenKind::HTMLCDataText
+            )
+          {
+            Self::push_parsed_node(
+              &mut root_nodes,
+              &mut node_stack,
+              ParsedNode::Text(ParsedText { value, span: token.span }),
+            );
+          }
+          self.push_template_vtoken(token);
+        }
       }
     }
+
+    while let Some(element) = node_stack.pop() {
+      Self::push_parsed_node(&mut root_nodes, &mut node_stack, ParsedNode::Element(element));
+    }
+
+    self.sfc.children = self.build_arena_nodes(root_nodes);
   }
 
   pub(super) fn alloc_str(&self, value: &str) -> &'b str {

@@ -2,12 +2,9 @@ use oxc_allocator::{Box, Vec};
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 use oxc_span::Span;
 
-use crate::ast::{
-  bindings::Variable,
-  nodes::{
-    attribute::VAttribute,
-    javascript::{VInterpolation, VPureScript},
-  },
+use crate::ast::nodes::{
+  attribute::VAttribute,
+  javascript::{VInterpolation, VPureScript},
 };
 
 #[derive(Debug)]
@@ -15,7 +12,7 @@ pub enum VNode<'a, 'b> {
   Element(Box<'a, VElement<'a, 'b>>),
   Text(Box<'a, VText<'a>>),
   Comment(Box<'a, VComment<'a>>),
-  Interpolation(Box<'a, VInterpolation<'a, 'b>>),
+  Interpolation(Box<'a, VInterpolation<'b>>),
   PureScript(Box<'a, VPureScript<'b>>),
 }
 
@@ -23,10 +20,11 @@ pub enum VNode<'a, 'b> {
 pub struct VElement<'a, 'b> {
   pub name: &'a str,
   pub raw_name: &'a str,
+  pub namespace: &'static str,
   pub start_tag: VStartTag<'a, 'b>,
   pub children: Vec<'a, VNode<'a, 'b>>,
   pub end_tag: Option<VEndTag>,
-  pub variables: Vec<'a, Variable<'a>>,
+  pub style: bool,
   pub span: Span,
 }
 
@@ -75,10 +73,13 @@ impl ESTree for VElement<'_, '_> {
     state.serialize_field("type", &JsonSafeString("VElement"));
     state.serialize_field("name", &self.name);
     state.serialize_field("rawName", &self.raw_name);
+    state.serialize_field("namespace", &self.namespace);
     state.serialize_field("startTag", &self.start_tag);
     state.serialize_field("children", &self.children);
     state.serialize_field("endTag", &self.end_tag);
-    state.serialize_field("variables", &self.variables);
+    if self.style {
+      state.serialize_field("style", &true);
+    }
     state.serialize_span(self.span);
     state.end();
   }
@@ -108,7 +109,7 @@ impl ESTree for VText<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
     state.serialize_field("type", &JsonSafeString("VText"));
-    state.serialize_field("text", &self.text);
+    state.serialize_field("value", &self.text);
     state.serialize_span(self.span);
     state.end();
   }

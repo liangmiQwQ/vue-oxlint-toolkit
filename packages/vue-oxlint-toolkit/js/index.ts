@@ -1,9 +1,12 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
 import { nativeParse } from '../bindings'
 import { getConvertor } from './location'
+import { rebuildProgram } from './parse'
 import { transformJsx } from './transform'
 
 export { transformJsx } from './transform'
+export { visitorKeys } from './parse/visitorKeys'
+export * from './ast'
 
 export interface Mapping {
   virtualStart: number
@@ -32,10 +35,11 @@ export interface ParseResult {
 export function parse(_path: string, source: string, _options?: {}): ParseResult {
   const sourceConvertor = getConvertor(source)
   const result = nativeParse(source)
+  const sfc = JSON.parse(result.astJson)
 
   return {
     transform: transformJsx(source, sourceConvertor),
-    ast: null,
+    ast: rebuildProgram(sfc, sourceConvertor),
     errors: result.errors.map(sourceConvertor.fix),
     panicked: result.panicked,
   }

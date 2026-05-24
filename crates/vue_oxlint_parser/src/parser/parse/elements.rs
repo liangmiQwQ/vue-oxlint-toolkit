@@ -3,6 +3,7 @@ use crate::lexer::{Lexer, LexerMode, VToken, VTokenKind};
 use crate::parser::parse::state::{
   CurrentTag, ElementState, PendingScript, RawElement, ScriptInfo, TagAttrs,
 };
+use crate::parser::parse::tree::{ParsedElement, ParsedNode, ParsedPureScript, ParsedStartTag};
 use crate::parser::parse::{token_end, token_start};
 use oxc_span::{SourceType, Span};
 
@@ -49,6 +50,8 @@ where
     lexer: &mut Lexer<'b>,
     current_tag: &mut Option<CurrentTag<'b>>,
     element_stack: &mut Vec<ElementState>,
+    node_stack: &mut Vec<ParsedElement<'b>>,
+    root_nodes: &mut Vec<ParsedNode<'b>>,
     raw_element: &mut Option<RawElement<'b>>,
     pending_script: &mut Option<PendingScript<'b>>,
     seen_script: &mut bool,
@@ -60,26 +63,36 @@ where
 
     let tag_end = token_end(token);
     if tag.is_end {
-      pop_element(element_stack, &tag.normalized_name);
-      if let Some(script) = pending_script.take() {
-        self.emit_script_tokens(
+      if let Some(script) = pending_script.take()
+        && let Some(script_node) = self.emit_script_tokens(
           script.info,
           script.body_start,
           script.body_end,
           tag_end,
           seen_script,
           seen_setup,
-        );
+        )
+      {
+        if node_stack.len() == 1 {
+          root_nodes.push(ParsedNode::PureScript(script_node));
+        } else {
+          Self::push_parsed_node(root_nodes, node_stack, ParsedNode::PureScript(script_node));
+        }
       }
+      Self::close_node(tag.open_start, tag_end, &tag.normalized_name, node_stack, root_nodes);
+      pop_element(element_stack, &tag.normalized_name);
       update_lexer_mode(lexer, element_stack);
       return;
     }
 
+    let element = self.open_node(&tag, token.kind == VTokenKind::HTMLSelfClosingTagClose, tag_end);
     if token.kind == VTokenKind::HTMLSelfClosingTagClose {
+      Self::push_parsed_node(root_nodes, node_stack, ParsedNode::Element(element));
       update_lexer_mode(lexer, element_stack);
       return;
     }
 
+    node_stack.push(element);
     let state = ElementState { name: tag.normalized_name.clone(), v_pre: tag.attrs.v_pre };
     element_stack.push(state);
 
@@ -111,16 +124,16 @@ where
     close_end: usize,
     seen_script: &mut bool,
     seen_setup: &mut bool,
-  ) {
+  ) -> Option<ParsedPureScript<'b>> {
     if script.attrs.setup {
       if *seen_setup || body_start == body_end {
         *seen_setup = true;
-        return;
+        return None;
       }
       *seen_setup = true;
     } else {
       if *seen_script || (*seen_setup && body_start == body_end) {
-        return;
+        return None;
       }
       *seen_script = true;
     }
@@ -128,16 +141,67 @@ where
     self.push_script_punctuator(script.open_start, script.open_end, "<script>");
     self.apply_script_source_type(script.attrs.lang);
 
+    let mut script_node = None;
     if body_start < body_end {
       let span = Span::new(body_start as u32, body_end as u32);
-      if let Some((_, _, _, tokens)) = self.oxc_parse(span, &[], &[], None)
-        && !tokens.is_empty()
-      {
-        self.sfc.script_tokens.push(tokens.into());
+      if let Some((directives, statements, tokens)) = self.oxc_parse_script(span) {
+        script_node =
+          Some(ParsedPureScript { directives, statements, setup: script.attrs.setup, span });
+        if !tokens.is_empty() {
+          self.sfc.script_tokens.push(tokens.into());
+        }
       }
     }
 
     self.push_script_punctuator(body_end, close_end, "</script>");
+    script_node
+  }
+
+  fn open_node(
+    &mut self,
+    tag: &CurrentTag<'b>,
+    self_closing: bool,
+    tag_end: usize,
+  ) -> ParsedElement<'b> {
+    let name = self.alloc_str(&tag.normalized_name);
+    ParsedElement {
+      name,
+      raw_name: tag.name,
+      start_tag: ParsedStartTag {
+        attributes: self.parse_tag_attributes(tag),
+        self_closing,
+        span: Span::new(tag.open_start as u32, tag_end as u32),
+      },
+      children: Vec::new(),
+      end_tag: None,
+      span: Span::new(tag.open_start as u32, tag_end as u32),
+    }
+  }
+
+  fn close_node(
+    close_start: usize,
+    close_end: usize,
+    name: &str,
+    node_stack: &mut Vec<ParsedElement<'b>>,
+    root_nodes: &mut Vec<ParsedNode<'b>>,
+  ) {
+    let Some(index) = node_stack.iter().rposition(|element| element.name == name) else {
+      return;
+    };
+
+    let mut completed = Vec::new();
+    while node_stack.len() > index {
+      let mut element = node_stack.pop().unwrap();
+      if element.name == name {
+        element.end_tag = Some(Span::new(close_start as u32, close_end as u32));
+        element.span = Span::new(element.span.start, close_end as u32);
+      }
+      completed.push(element);
+    }
+
+    while let Some(element) = completed.pop() {
+      Self::push_parsed_node(root_nodes, node_stack, ParsedNode::Element(element));
+    }
   }
 
   fn apply_script_source_type(&mut self, lang: Option<&str>) {

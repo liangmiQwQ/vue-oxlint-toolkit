@@ -23,11 +23,11 @@ impl ESTree for ESTreeComment<'_> {
 impl<'a> ESTreeComment<'a> {
   pub fn from_oxc_comment(comment: &Comment, source_text: &'a str) -> Self {
     let span = comment.span;
-    let (r#type, span) = match comment.kind {
+    let (r#type, value_span) = match comment.kind {
       CommentKind::Line => ("Line", span.shrink_left(2)),
       CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => ("Block", span.shrink(2)),
     };
-    let value = span.source_text(source_text);
+    let value = value_span.source_text(source_text);
 
     Self { r#type, value, span }
   }

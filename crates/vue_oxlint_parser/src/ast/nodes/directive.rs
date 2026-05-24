@@ -15,42 +15,42 @@ use oxc_span::Span;
 #[derive(Debug)]
 pub struct VDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VDirectiveExpression<'a, 'b>,
+  pub value: Option<VDirectiveExpression<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VOnDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VOnExpression<'b>,
+  pub value: Option<VOnExpression<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VSlotDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VSlotExpression<'b>,
+  pub value: Option<VSlotExpression<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VForDirective<'a, 'b> {
   pub key: VDirectiveKey<'a, 'b>,
-  pub value: VForExpression<'b>,
+  pub value: Option<VForExpression<'b>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub struct VDirectiveKey<'a, 'b> {
   pub name: &'a VIdentifier<'a>,
-  pub argument: VDirectiveArgument<'a, 'b>,
+  pub argument: Option<VDirectiveArgument<'a, 'b>>,
   pub modifiers: Vec<'a, VIdentifier<'a>>,
   pub span: Span,
 }
 
 #[derive(Debug)]
 pub enum VDirectiveArgument<'a, 'b> {
-  VDirectiveArgument(Box<'a, VDirectiveArgumentExpression<'a, 'b>>),
+  VDirectiveArgument(Box<'a, VDirectiveArgumentExpression<'b>>),
   VIdentifier(Box<'a, VIdentifier<'a>>),
 }
 
@@ -105,6 +105,7 @@ impl ESTree for VForDirective<'_, '_> {
 impl ESTree for VDirectiveKey<'_, '_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     let mut state = serializer.serialize_struct();
+    state.serialize_field("type", &JsonSafeString("VDirectiveKey"));
     state.serialize_field("name", &self.name);
     state.serialize_field("argument", &self.argument);
     state.serialize_field("modifiers", &self.modifiers);

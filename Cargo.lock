@@ -1760,6 +1760,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_parser",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "regex",
  "rustc-hash 2.1.2",
