@@ -234,7 +234,7 @@ impl ESTree for VueExpression<'_> {
   fn serialize<S: Serializer>(&self, serializer: S) {
     match self.0 {
       Expression::ParenthesizedExpression(expression) => {
-        expression.expression.serialize(serializer)
+        expression.expression.serialize(serializer);
       }
       expression => expression.serialize(serializer),
     }

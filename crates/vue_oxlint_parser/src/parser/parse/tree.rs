@@ -39,7 +39,7 @@ pub(super) struct ParsedStartTag<'b> {
   pub(super) span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(super) struct ParsedText<'b> {
   pub(super) value: &'b str,
   pub(super) span: Span,
@@ -176,11 +176,8 @@ where
     for node in nodes {
       match node {
         ParsedNode::Text(text) => {
-          pending_text = Some(if let Some(previous) = pending_text {
-            self.merge_text(previous, text)
-          } else {
-            text
-          });
+          pending_text =
+            Some(pending_text.map_or(text, |previous| self.merge_text(previous, text)));
         }
         ParsedNode::CommentBoundary => {
           self.push_pending_text(&mut arena_nodes, &mut pending_text);
