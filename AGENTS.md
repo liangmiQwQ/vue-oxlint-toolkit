@@ -44,4 +44,4 @@ Some signs of behavior exceeding boundaries:
 - Comments / PR titles follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, etc.). The repo squash-merges PRs. You should always use Conventional Commits format as PR title even if you are using codex-app connector.
 - If you are modifying an existing PR / branch, prefer commit directly to avoid force pushing.
 - Run `just ready` after your do changes and commits, it will run build, test, format check automatically.
-- Consider to update AGENTS.md to sync after you made change (ATTENTION: it's `update`, means adjust or delete outdated things, but not `add things into`).
+- If you find AGENTS.md is outdated, please notice users to change in response.
