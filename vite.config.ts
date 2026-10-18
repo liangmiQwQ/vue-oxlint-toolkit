@@ -1,23 +1,5 @@
-import { defineConfig } from 'vite-plus'
+import { liangmi } from '@liangmi/vp-config'
 
-const ignorePatterns = ['**/*.vue', 'packages/*/bindings/**', 'MAPPING.md']
+const ignorePatterns = ['**/*.vue', 'packages/*/bindings/**', 'MAPPING.md', 'fixtures/**']
 
-export default defineConfig({
-  lint: {
-    options: {
-      typeAware: true,
-      typeCheck: true,
-    },
-    ignorePatterns,
-  },
-  fmt: {
-    singleQuote: true,
-    semi: false,
-    sortPackageJson: true,
-    excludeFiles: [],
-    ignorePatterns,
-  },
-  staged: {
-    '*.{js,ts,tsx,md,json}': 'vp check --fix',
-  },
-})
+export default await liangmi({ lint: { ignores: ignorePatterns }, fmt: { ignorePatterns } })

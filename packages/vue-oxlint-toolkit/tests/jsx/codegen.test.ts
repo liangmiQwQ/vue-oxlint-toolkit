@@ -1,5 +1,6 @@
 import { it, expect } from 'vite-plus/test'
-import { transformJsx } from '../../js'
+
+import { transformJsx } from '../../js/index.ts'
 
 it('transforms Vue SFCs to generated JSX', () => {
   const source = `<script setup lang="ts">
@@ -22,7 +23,7 @@ const msg: string = 'hello'
     virtualStart,
     virtualEnd: virtualStart + 'msg'.length,
     originalStart,
-    originalEnd: originalStart + 'msg'.length,
+    originalEnd: originalStart + 'msg'.length
   })
 })
 
@@ -39,9 +40,9 @@ it('returns parser metadata', () => {
       range: [17, 24],
       loc: {
         start: { line: 2, column: 6 },
-        end: { line: 2, column: 13 },
-      },
-    },
+        end: { line: 2, column: 13 }
+      }
+    }
   ])
   expect(result.irregularWhitespaces).toEqual([])
   expect(result.errors).toEqual([])
@@ -56,12 +57,12 @@ it('keeps full line comment values', () => {
   expect(result.comments).toMatchObject([
     {
       type: 'Line',
-      value: 'a',
+      value: 'a'
     },
     {
       type: 'Line',
-      value: ' hello',
-    },
+      value: ' hello'
+    }
   ])
 })
 
@@ -75,8 +76,8 @@ const s = "你好" // hello
     range: [24, 32],
     loc: {
       start: { line: 2, column: 15 },
-      end: { line: 2, column: 23 },
-    },
+      end: { line: 2, column: 23 }
+    }
   })
 })
 
@@ -93,7 +94,7 @@ const 你好 = 1
     virtualStart,
     virtualEnd: virtualStart + 'const 你好'.length,
     originalStart,
-    originalEnd: originalStart + 'const 你好'.length,
+    originalEnd: originalStart + 'const 你好'.length
   })
 })
 
@@ -108,7 +109,7 @@ it('keeps bogus template comment values', () => {
     range: [13, 19],
     loc: {
       start: { line: 2, column: 2 },
-      end: { line: 2, column: 8 },
-    },
+      end: { line: 2, column: 8 }
+    }
   })
 })

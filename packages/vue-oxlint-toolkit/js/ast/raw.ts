@@ -1,4 +1,5 @@
 import type { Ranged, Span } from '@oxlint/plugins'
+
 import type {
   ParseError,
   VForExpression,
@@ -17,8 +18,8 @@ import type {
   VEndTag,
   VElement,
   VDocumentFragment,
-  VStyleElement,
-} from '.'
+  VStyleElement
+} from './index.ts'
 
 type RawSpan = { start: number; end: number } | Ranged
 type RawValue<T> = T extends ParseError

@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/number-literal-case -- Keep hexadecimal formatting consistent with Oxfmt. */
 import type { LineColumn, Location, Ranged, Span } from '@oxlint/plugins'
 
 // JavaScript uses UTF-16 for internal string representation, while Rust uses UTF-8 for string representation.
@@ -31,14 +32,14 @@ export function getConvertor(sourceText: string): LocationConvertor {
     checkPoints,
     toUtf16: ({ start, end }) => ({
       start: toUtf16Offset(sourceText, checkPoints, start),
-      end: toUtf16Offset(sourceText, checkPoints, end),
+      end: toUtf16Offset(sourceText, checkPoints, end)
     }),
     range: ([start, end]) => {
       const fixed = convertor.toUtf16({ start, end })
 
       return [fixed.start, fixed.end]
     },
-    fix: (node) => {
+    fix: node => {
       const [utf8Start, utf8End] = 'range' in node ? node.range : [node.start, node.end]
       // We should use utf16 location for location creation.
       const { start, end } = convertor.toUtf16({ start: utf8Start, end: utf8End })
@@ -52,9 +53,9 @@ export function getConvertor(sourceText: string): LocationConvertor {
         range: [start, end],
         get loc() {
           return (loc ??= createLocation(sourceText, start, end))
-        },
+        }
       }
-    },
+    }
   }
 
   return convertor
@@ -67,7 +68,7 @@ function createCheckPoints(sourceText: string): CheckPoint[] {
 
   while (utf16 < sourceText.length) {
     const codePoint = sourceText.codePointAt(utf16)!
-    const utf16Length = codePoint > 0xffff ? 2 : 1
+    const utf16Length = codePoint > 0xff_ff ? 2 : 1
     const utf8Length = getUtf8Length(codePoint)
 
     if (codePoint > 0x7f) {
@@ -86,7 +87,7 @@ function toUtf16Offset(sourceText: string, checkPoints: CheckPoint[], offset: nu
 
   while (utf8 < offset && utf16 < sourceText.length) {
     const codePoint = sourceText.codePointAt(utf16)!
-    const utf16Length = codePoint > 0xffff ? 2 : 1
+    const utf16Length = codePoint > 0xff_ff ? 2 : 1
     const utf8Length = getUtf8Length(codePoint)
 
     if (utf8 + utf8Length > offset) {
@@ -121,10 +122,10 @@ function getUtf8Length(codePoint: number): number {
   if (codePoint <= 0x7f) {
     return 1
   }
-  if (codePoint <= 0x7ff) {
+  if (codePoint <= 0x7_ff) {
     return 2
   }
-  if (codePoint <= 0xffff) {
+  if (codePoint <= 0xff_ff) {
     return 3
   }
   return 4
@@ -135,7 +136,7 @@ function createLocation(sourceText: string, start: number, end: number): Locatio
 
   return {
     start: lineColumn(lineStartIndices, start),
-    end: lineColumn(lineStartIndices, end),
+    end: lineColumn(lineStartIndices, end)
   }
 }
 
@@ -165,6 +166,6 @@ function lineColumn(lineStartIndices: number[], offset: number): LineColumn {
 
   return {
     line: low,
-    column: offset - lineStartIndices[low - 1],
+    column: offset - lineStartIndices[low - 1]
   }
 }

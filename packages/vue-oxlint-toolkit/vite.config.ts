@@ -1,15 +1,13 @@
-import { defineConfig } from 'vite-plus'
+import { liangmi } from '@liangmi/vp-config'
 
-export default defineConfig({
+export default await liangmi({
   pack: {
-    fixedExtension: true,
     platform: 'node',
     entry: {
-      index: './js/index.ts',
+      index: './js/index.ts'
     },
-    dts: true,
     deps: {
-      neverBundle: ['@eslint/plugin-kit'],
-    },
-  },
+      neverBundle: ['@eslint/plugin-kit']
+    }
+  }
 })

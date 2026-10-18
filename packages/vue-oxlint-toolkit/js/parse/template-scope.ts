@@ -1,5 +1,5 @@
-import type { NativeNode } from './types'
-import { visitorKeys } from './visitorKeys'
+import type { NativeNode } from './types.ts'
+import { visitorKeys } from './visitor-keys.ts'
 
 interface TemplateVariable {
   id: NativeNode
@@ -32,7 +32,7 @@ export function applyTemplateScope(root: NativeNode | null | undefined) {
 
 function collectElements(root: NativeNode) {
   const elements: NativeNode[] = []
-  walk(root, (node) => {
+  walk(root, node => {
     if (node.type === 'VElement') {
       elements.push(node)
     }
@@ -42,7 +42,7 @@ function collectElements(root: NativeNode) {
 
 function collectExpressionContainers(root: NativeNode) {
   const containers: NativeNode[] = []
-  walk(root, (node) => {
+  walk(root, node => {
     if (node.type === 'VExpressionContainer') {
       containers.push(node)
     }
@@ -71,7 +71,7 @@ function collectElementVariables(element: NativeNode): TemplateVariable[] {
 
 function collectBindingVariables(value: unknown, kind: TemplateVariable['kind']) {
   const variables: TemplateVariable[] = []
-  collectBindingIdentifiers(value, (id) => {
+  collectBindingIdentifiers(value, id => {
     const variable = { id, kind } as TemplateVariable
     defineHiddenProperty(variable, 'references', [])
     variables.push(variable)
@@ -98,7 +98,7 @@ function collectContainerReferences(container: NativeNode): TemplateReference[] 
   if (isShorthandBindContainer(container)) {
     return collectReferences(expression, {
       enumerableVariable: true,
-      includeReferenceFlags: false,
+      includeReferenceFlags: false
     })
   }
 
@@ -107,14 +107,14 @@ function collectContainerReferences(container: NativeNode): TemplateReference[] 
 
 function collectReferences(
   value: unknown,
-  options: { enumerableVariable?: boolean; includeReferenceFlags?: boolean } = {},
+  options: { enumerableVariable?: boolean; includeReferenceFlags?: boolean } = {}
 ) {
   const references: TemplateReference[] = []
   walkExpression(value, null, null, (node, parent, key) => {
     if (node.type === 'Identifier' && isReferenceIdentifier(node, parent, key)) {
       const reference = {
         id: node,
-        mode: 'r',
+        mode: 'r'
       } as TemplateReference
       if (options.includeReferenceFlags !== false) {
         reference.isValueReference = true
@@ -136,7 +136,7 @@ function resolveReferences(container: NativeNode) {
     let element = nearestElement(container.parent)
     while (element) {
       const variable = (element.variables as TemplateVariable[]).find(
-        (variable) => variable.id.name === reference.id.name,
+        variable => variable.id.name === reference.id.name
       )
       if (variable) {
         defineHiddenProperty(reference, 'variable', variable)
@@ -193,7 +193,7 @@ function collectBindingIdentifiers(value: unknown, onIdentifier: (node: NativeNo
 function isReferenceIdentifier(
   node: NativeNode,
   parent: NativeNode | null,
-  key: string | null,
+  key: string | null
 ): boolean {
   if (!parent) {
     return true
@@ -226,7 +226,7 @@ function isReferenceIdentifier(
 function isBindingIdentifier(
   node: NativeNode,
   parent: NativeNode | null,
-  key: string | null,
+  key: string | null
 ): boolean {
   if (!parent) {
     return false
@@ -279,7 +279,7 @@ function walkExpression(
   value: unknown,
   parent: NativeNode | null,
   key: string | null,
-  visitor: (node: NativeNode, parent: NativeNode | null, key: string | null) => void,
+  visitor: (node: NativeNode, parent: NativeNode | null, key: string | null) => void
 ) {
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -298,11 +298,11 @@ function walkExpression(
 }
 
 function childKeys(node: NativeNode) {
-  const keys = visitorKeys[node.type as keyof typeof visitorKeys]
+  const keys = (visitorKeys as Record<string, readonly string[] | undefined>)[node.type]
   if (keys) {
     return keys
   }
-  return Object.keys(node).filter((key) => {
+  return Object.keys(node).filter(key => {
     if (META_KEYS.has(key)) {
       return false
     }
@@ -319,16 +319,12 @@ function isNode(value: unknown): value is NativeNode {
   )
 }
 
-function defineHiddenProperty<T extends object, K extends PropertyKey, V>(
-  target: T,
-  key: K,
-  value: V,
-) {
+function defineHiddenProperty(target: object, key: PropertyKey, value: unknown) {
   Object.defineProperty(target, key, {
     value,
     writable: true,
     enumerable: false,
-    configurable: true,
+    configurable: true
   })
 }
 
@@ -339,5 +335,5 @@ const META_KEYS = new Set([
   'range',
   'references',
   'tokens',
-  'variables',
+  'variables'
 ])

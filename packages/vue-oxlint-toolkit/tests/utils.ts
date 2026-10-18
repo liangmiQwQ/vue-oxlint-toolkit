@@ -6,27 +6,27 @@ const FIXTURES_ROOT = fileURLToPath(new URL('../../../fixtures', import.meta.url
 
 export function readTestFiles(): TestFiles {
   return {
-    pass: _readFixtureGroup('pass'),
-    error: _readFixtureGroup('error'),
-    panic: _readFixtureGroup('panic'),
+    pass: readFixtureGroup('pass'),
+    error: readFixtureGroup('error'),
+    panic: readFixtureGroup('panic')
   }
 }
 
-function _readFixtureGroup(group: keyof TestFiles): TestFile[] {
-  return _walkVueFixtures(join(FIXTURES_ROOT, group)).map((filePath) => ({
+function readFixtureGroup(group: keyof TestFiles): TestFile[] {
+  return walkVueFixtures(join(FIXTURES_ROOT, group)).map(filePath => ({
     path: relative(FIXTURES_ROOT, filePath),
-    source_text: readFileSync(filePath, 'utf8'),
+    source_text: readFileSync(filePath, 'utf8')
   }))
 }
 
-function _walkVueFixtures(dir: string): string[] {
+function walkVueFixtures(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .flatMap((entry) => {
+    .toSorted((a, b) => a.name.localeCompare(b.name))
+    .flatMap(entry => {
       const filePath = join(dir, entry.name)
 
       if (entry.isDirectory()) {
-        return _walkVueFixtures(filePath)
+        return walkVueFixtures(filePath)
       }
 
       return entry.isFile() && entry.name.endsWith('.vue') ? [filePath] : []

@@ -6,6 +6,7 @@
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@liangmi/vp-config": "catalog:devtools",
     "@types/node": "catalog:types",
     "@typescript/native-preview": "catalog:types",
     "bumpp": "catalog:devtools",
@@ -14,11 +15,5 @@
     "typescript": "catalog:types",
     "vite-plus": "catalog:devtools"
   },
-  "packageManager": "pnpm@11.0.8",
-  "pnpm": {
-    "overrides": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
-    }
-  }
+  "packageManager": "pnpm@11.0.8"
 }
