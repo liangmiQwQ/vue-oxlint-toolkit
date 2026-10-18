@@ -1,12 +1,13 @@
 import type { Comment, Diagnostic, Range } from '@oxlint/plugins'
-import { nativeParse } from '../bindings'
-import { getConvertor } from './location'
-import { rebuildProgram } from './parse'
-import { transformJsx } from './transform'
 
-export { transformJsx } from './transform'
-export { visitorKeys } from './parse/visitorKeys'
-export * from './ast'
+import { nativeParse } from '../bindings/index.js'
+import { getConvertor } from './location.ts'
+import { rebuildProgram } from './parse/index.ts'
+import { transformJsx } from './transform.ts'
+
+export { transformJsx } from './transform.ts'
+export { visitorKeys } from './parse/visitor-keys.ts'
+export * from './ast/index.ts'
 
 export interface Mapping {
   virtualStart: number
@@ -25,14 +26,14 @@ export interface ToolkitTransformResult {
 }
 
 export interface ParseResult {
-  // ast: AST.ESLintProgram (the import of AST brings a lot of unnecessary types definition in dts, remove it temporarily)
+  // Ast: AST.ESLintProgram (the import of AST brings a lot of unnecessary types definition in dts, remove it temporarily)
   ast: any
   errors: Diagnostic[]
   panicked: boolean
   transform: ToolkitTransformResult
 }
 
-export function parse(_path: string, source: string, _options?: {}): ParseResult {
+export function parse(_path: string, source: string, _options?: object): ParseResult {
   const sourceConvertor = getConvertor(source)
   const result = nativeParse(source)
   const sfc = JSON.parse(result.astJson)
@@ -41,6 +42,6 @@ export function parse(_path: string, source: string, _options?: {}): ParseResult
     transform: transformJsx(source, sourceConvertor),
     ast: rebuildProgram(sfc, sourceConvertor),
     errors: result.errors.map(sourceConvertor.fix),
-    panicked: result.panicked,
+    panicked: result.panicked
   }
 }

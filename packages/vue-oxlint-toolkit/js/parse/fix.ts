@@ -1,6 +1,7 @@
 import type { Ranged } from '@oxlint/plugins'
-import type { LocationConvertor } from '../location'
-import type { NativeNode } from './types'
+
+import type { LocationConvertor } from '../location.ts'
+import type { NativeNode } from './types.ts'
 
 const RANGE_KEYS = new Set(['range', 'start', 'end', 'loc', 'parent'])
 const ABSENT_WHEN_NULL_KEYS = new Set([
@@ -10,12 +11,12 @@ const ABSENT_WHEN_NULL_KEYS = new Set([
   'returnType',
   'typeAnnotation',
   'typeArguments',
-  'typeParameters',
+  'typeParameters'
 ])
 
 export function fixNativeNode<T>(value: T, convertor: LocationConvertor): T {
   if (Array.isArray(value)) {
-    return value.map((item) => fixNativeNode(item, convertor)) as T
+    return value.map(item => fixNativeNode(item, convertor)) as T
   }
 
   if (!isRecord(value)) {

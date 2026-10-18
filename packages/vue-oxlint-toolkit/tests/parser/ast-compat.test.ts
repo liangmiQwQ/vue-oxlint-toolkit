@@ -1,22 +1,22 @@
-import { expect, it } from 'vite-plus/test'
-import { readTestFiles } from '../utils'
-import { AST } from 'vue-eslint-parser'
-import { parse, visitorKeys } from '../../js'
-import vueEslintParser from 'vue-eslint-parser'
 import tsParser from '@typescript-eslint/parser'
+import { expect, it } from 'vite-plus/test'
+import vueEslintParser, { AST } from 'vue-eslint-parser'
+
+import { parse, visitorKeys } from '../../js/index.ts'
+import { readTestFiles } from '../utils.ts'
 
 const TEST_FILES = readTestFiles()
 const VUE_ESLINT_PARSER_OPTION = {
   sourceType: 'module',
   ecmaVersion: 'latest',
   ecmaFeatures: {
-    jsx: true,
+    jsx: true
   },
   parser: tsParser,
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module',
-  },
+    sourceType: 'module'
+  }
 }
 
 it('exports the same visitor keys as vue-eslint-parser', () => {
@@ -28,7 +28,7 @@ for (const testFile of TEST_FILES.pass) {
     const toolkitParseResult = parse(testFile.path, testFile.source_text, VUE_ESLINT_PARSER_OPTION)
     const vueEslintParserResult: any = vueEslintParser.parse(
       testFile.source_text,
-      VUE_ESLINT_PARSER_OPTION,
+      VUE_ESLINT_PARSER_OPTION
     )
     delete vueEslintParserResult.errors
     if (vueEslintParserResult.templateBody) {

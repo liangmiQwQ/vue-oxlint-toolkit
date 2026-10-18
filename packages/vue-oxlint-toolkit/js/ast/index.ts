@@ -27,7 +27,7 @@ export const NS = Object.freeze({
   SVG: 'http://www.w3.org/2000/svg',
   XLink: 'http://www.w3.org/1999/xlink',
   XML: 'http://www.w3.org/XML/1998/namespace',
-  XMLNS: 'http://www.w3.org/2000/xmlns/',
+  XMLNS: 'http://www.w3.org/2000/xmlns/'
 } as const)
 
 export type Namespace =

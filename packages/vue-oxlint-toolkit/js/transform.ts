@@ -1,10 +1,11 @@
-import type { ToolkitTransformResult } from '.'
-import { nativeTransformJsx } from '../bindings'
-import { getConvertor, type LocationConvertor } from './location'
+import { nativeTransformJsx } from '../bindings/index.js'
+import type { ToolkitTransformResult } from './index.ts'
+import { getConvertor } from './location.ts'
+import type { LocationConvertor } from './location.ts'
 
 export function transformJsx(
   source: string,
-  sourceConvertor: LocationConvertor = getConvertor(source),
+  sourceConvertor: LocationConvertor = getConvertor(source)
 ): ToolkitTransformResult {
   const result = nativeTransformJsx(source)
   const generatedConvertor = getConvertor(result.sourceText)
@@ -15,22 +16,22 @@ export function transformJsx(
     comments: result.comments.map(sourceConvertor.fix),
     irregularWhitespaces: result.irregularWhitespaces.map(sourceConvertor.range),
     errors: result.errors.map(sourceConvertor.fix),
-    mappings: result.mappings.map((mapping) => {
+    mappings: result.mappings.map(mapping => {
       const virtual = generatedConvertor.toUtf16({
         start: mapping.virtualStart,
-        end: mapping.virtualEnd,
+        end: mapping.virtualEnd
       })
       const original = sourceConvertor.toUtf16({
         start: mapping.originalStart,
-        end: mapping.originalEnd,
+        end: mapping.originalEnd
       })
 
       return {
         virtualStart: virtual.start,
         virtualEnd: virtual.end,
         originalStart: original.start,
-        originalEnd: original.end,
+        originalEnd: original.end
       }
-    }),
+    })
   }
 }

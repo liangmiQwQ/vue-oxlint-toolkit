@@ -104,5 +104,5 @@ export const visitorKeys = {
   VSlotScopeExpression: ['params'],
   VStartTag: ['attributes'],
   VText: [],
-  VGenericExpression: ['params'],
+  VGenericExpression: ['params']
 } as const

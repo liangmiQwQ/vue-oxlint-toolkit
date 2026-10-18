@@ -1,38 +1,32 @@
-import type { LocationConvertor } from '../location'
-import type { NativeNode, NativeSfc } from './types'
-import { fixNativeNode } from './fix'
-import { rebuildTemplate } from './template'
-import { applyTemplateScope } from './templateScope'
-import { visitorKeys } from './visitorKeys'
+import type { LocationConvertor } from '../location.ts'
+import { fixNativeNode } from './fix.ts'
+import { applyTemplateScope } from './template-scope.ts'
+import { rebuildTemplate } from './template.ts'
+import type { NativeNode, NativeSfc } from './types.ts'
+import { visitorKeys } from './visitor-keys.ts'
 
 export function rebuildProgram(sfc: NativeSfc, convertor: LocationConvertor) {
-  const children = fixNativeNode(sfc.children, convertor) as NativeNode[]
+  const children = fixNativeNode(sfc.children, convertor)
   const body = scriptBody(children)
   const template = rebuildTemplate(sfc, convertor, children)
   const blocks = scriptBlocks(template.fragment.children)
-  const comments = (fixNativeNode(sfc.script_comments, convertor) as NativeNode[]).filter(
-    (comment) =>
-      blocks.some(
-        (block) => comment.range![0] >= block.bodyStart && comment.range![1] <= block.bodyEnd,
-      ),
+  const comments = fixNativeNode(sfc.script_comments, convertor).filter(comment =>
+    blocks.some(block => comment.range![0] >= block.bodyStart && comment.range![1] <= block.bodyEnd)
   )
   const range = programRange(body, comments, blocks)
   const program: any = {
+    templateBody: template.templateBody,
     type: 'Program',
     body,
     sourceType: sfc.source_type === 'script' ? 'script' : 'module',
     comments,
     tokens: fixNativeNode(sfc.scriptTokens, convertor),
     range,
-    loc: convertor.fix({ range }).loc,
+    loc: convertor.fix({ range }).loc
   }
-
-  program.templateBody = template.templateBody
 
   visit(program, null)
-  if (template.fragment) {
-    visit(template.fragment, null)
-  }
+  visit(template.fragment, null)
   applyTemplateScope(template.fragment)
 
   return program
@@ -57,13 +51,13 @@ function collectScriptBody(nodes: NativeNode[], body: NativeNode[]) {
 function programRange(
   body: NativeNode[],
   comments: NativeNode[],
-  blocks: ReturnType<typeof scriptBlocks>,
+  blocks: ReturnType<typeof scriptBlocks>
 ) {
   if (body.length > 0) {
-    const blocksWithBody = blocks.filter((block) =>
+    const blocksWithBody = blocks.filter(block =>
       body.some(
-        (node) => node.range && node.range[0] >= block.bodyStart && node.range[1] <= block.bodyEnd,
-      ),
+        node => node.range && node.range[0] >= block.bodyStart && node.range[1] <= block.bodyEnd
+      )
     )
     const end =
       blocksWithBody.length === 1 ? blocksWithBody[0].bodyEnd : body[body.length - 1].range![1]
@@ -81,8 +75,8 @@ function programRange(
 
 function commentOnlyProgramStart(comments: NativeNode[]) {
   const block = comments.find(
-    (comment) =>
-      comment.type === 'Block' && typeof comment.value === 'string' && comment.value.includes('\n'),
+    comment =>
+      comment.type === 'Block' && typeof comment.value === 'string' && comment.value.includes('\n')
   )
   if (!block) {
     return comments[0].range![0]
@@ -104,10 +98,10 @@ function commentOnlyProgramStart(comments: NativeNode[]) {
 
 function scriptBlocks(children: NativeNode[]) {
   return children
-    .filter((node) => node.type === 'VElement' && node.name === 'script' && node.endTag)
-    .map((node) => ({
+    .filter(node => node.type === 'VElement' && node.name === 'script' && node.endTag)
+    .map(node => ({
       bodyStart: node.startTag.range[1],
-      bodyEnd: node.endTag.range[0],
+      bodyEnd: node.endTag.range[0]
     }))
 }
 
@@ -139,8 +133,8 @@ function isNode(value: unknown): value is Record<string, any> & { type: string }
 }
 
 function childKeys(node: Record<string, any>) {
-  const keys = visitorKeys[node.type as keyof typeof visitorKeys]
-  const fallbackKeys = Object.keys(node).filter((key) => {
+  const keys = (visitorKeys as Record<string, readonly string[] | undefined>)[node.type]
+  const fallbackKeys = Object.keys(node).filter(key => {
     if (RANGE_OR_META_KEYS.has(key)) {
       return false
     }
